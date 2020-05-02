@@ -38,10 +38,21 @@ namespace Pustalorc.Plugins.BaseClustering
 
         protected override void Unload()
         {
-            Instance = null;
+            BarricadeManager.onSalvageBarricadeRequested -= BarricadeSalvaged;
+            BarricadeManager.onDamageBarricadeRequested -= BarricadeDamaged;
+            BarricadeManager.onHarvestPlantRequested -= PlantHarvested;
+            BarricadeManager.onTransformRequested -= BarricadeTransformed;
+            PatchBarricadeSpawnInternal.OnNewBarricadeSpawned -= BarricadeSpawned;
+
+            StructureManager.onTransformRequested -= StructureTransformed;
+            StructureManager.onSalvageStructureRequested -= StructureSalvaged;
+            StructureManager.onDamageStructureRequested -= StructureDamaged;
+            PatchStructureSpawnInternal.OnNewStructureSpawned -= StructureSpawned;
 
             _harmony.UnpatchAll();
             _harmony = null;
+
+            Instance = null;
 
             Logging.PluginUnloaded(this);
         }
