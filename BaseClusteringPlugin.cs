@@ -233,7 +233,7 @@ namespace Pustalorc.Plugins.BaseClustering
 
             if (sData.structure.isDead)
             {
-                foreach (var cluster in Clusters.Where(k => k.Buildables.Any(l => l.InstanceId == sData.instanceID)))
+                foreach (var cluster in Clusters.Where(k => k.Buildables.Any(l => l.InstanceId == sData.instanceID)).ToList())
                 {
                     if (cluster.Buildables.Count == 1)
                     {
@@ -261,7 +261,7 @@ namespace Pustalorc.Plugins.BaseClustering
             var clusters = Clusters.Where(k =>
                 k.Buildables.Any(l => l.InstanceId == sData.instanceID));
 
-            foreach (var cluster in clusters)
+            foreach (var cluster in clusters.ToList())
             {
                 if (cluster.Buildables.Count == 1)
                 {
@@ -305,7 +305,7 @@ namespace Pustalorc.Plugins.BaseClustering
             var clusters = Clusters.Where(k =>
                 k.Buildables.Any(l => l.InstanceId == region.structures[index].instanceID));
 
-            foreach (var cluster in clusters)
+            foreach (var cluster in clusters.ToList())
             {
                 if (cluster.Buildables.Count == 1)
                 {
@@ -370,7 +370,7 @@ namespace Pustalorc.Plugins.BaseClustering
 
             if (bData.barricade.isDead)
             {
-                foreach (var cluster in Clusters.Where(k => k.Buildables.Any(l => l.InstanceId == bData.instanceID)))
+                foreach (var cluster in Clusters.Where(k => k.Buildables.Any(l => l.InstanceId == bData.instanceID)).ToList())
                 {
                     if (cluster.Buildables.Count == 1)
                     {
@@ -398,7 +398,7 @@ namespace Pustalorc.Plugins.BaseClustering
             var clusters = Clusters.Where(k =>
                 k.Buildables.Any(l => l.InstanceId == bData.instanceID));
 
-            foreach (var cluster in clusters)
+            foreach (var cluster in clusters.ToList())
             {
                 if (cluster.Buildables.Count == 1)
                 {
@@ -443,7 +443,7 @@ namespace Pustalorc.Plugins.BaseClustering
             var clusters = Clusters.Where(k =>
                 k.Buildables.Any(l => l.InstanceId == region.barricades[index].instanceID));
 
-            foreach (var cluster in clusters)
+            foreach (var cluster in clusters.ToList())
             {
                 if (cluster.Buildables.Count == 1)
                 {
@@ -472,7 +472,7 @@ namespace Pustalorc.Plugins.BaseClustering
             var clusters = Clusters.Where(k =>
                 k.Buildables.Any(l => l.InstanceId == region.barricades[index].instanceID));
 
-            foreach (var cluster in clusters)
+            foreach (var cluster in clusters.ToList())
             {
                 if (cluster.Buildables.Count == 1)
                 {
@@ -530,7 +530,7 @@ namespace Pustalorc.Plugins.BaseClustering
 
         private void _changeOwnerAndGroup([NotNull] BaseCluster cluster, ulong newOwner, ulong newGroup)
         {
-            foreach (var buildable in cluster.Buildables)
+            foreach (var buildable in cluster.Buildables.ToList())
             {
                 Game.ChangeOwnerAndGroup(buildable.Position, newOwner, newGroup);
                 buildable.Owner = newOwner;
@@ -540,7 +540,7 @@ namespace Pustalorc.Plugins.BaseClustering
 
         private void _damage([NotNull] BaseCluster cluster, ushort damage)
         {
-            foreach (var buildable in cluster.Buildables)
+            foreach (var buildable in cluster.Buildables.ToList())
                 Game.DamageBarricadeStructure(buildable.Position, damage);
         }
 
@@ -557,7 +557,7 @@ namespace Pustalorc.Plugins.BaseClustering
 
         private void _repair([NotNull] BaseCluster cluster, float amount, float times)
         {
-            foreach (var buildable in cluster.Buildables)
+            foreach (var buildable in cluster.Buildables.ToList())
                 Game.RepairBarricadeStructure(buildable.Position, amount, times);
         }
 
