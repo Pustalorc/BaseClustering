@@ -197,7 +197,9 @@ namespace Pustalorc.Plugins.BaseClustering
                     allBuildables.RemoveAt(localCluster.ElementAt(i).Key - i);
                 }
 
-                Clusters.Add(new BaseCluster(builds, center, radius));
+                var cluster = new BaseCluster(builds, center, radius);
+                Clusters.Add(cluster);
+                Logging.Verbose(this, $"New cluster created at: {center}\nRadius: {radius}\nAverage Center: {cluster.AverageCenterPosition}\nMost common group: {cluster.CommonGroup}\nMost common owner: {cluster.CommonOwner}\nAll buildables: {string.Join(", ", cluster.Buildables)}");
             }
 
             var end = DateTime.Now;
