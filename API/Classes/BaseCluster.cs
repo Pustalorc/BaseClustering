@@ -98,7 +98,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
             var centerIndex = Buildables.GetCenterIndex();
             CenterBuildable = Buildables[centerIndex].Position;
 
-            var radiiDist = Buildables.GetDistances(k => k.Position, CenterBuildable);
+            var radiiDist = Buildables.GetDistances(k => k.Position, CenterBuildable).ToList();
 
             if (!(radiiDist.Max() > 0)) return;
 

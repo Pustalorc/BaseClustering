@@ -85,7 +85,7 @@
     <Compile Include="API\Statics\Logging.cs" />
     <Compile Include="API\Statics\ThreadUtil2.cs" />
     <Compile Include="BaseClusteringPlugin.cs" />
-    <Compile Include="Commands\ReCreateClustersCommand.cs" />
+    <Compile Include="Commands\ClustersRegenCommand.cs" />
     <Compile Include="Config\BaseClusteringPluginConfiguration.cs" />
     <Compile Include="Patches\PatchBarricadeSpawnInternal.cs" />
     <Compile Include="Patches\PatchStructureSpawnInternal.cs" />

@@ -59,7 +59,7 @@ namespace Pustalorc.Plugins.BaseClustering
 
         public List<BaseCluster> Clusters { get; set; }
 
-        public List<Buildable> Buildables => Clusters?.SelectMany(k => k.Buildables).ToList() ?? new List<Buildable>();
+        [NotNull] public List<Buildable> Buildables => Clusters?.SelectMany(k => k.Buildables).ToList() ?? new List<Buildable>();
 
         /// <summary>
         ///     Retrieves all clusters within the specified radius.
@@ -231,13 +231,14 @@ namespace Pustalorc.Plugins.BaseClustering
 
                 var cluster = new BaseCluster(builds, center, radius);
                 Clusters.Add(cluster);
-                Logging.Verbose(this, $"New cluster created at: {center}\nRadius: {radius}\nAverage Center: {cluster.AverageCenterPosition}\nMost common group: {cluster.CommonGroup}\nMost common owner: {cluster.CommonOwner}\nAll buildables: {string.Join(", ", cluster.Buildables.Select(k => k.Position))}");
+                Logging.Verbose(this,
+                    $"New cluster created at: {center}\nRadius: {radius}\nAverage Center: {cluster.AverageCenterPosition}\nMost common group: {cluster.CommonGroup}\nMost common owner: {cluster.CommonOwner}\nAll buildables: {string.Join(", ", cluster.Buildables.Select(k => k.Position))}");
             }
 
             var end = DateTime.Now;
 
             Logging.Write(this,
-                $"Clusters Loaded: {Clusters.Count}. Took {(int)end.Subtract(start).TotalMilliseconds}ms.");
+                $"Clusters Loaded: {Clusters.Count}. Took {(int) end.Subtract(start).TotalMilliseconds}ms.");
         }
 
         private void OnLevelLoaded(int level)
@@ -259,7 +260,8 @@ namespace Pustalorc.Plugins.BaseClustering
         private void StructureDamaged(CSteamID instigatorSteamId, Transform structureTransform,
             ref ushort pendingTotalDamage, ref bool shouldAllow, EDamageOrigin damageOrigin)
         {
-            if (!shouldAllow || !StructureManager.tryGetInfo(structureTransform, out var x, out var y, out var index, out var region)) return;
+            if (!shouldAllow || !StructureManager.tryGetInfo(structureTransform, out _, out _, out var index,
+                out var region)) return;
 
             var sData = region.structures[index];
 
@@ -274,15 +276,18 @@ namespace Pustalorc.Plugins.BaseClustering
             RemoveBuildable(sData.instanceID);
         }
 
-        private void StructureSpawned(StructureData data, StructureDrop drop)
+        private void StructureSpawned([NotNull] StructureData data, [NotNull] StructureDrop drop)
         {
-            var buildable = new Buildable(data.angle_x, data.angle_y, data.angle_z, data.structure.id, data.structure.health, data.instanceID, data.owner, data.group, data.point, data.structure.asset, drop.model, null, null);
+            var buildable = new Buildable(data.angle_x, data.angle_y, data.angle_z, data.structure.id,
+                data.structure.health, data.instanceID, data.owner, data.group, data.point, data.structure.asset,
+                drop.model, null, null);
 
             var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxRadius);
 
             if (bestCluster == null)
             {
-                Clusters.Add(new BaseCluster(new List<Buildable> { buildable }, buildable.Position, Configuration.Instance.InitialRadius));
+                Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                    Configuration.Instance.InitialRadius));
                 return;
             }
 
@@ -301,7 +306,7 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             if (!shouldAllow) return;
 
-            var cluster = Clusters.FirstOrDefault(k => k.Buildables.Any(k => k.InstanceId == instanceId));
+            var cluster = Clusters.FirstOrDefault(k => k.Buildables.Any(l => l.InstanceId == instanceId));
             if (cluster == null)
             {
                 Logging.Verbose(this, $"Missed a barricade being added with instance ID {instanceId}");
@@ -314,6 +319,7 @@ namespace Pustalorc.Plugins.BaseClustering
             if (cluster.Buildables.Count == 0)
                 DestroyCluster(cluster);
 
+            // ReSharper disable once PossibleNullReferenceException
             buildable.AngleX = angleX;
             buildable.AngleY = angleY;
             buildable.AngleZ = angleZ;
@@ -323,7 +329,8 @@ namespace Pustalorc.Plugins.BaseClustering
 
             if (bestCluster == null)
             {
-                Clusters.Add(new BaseCluster(new List<Buildable> { buildable }, buildable.Position, Configuration.Instance.InitialRadius));
+                Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                    Configuration.Instance.InitialRadius));
                 return;
             }
 
@@ -333,7 +340,8 @@ namespace Pustalorc.Plugins.BaseClustering
         private void BarricadeDamaged(CSteamID instigatorSteamId, Transform barricadeTransform,
             ref ushort pendingTotalDamage, ref bool shouldAllow, EDamageOrigin damageOrigin)
         {
-            if (!shouldAllow || !BarricadeManager.tryGetInfo(barricadeTransform, out var x, out var y, out var plant, out var index, out var region)) return;
+            if (!shouldAllow || !BarricadeManager.tryGetInfo(barricadeTransform, out _, out _, out _,
+                out var index, out var region)) return;
 
             var bData = region.barricades[index];
 
@@ -348,15 +356,18 @@ namespace Pustalorc.Plugins.BaseClustering
             RemoveBuildable(bData.instanceID);
         }
 
-        private void BarricadeSpawned(BarricadeData data, BarricadeDrop drop)
+        private void BarricadeSpawned([NotNull] BarricadeData data, [NotNull] BarricadeDrop drop)
         {
-            var buildable = new Buildable(data.angle_x, data.angle_y, data.angle_z, data.barricade.id, data.barricade.health, data.instanceID, data.owner, data.group, data.point, drop.asset, drop.model, drop.interactable, data.barricade.state);
+            var buildable = new Buildable(data.angle_x, data.angle_y, data.angle_z, data.barricade.id,
+                data.barricade.health, data.instanceID, data.owner, data.group, data.point, drop.asset, drop.model,
+                drop.interactable, data.barricade.state);
 
             var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxRadius);
 
             if (bestCluster == null)
             {
-                Clusters.Add(new BaseCluster(new List<Buildable> { buildable }, buildable.Position, Configuration.Instance.InitialRadius));
+                Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                    Configuration.Instance.InitialRadius));
                 return;
             }
 
@@ -376,19 +387,20 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             if (!shouldAllow) return;
 
-            var cluster = Clusters.FirstOrDefault(k => k.Buildables.Any(k => k.InstanceId == instanceId));
+            var cluster = Clusters.FirstOrDefault(k => k.Buildables.Any(l => l.InstanceId == instanceId));
             if (cluster == null)
             {
                 Logging.Verbose(this, $"Missed a barricade being added with instance ID {instanceId}");
                 return;
             }
 
-            var buildable = cluster.Buildables.FirstOrDefault(k => k.InstanceId == instanceId);            
+            var buildable = cluster.Buildables.FirstOrDefault(k => k.InstanceId == instanceId);
             cluster.Buildables.Remove(buildable);
 
             if (cluster.Buildables.Count == 0)
                 DestroyCluster(cluster);
 
+            // ReSharper disable once PossibleNullReferenceException
             buildable.AngleX = angleX;
             buildable.AngleY = angleY;
             buildable.AngleZ = angleZ;
@@ -398,7 +410,8 @@ namespace Pustalorc.Plugins.BaseClustering
 
             if (bestCluster == null)
             {
-                Clusters.Add(new BaseCluster(new List<Buildable> { buildable }, buildable.Position, Configuration.Instance.InitialRadius));
+                Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                    Configuration.Instance.InitialRadius));
                 return;
             }
 
