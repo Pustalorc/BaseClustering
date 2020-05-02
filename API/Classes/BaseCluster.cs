@@ -76,6 +76,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
 
         private void BuildablesChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
+            if (Buildables.Count == 0)
+            {
+                BaseClusteringPlugin.Instance.DestroyCluster(this);
+                return;
+            }
+
             decimal angleX = 0, angleY = 0, angleZ = 0;
 
             foreach (var build in Buildables)
