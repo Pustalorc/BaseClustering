@@ -18,7 +18,7 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
                 Vector3 point,
                 Quaternion rotation, ulong owner, ulong group, [NotNull] out BarricadeData data, out Transform result,
                 // ReSharper disable InconsistentNaming
-                out uint instanceId, ref uint ___instanceCount, ref List<Collider> ___barricadeColliders)
+                out uint instanceID, ref uint ___instanceCount, ref List<Collider> ___barricadeColliders)
             // ReSharper restore InconsistentNaming
         {
             result = null;
@@ -26,12 +26,12 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
             var angle1 = (float) (Mathf.RoundToInt(eulerAngles.x / 2f) * 2);
             var angle2 = (float) (Mathf.RoundToInt(eulerAngles.y / 2f) * 2);
             var angle3 = (float) (Mathf.RoundToInt(eulerAngles.z / 2f) * 2);
-            instanceId = ++___instanceCount;
+            instanceID = ++___instanceCount;
             data = new BarricadeData(barricade, point, MeasurementTool.angleToByte(angle1),
                 MeasurementTool.angleToByte(angle2), MeasurementTool.angleToByte(angle3), owner, group, Provider.time,
-                instanceId);
+                instanceID);
             var drop = SpawnBarricade(region, barricade.id, barricade.state, data.point, data.angle_x, data.angle_y,
-                data.angle_z, 100, data.owner, data.group, instanceId, ref ___barricadeColliders);
+                data.angle_z, 100, data.owner, data.group, instanceID, ref ___barricadeColliders);
             if (drop == null)
                 return false;
 
