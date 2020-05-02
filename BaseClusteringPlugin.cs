@@ -138,7 +138,11 @@ namespace Pustalorc.Plugins.BaseClustering
                 TaskDispatcher.QueueOnMainThread(_removeAllClusters);
         }
 
-        private void RemoveBuildable(uint instanceId)
+        /// <summary>
+        ///     Removes a specific buildable from all the clusters where it is found at.
+        /// </summary>
+        /// <param name="instanceId"></param>
+        public void RemoveBuildable(uint instanceId)
         {
             var clusters = Clusters.Where(k =>
                 k.Buildables.Any(l => l.InstanceId == instanceId));
