@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Statics
@@ -63,6 +64,20 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             standardDeviation = Math.Sqrt(sum / (values.Count() - 1));
 
             return standardDeviation;
+        }
+
+        public static ulong SumUlong<T>([NotNull] this IEnumerable<T> source, [NotNull] Func<T, ulong> selector)
+        {
+            var list = source.Select(selector).ToList();
+
+            var sum = 0ul;
+
+            checked
+            {
+                sum = list.Aggregate(sum, (current, element) => current + element);
+            }
+
+            return sum;
         }
     }
 }

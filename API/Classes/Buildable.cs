@@ -1,7 +1,7 @@
 using SDG.Unturned;
 using UnityEngine;
 
-namespace Pustalorc.Plugins.BaseClustering.API.Classes.Objects
+namespace Pustalorc.Plugins.BaseClustering.API.Classes
 {
     public class Buildable
     {

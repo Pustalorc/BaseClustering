@@ -33,6 +33,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="0Harmony, Version=2.0.0.10, Culture=neutral, PublicKeyToken=null">
+      <HintPath>packages\Lib.Harmony.2.0.0.10\lib\net45\0Harmony.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>libs/Assembly-CSharp.dll</HintPath>
       <Private>False</Private>
@@ -65,18 +69,29 @@
       <HintPath>libs\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>libs\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="API\Classes\Objects\BaseCluster.cs" />
-    <Compile Include="API\Classes\Objects\Buildable.cs" />
+    <Compile Include="API\Classes\BaseCluster.cs" />
+    <Compile Include="API\Classes\Buildable.cs" />
+    <Compile Include="API\Delegates\BarricadeSpawned.cs" />
+    <Compile Include="API\Delegates\StructureSpawned.cs" />
     <Compile Include="API\Statics\ExtendedMath.cs" />
     <Compile Include="API\Statics\Extensions.cs" />
     <Compile Include="API\Statics\Game.cs" />
     <Compile Include="API\Statics\Logging.cs" />
     <Compile Include="API\Statics\ThreadUtil2.cs" />
     <Compile Include="BaseClusteringPlugin.cs" />
+    <Compile Include="Commands\ReCreateClustersCommand.cs" />
     <Compile Include="Config\BaseClusteringPluginConfiguration.cs" />
+    <Compile Include="Patches\PatchBarricadeSpawnInternal.cs" />
+    <Compile Include="Patches\PatchStructureSpawnInternal.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -1,21 +1,35 @@
-using Pustalorc.Plugins.BaseClustering.API.Statics;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
+using JetBrains.Annotations;
+using Pustalorc.Plugins.BaseClustering.API.Statics;
 using UnityEngine;
 
-namespace Pustalorc.Plugins.BaseClustering.API.Classes.Objects
+namespace Pustalorc.Plugins.BaseClustering.API.Classes
 {
     public class BaseCluster
     {
         private ObservableCollection<Buildable> _buildables;
 
-        public Vector3 Center;
-        public double Radius;
+        public ulong TotalHealth => _buildables.SumUlong(k => k.Health);
+
+        public ulong CommonOwner => _buildables.GroupBy(k => k.Owner)
+            .OrderByDescending(k => k.Count())
+            .Select(g => g.Key).ToList().FirstOrDefault();
+
+        public ulong CommonGroup => _buildables.GroupBy(k => k.Group)
+            .OrderByDescending(k => k.Count())
+            .Select(g => g.Key).ToList().FirstOrDefault();
+
+        public Vector3 AverageCenterPosition => _buildables.AverageCenter(k => k.Position);
+
         public byte AngleX;
         public byte AngleY;
         public byte AngleZ;
+
+        public Vector3 CenterBuildable;
+        public double Radius;
 
         public ObservableCollection<Buildable> Buildables
         {
@@ -35,15 +49,15 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes.Objects
         public BaseCluster()
         {
             Buildables = new ObservableCollection<Buildable>();
-            Center = Vector3.zero;
+            CenterBuildable = Vector3.zero;
             Radius = 0;
             AngleX = AngleY = AngleZ = 0;
         }
 
-        public BaseCluster(List<Buildable> buildables, Vector3 center, double radius)
+        public BaseCluster([NotNull] List<Buildable> buildables, Vector3 center, double radius)
         {
             Buildables = new ObservableCollection<Buildable>(buildables);
-            Center = center;
+            CenterBuildable = center;
             Radius = radius;
 
             double angleX = 0, angleY = 0, angleZ = 0;
@@ -75,22 +89,19 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes.Objects
             AngleY = (byte) (angleY / Buildables.Count);
             AngleZ = (byte) (angleZ / Buildables.Count);
 
-            var globalMean = Buildables.AverageCenter(k => k.Position);
-            var globalScalar = Buildables.GetScalar(k => k.Position);
-            var globalDensity = Buildables.GetDensity(k => k.Position, globalMean, globalScalar);
-            var centerIndex = globalDensity.IndexOf(globalDensity.MinVector3());
-            Center = Buildables[centerIndex].Position;
+            var centerIndex = Buildables.GetCenterIndex();
+            CenterBuildable = Buildables[centerIndex].Position;
 
-            var radiiDist = Buildables.GetDistances(k => k.Position, Center);
-            if (radiiDist.Max() > 0)
-            {
-                var newRadius = radiiDist.Max();
+            var radiiDist = Buildables.GetDistances(k => k.Position, CenterBuildable);
 
-                if (newRadius > BaseClusteringPlugin.Instance.Configuration.Instance.MaxRadius)
-                    newRadius = BaseClusteringPlugin.Instance.Configuration.Instance.MaxRadius;
+            if (!(radiiDist.Max() > 0)) return;
 
-                Radius = newRadius;
-            }
+            var newRadius = radiiDist.Max();
+
+            if (newRadius > BaseClusteringPlugin.Instance.Configuration.Instance.MaxRadius)
+                newRadius = BaseClusteringPlugin.Instance.Configuration.Instance.MaxRadius;
+
+            Radius = newRadius;
         }
     }
 }

@@ -1,14 +1,83 @@
-using SDG.Provider;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
+using Pustalorc.Plugins.BaseClustering.API.Classes;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Statics
 {
     public static class Extensions
     {
-        public static Vector3 AverageCenter(this IEnumerable<Vector3> source)
+        public static BaseCluster FindBestCluster(this IEnumerable<BaseCluster> source, Buildable target, float maxDist)
+        {
+            var validClusters = source.Where(k => Vector3.Distance(k.CenterBuildable, target.Position) <= maxDist);
+
+            if (validClusters.Count() == 0) return null;
+
+            return validClusters.OrderBy(k => Vector3.Distance(k.CenterBuildable, target.Position)).FirstOrDefault();
+        }
+
+        public static int GetLocalCenterIndex([NotNull] this Dictionary<int, Vector3> source)
+        {
+            return source.GetLocalDensity().MinVector3();
+        }
+
+        public static int GetCenterIndex([NotNull] this IEnumerable<Buildable> source)
+        {
+            var globalDensity = source.GetDensity(k => k.Position);
+            return globalDensity.IndexOf(globalDensity.MinVector3());
+        }
+
+        [NotNull]
+        public static Dictionary<int, Vector3> GetCluster([NotNull] this IEnumerable<Buildable> source, Vector3 center,
+            float radius)
+        {
+            var radSq = Math.Pow(radius, 2);
+            var positions = source.Select(k => k.Position).ToList();
+            var cluster = positions.SubtractMaintainOriginalIndices(center).DivideDictionaryVector3(radSq)
+                .GetMatchingWithOriginal(positions, v => v.x < 1 && v.y < 1 && v.z < 1);
+
+            var dist = cluster.GetDistances(center);
+            var average = dist.Values.Average();
+            for (var i = 0; i < dist.Count; i++)
+            {
+                var std = ExtendedMath.StandardDeviation(dist.Values);
+
+                if (double.IsNaN(std))
+                    continue;
+
+                if (dist.Values.ToList()[i] - average <= 3 * std)
+                    continue;
+
+                cluster.Remove(i);
+                dist.Remove(dist.Keys.ToList()[i]);
+                i--;
+            }
+
+            return cluster;
+        }
+
+        public static Vector3 GetScalar([NotNull] this IEnumerable<Vector3> source)
+        {
+            if (source == null) throw new ArgumentNullException(nameof(source));
+
+            var scalar = Vector3.zero;
+            var list = source.ToList();
+
+            foreach (var element in list)
+            {
+                scalar.x += element.x * element.x;
+                scalar.y += element.y * element.y;
+                scalar.z += element.z * element.z;
+            }
+
+            if (list.Count > 0) return scalar / list.Count;
+
+            throw new Exception("The collection had no elements. Cannot divide by 0.");
+        }
+
+        public static Vector3 AverageCenter([NotNull] this IEnumerable<Vector3> source)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
@@ -26,73 +95,29 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             throw new Exception("The collection had no elements. Cannot divide by 0.");
         }
 
-        public static decimal AverageDistance(this IEnumerable<Vector3> source)
+        [NotNull]
+        public static List<Vector3> GetDensity([NotNull] this IEnumerable<Vector3> source)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
 
             var list = source.ToList();
+            var mean = list.AverageCenter();
+            var scalar = list.GetScalar();
 
-            var sum = decimal.Zero;
-            var count = 0;
-
-            checked
-            {
-                for (var i = 0; i < list.Count; i++)
-                {
-                    for (var o = i+1; o < list.Count; o++)
-                    {
-                        sum += (decimal)Vector3.Distance(list[i], list[o]);
-                        count++;
-                    }
-                }
-            }
-
-            if (list.Count > 0) return sum / count;
-
-            throw new Exception("The collection had no elements. Cannot divide by 0.");
+            return list.Select(element =>
+                ExtendedMath.Pow(ExtendedMath.Abs(element - mean), 2) + scalar - ExtendedMath.Pow(mean, 2)).ToList();
         }
 
-        public static Vector3 GetScalar(this IEnumerable<Vector3> source)
+        [NotNull]
+        public static List<Vector3> GetDensity<TSource>([NotNull] this IEnumerable<TSource> source,
+            [NotNull] Func<TSource, Vector3> selector)
         {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-
-            var scalar = Vector3.zero;
-            var list = source.ToList();
-
-            checked
-            {
-                foreach (var element in list)
-                {
-                    scalar.x += element.x * element.x;
-                    scalar.y += element.y * element.y;
-                    scalar.z += element.z * element.z;
-                }
-            }
-
-            if (list.Count > 0) return scalar / list.Count;
-
-            throw new Exception("The collection had no elements. Cannot divide by 0.");
+            return source.Select(selector).GetDensity();
         }
 
-        public static List<Vector3> GetDensity(this IEnumerable<Vector3> source, Vector3 mean, Vector3 scalar)
-        {
-            if (source == null) throw new ArgumentNullException(nameof(source));
-
-            var list = source.ToList();
-            var output = new List<Vector3>();
-
-            checked
-            {
-                foreach (var element in list)
-                {
-                    output.Add(ExtendedMath.Pow(ExtendedMath.Abs(element - mean), 2) + scalar - ExtendedMath.Pow(mean, 2));
-                }
-            }
-
-            return output;
-        }
-
-        public static Dictionary<int, Vector3> SubtractMaintainOriginalIndices(this IEnumerable<Vector3> source,
+        [NotNull]
+        public static Dictionary<int, Vector3> SubtractMaintainOriginalIndices(
+            [NotNull] this IEnumerable<Vector3> source,
             Vector3 value)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
@@ -100,101 +125,83 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             var list = source.ToList();
             var output = new Dictionary<int, Vector3>();
 
-            for (var i = 0; i < list.Count; i++)
-            {
-                output.Add(i, ExtendedMath.Pow(list[i] - value, 2));
-            }
+            for (var i = 0; i < list.Count; i++) output.Add(i, ExtendedMath.Pow(list[i] - value, 2));
 
             return output;
         }
 
-        public static Vector3 GetScalar<TSource>(this IEnumerable<TSource> source, Func<TSource, Vector3> selector)
-        {
-            return source.Select(selector).GetScalar();
-        }
-
-        public static List<Vector3> GetDensity<TSource>(this IEnumerable<TSource> source,
-            Func<TSource, Vector3> selector, Vector3 mean, Vector3 scalar)
-        {
-            return source.Select(selector).GetDensity(mean, scalar);
-        }
-
-        public static Vector3 AverageCenter<TSource>(this IEnumerable<TSource> source, Func<TSource, Vector3> selector)
+        public static Vector3 AverageCenter<TSource>([NotNull] this IEnumerable<TSource> source,
+            [NotNull] Func<TSource, Vector3> selector)
         {
             return source.Select(selector).AverageCenter();
         }
 
-        public static decimal AverageDistance<TSource>(this IEnumerable<TSource> source, Func<TSource, Vector3> selector)
-        {
-            return source.Select(selector).AverageDistance();
-        }
-
-        public static Dictionary<int, Vector3> SubtractMaintainOriginalIndices<TSource>(
-            this IEnumerable<TSource> source, Func<TSource, Vector3> selector, Vector3 value)
-        {
-            return source.Select(selector).SubtractMaintainOriginalIndices(value);
-        }
-
-        public static Dictionary<int, Vector3> DivideDictionaryVector3(this Dictionary<int, Vector3> source,
+        [NotNull]
+        public static Dictionary<int, Vector3> DivideDictionaryVector3([NotNull] this Dictionary<int, Vector3> source,
             double value)
         {
             return source.ToDictionary(d => d.Key, d => d.Value / (float) value);
         }
 
-        public static Dictionary<int, Vector3> GetMatchingWithOriginal(this Dictionary<int, Vector3> value, List<Vector3> source,
+        [NotNull]
+        public static Dictionary<int, Vector3> GetMatchingWithOriginal([NotNull] this Dictionary<int, Vector3> value,
+            List<Vector3> source,
             Predicate<Vector3> match)
         {
             return value.Where(l => match(l.Value)).ToDictionary(l => l.Key, l => source[l.Key]);
         }
 
-        public static Dictionary<int, float> GetDistances(this Dictionary<int, Vector3> list, Vector3 value)
+        [NotNull]
+        public static Dictionary<int, float> GetDistances([NotNull] this Dictionary<int, Vector3> list, Vector3 value)
         {
             return list.ToDictionary(l => l.Key, l => Vector3.Distance(l.Value, value));
         }
 
-        public static List<float> GetDistances<T>(this IEnumerable<T> list, Func<T, Vector3> selector, Vector3 value)
+        [NotNull]
+        public static IEnumerable<float> GetDistances<T>([NotNull] this IEnumerable<T> list,
+            [NotNull] Func<T, Vector3> selector, Vector3 value)
         {
             return list.Select(selector).Select(l => Vector3.Distance(l, value)).ToList();
         }
 
-        public static List<Vector3> GetLocalScalar(this Dictionary<int, Vector3> data)
+        [NotNull]
+        public static List<Vector3> GetLocalScalar([NotNull] this Dictionary<int, Vector3> data)
         {
             return data.Select(d => ExtendedMath.Pow(d.Value, 2) / data.Count).ToList();
         }
 
-        public static Dictionary<int, Vector3> GetLocalDensity(this Dictionary<int, Vector3> data, Vector3 mean,
-            List<Vector3> scalar)
+        [NotNull]
+        public static Dictionary<int, Vector3> GetLocalDensity([NotNull] this Dictionary<int, Vector3> data)
         {
             var density = new Dictionary<int, Vector3>();
+            var mean = data.Values.AverageCenter();
+            var scalar = data.GetLocalScalar();
+
             for (var i = 0; i < data.Count; i++)
                 density.Add(data.Keys.ToList()[i],
-                    ExtendedMath.Pow(ExtendedMath.Abs(data.Values.ToList()[i] - mean), 2) + scalar[i] - ExtendedMath.Pow(mean, 2));
+                    ExtendedMath.Pow(ExtendedMath.Abs(data.Values.ToList()[i] - mean), 2) + scalar[i] -
+                    ExtendedMath.Pow(mean, 2));
 
             return density;
         }
 
-        public static Vector3 MinVector3(this List<Vector3> vectors)
+        public static Vector3 MinVector3([NotNull] this IEnumerable<Vector3> vectors)
         {
             var smallestVector = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
 
-            foreach (var vector in vectors)
-            {
-                if (IsSmaller(vector, smallestVector))
-                    smallestVector = vector;
-            }
+            foreach (var vector in vectors.Where(vector => IsSmaller(vector, smallestVector)))
+                smallestVector = vector;
 
             return smallestVector;
         }
 
-        public static int MinVector3(this Dictionary<int, Vector3> vectors)
+        public static int MinVector3([NotNull] this Dictionary<int, Vector3> vectors)
         {
-            var smallestVector = new KeyValuePair<int, Vector3>(int.MaxValue, new Vector3(float.MaxValue, float.MaxValue, float.MaxValue));
+            var smallestVector = new KeyValuePair<int, Vector3>(int.MaxValue,
+                new Vector3(float.MaxValue, float.MaxValue, float.MaxValue));
 
-            foreach (var vector in vectors)
-            {
-                if (IsSmaller(vector.Value, smallestVector.Value))
-                    smallestVector = vector;
-            }
+            foreach (var vector in vectors.Where(vector => IsSmaller(vector.Value, smallestVector.Value)))
+                smallestVector = vector;
 
             return smallestVector.Key;
         }

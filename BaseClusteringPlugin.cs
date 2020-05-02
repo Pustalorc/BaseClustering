@@ -1,27 +1,32 @@
-﻿using Pustalorc.Plugins.BaseClustering.API.Statics;
-using Rocket.Core.Plugins;
-using SDG.Unturned;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using Pustalorc.Plugins.BaseClustering.API.Classes.Objects;
+using HarmonyLib;
+using JetBrains.Annotations;
+using Pustalorc.Plugins.BaseClustering.API.Classes;
+using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Pustalorc.Plugins.BaseClustering.Config;
+using Pustalorc.Plugins.BaseClustering.Patches;
+using Rocket.Core.Plugins;
 using Rocket.Core.Utils;
+using SDG.Unturned;
 using Steamworks;
 using UnityEngine;
-using Math = System.Math;
-using System.Collections.Specialized;
-using System;
-using Pustalorc.Plugins.BaseClustering.Config;
+
+// ReSharper disable MemberCanBeMadeStatic.Local
 
 namespace Pustalorc.Plugins.BaseClustering
 {
-    public class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConfiguration>
+    public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConfiguration>
     {
         public static BaseClusteringPlugin Instance { get; private set; }
+        private Harmony _harmony;
 
         protected override void Load()
         {
             Instance = this;
+            _harmony = new Harmony("xyz.pustalorc.baseClustering");
+            _harmony.PatchAll();
 
             if (Level.isLoaded)
                 OnLevelLoaded(0);
@@ -33,23 +38,17 @@ namespace Pustalorc.Plugins.BaseClustering
 
         protected override void Unload()
         {
-            StructureManager.onDamageStructureRequested -= StructureDamaged;
-            StructureManager.onDeployStructureRequested -= StructureDeployed;
-            StructureManager.onSalvageStructureRequested -= StructureSalvaged;
-            StructureManager.onStructureSpawned -= StructureSpawned;
-            StructureManager.onTransformRequested -= StructureTransformed;
-            BarricadeManager.onDamageBarricadeRequested -= BarricadeDamaged;
-            BarricadeManager.onDeployBarricadeRequested -= BarricadeDeployed;
-            BarricadeManager.onSalvageBarricadeRequested -= BarricadeSalvaged;
-            BarricadeManager.onBarricadeSpawned -= BarricadeSpawned;
-            BarricadeManager.onTransformRequested -= BarricadeTransformed;
-
             Instance = null;
+
+            _harmony.UnpatchAll();
+            _harmony = null;
 
             Logging.PluginUnloaded(this);
         }
 
         public List<BaseCluster> Clusters { get; set; }
+
+        public List<Buildable> Buildables => Clusters?.SelectMany(k => k.Buildables).ToList() ?? new List<Buildable>();
 
         /// <summary>
         ///     Retrieves all clusters within the specified radius.
@@ -57,9 +56,10 @@ namespace Pustalorc.Plugins.BaseClustering
         /// <param name="center">The position to search from.</param>
         /// <param name="sqrRadius">The maximum distance to detect a cluster in.</param>
         /// <returns></returns>
+        [NotNull]
         public IEnumerable<BaseCluster> GetClustersInRadius(Vector3 center, float sqrRadius)
         {
-            return Clusters?.Where(k => Vector3.Distance(k.Center, center) < sqrRadius) ??
+            return Clusters?.Where(k => Vector3.Distance(k.CenterBuildable, center) < sqrRadius) ??
                    new List<BaseCluster>();
         }
 
@@ -82,14 +82,12 @@ namespace Pustalorc.Plugins.BaseClustering
         /// </summary>
         /// <param name="cluster">The specific cluster to damage the buildables in.</param>
         /// <param name="damage">The amount of damage to deal to the buildables.</param>
-        /// <param name="instigator">The originating CSteamID of the damage.</param>
-        /// <param name="damageOrigin">The type of the originated damage.</param>
-        public void Damage(BaseCluster cluster, ushort damage, CSteamID instigator, EDamageOrigin damageOrigin)
+        public void Damage(BaseCluster cluster, ushort damage)
         {
             if (ThreadUtil2.IsGameThread)
-                _damage(cluster, damage, instigator, damageOrigin);
+                _damage(cluster, damage);
             else
-                TaskDispatcher.QueueOnMainThread(() => _damage(cluster, damage, instigator, damageOrigin));
+                TaskDispatcher.QueueOnMainThread(() => _damage(cluster, damage));
         }
 
         /// <summary>
@@ -129,57 +127,126 @@ namespace Pustalorc.Plugins.BaseClustering
                 TaskDispatcher.QueueOnMainThread(_removeAllClusters);
         }
 
+        internal void GenerateAndLoadAllClusters()
+        {
+            var start = DateTime.Now;
+            Clusters = new List<BaseCluster>();
+
+            var allBuildables = Game.GetBuilds(CSteamID.Nil).ToList();
+            Logging.Write(this, $"Total buildables: {allBuildables.Count}");
+
+            while (allBuildables.Count > 0)
+            {
+                var radius = Configuration.Instance.InitialRadius;
+
+                // Get center-most buildable
+                var centerIndex = allBuildables.GetCenterIndex();
+                var center = allBuildables[centerIndex].Position;
+
+                // Select all buildables that are within the radius of the cluster, but are not outliers
+                var localCluster = allBuildables.GetCluster(center, radius);
+
+                // Move cluster centre to local densest point
+                centerIndex = localCluster.GetLocalCenterIndex();
+                center = allBuildables[centerIndex].Position;
+
+                // Auto expand cluster and select new buildables
+                var currentRechecks = 0;
+                bool changed;
+                do
+                {
+                    changed = false;
+                    currentRechecks++;
+
+                    // Select all buildables that are within the radius of the new center, but are not outliers
+                    localCluster = allBuildables.GetCluster(center, radius);
+
+                    // Update radii to maximum distance
+                    var radiiDist = localCluster.GetDistances(center);
+
+                    if (!(radiiDist.Values.Max() > 0)) continue;
+
+                    var newRadius = radiiDist.Values.Max();
+
+                    if (newRadius != radius)
+                        changed = true;
+
+                    if (newRadius > Configuration.Instance.MaxRadius)
+                        newRadius = Configuration.Instance.MaxRadius;
+
+                    radius = newRadius;
+                } while (changed && Configuration.Instance.MaxRadiusRechecks > currentRechecks &&
+                         radius < Configuration.Instance.MaxRadius);
+
+                // Assign data to final clusters
+                var builds = new List<Buildable>();
+                for (var i = 0; i < localCluster.Count; i++)
+                {
+                    builds.Add(allBuildables[localCluster.ElementAt(i).Key - i]);
+                    allBuildables.RemoveAt(localCluster.ElementAt(i).Key - i);
+                }
+
+                Clusters.Add(new BaseCluster(builds, center, radius));
+            }
+
+            var end = DateTime.Now;
+
+            Logging.Write(this,
+                $"Clusters Loaded: {Clusters.Count}. Took {(int)end.Subtract(start).TotalMilliseconds}ms.");
+        }
+
         private void OnLevelLoaded(int level)
         {
-            if (level <= Level.BUILD_INDEX_SETUP) return;
-
             GenerateAndLoadAllClusters();
 
-            BarricadeManager.onTransformRequested += BarricadeTransformed;
-            BarricadeManager.onBarricadeSpawned += BarricadeSpawned;
             BarricadeManager.onSalvageBarricadeRequested += BarricadeSalvaged;
-            BarricadeManager.onDeployBarricadeRequested += BarricadeDeployed;
             BarricadeManager.onDamageBarricadeRequested += BarricadeDamaged;
+            BarricadeManager.onHarvestPlantRequested += PlantHarvested;
+            BarricadeManager.onTransformRequested += BarricadeTransformed;
+            PatchBarricadeSpawnInternal.OnNewBarricadeSpawned += BarricadeSpawned;
+
             StructureManager.onTransformRequested += StructureTransformed;
-            StructureManager.onStructureSpawned += StructureSpawned;
             StructureManager.onSalvageStructureRequested += StructureSalvaged;
-            StructureManager.onDeployStructureRequested += StructureDeployed;
             StructureManager.onDamageStructureRequested += StructureDamaged;
+            PatchStructureSpawnInternal.OnNewStructureSpawned += StructureSpawned;
         }
 
-        private void StructureDamaged(CSteamID instigatorSteamID, Transform structureTransform, ref ushort pendingTotalDamage, ref bool shouldAllow, EDamageOrigin damageOrigin)
+        private void StructureDamaged(CSteamID instigatorSteamId, Transform structureTransform,
+            ref ushort pendingTotalDamage, ref bool shouldAllow, EDamageOrigin damageOrigin)
         {
-        }
+            if (!shouldAllow || !StructureManager.tryGetInfo(structureTransform, out var x, out var y, out var index, out var region)) return;
 
-        private void StructureDeployed(Structure structure, ItemStructureAsset asset, ref Vector3 point, ref float angle_x, ref float angle_y, ref float angle_z, ref ulong owner, ref ulong group, ref bool shouldAllow)
-        {
-        }
+            var sData = region.structures[index];
 
-        private void StructureSalvaged(CSteamID steamID, byte x, byte y, ushort index, ref bool shouldAllow)
-        {
-        }
+            if (sData.structure.isDead)
+            {
+                foreach (var cluster in Clusters.Where(k => k.Buildables.Any(l => l.InstanceId == sData.instanceID)))
+                {
+                    if (cluster.Buildables.Count == 1)
+                    {
+                        DestroyCluster(cluster);
+                        continue;
+                    }
 
-        private void StructureSpawned(StructureRegion region, StructureDrop drop)
-        {
-        }
+                    var buildable =
+                        cluster.Buildables.FirstOrDefault(k => k.InstanceId == sData.instanceID);
+                    if (buildable == null)
+                    {
+                        Logging.Verbose(this,
+                            "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
+                        continue;
+                    }
 
-        private void StructureTransformed(CSteamID instigator, byte x, byte y, uint instanceID, ref Vector3 point, ref byte angle_x, ref byte angle_y, ref byte angle_z, ref bool shouldAllow)
-        {
-        }
+                    Game.RemoveBarricadeStructure(buildable.Position);
+                    cluster.Buildables.Remove(buildable);
+                }
+                return;
+            }
 
-        private void BarricadeDamaged(CSteamID instigatorSteamID, Transform barricadeTransform, ref ushort pendingTotalDamage, ref bool shouldAllow, EDamageOrigin damageOrigin)
-        {
-        }
+            if (pendingTotalDamage < 1 || pendingTotalDamage < sData.structure.health) return;
 
-        private void BarricadeDeployed(Barricade barricade, ItemBarricadeAsset asset, Transform hit, ref Vector3 point, ref float angle_x, ref float angle_y, ref float angle_z, ref ulong owner, ref ulong group, ref bool shouldAllow)
-        {
-        }
-
-        private void BarricadeSalvaged(CSteamID steamID, byte x, byte y, ushort plant, ushort index, ref bool shouldAllow)
-        {
-            if (!BarricadeManager.tryGetRegion(x, y, plant, out var region)) return;
-
-            var clusters = Clusters.Where(k => k.Buildables.Any(k => k.InstanceId == region.barricades[index].instanceID));
+            var clusters = Clusters.Where(k =>
+                k.Buildables.Any(l => l.InstanceId == sData.instanceID));
 
             foreach (var cluster in clusters)
             {
@@ -189,21 +256,266 @@ namespace Pustalorc.Plugins.BaseClustering
                     continue;
                 }
 
-                var buildable = cluster.Buildables.FirstOrDefault(k => k.InstanceId == region.barricades[index].instanceID);
+                var buildable =
+                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == sData.instanceID);
+                if (buildable == null)
+                {
+                    Logging.Verbose(this,
+                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
+                    continue;
+                }
+
                 Game.RemoveBarricadeStructure(buildable.Position);
                 cluster.Buildables.Remove(buildable);
             }
         }
 
-        private void BarricadeSpawned(BarricadeRegion region, BarricadeDrop drop)
+        private void StructureSpawned(StructureData data, StructureDrop drop)
         {
+            var buildable = new Buildable(data.angle_x, data.angle_y, data.angle_z, data.structure.id, data.structure.health, data.instanceID, data.owner, data.group, data.point, data.structure.asset, drop.model, null, null);
+
+            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxRadius);
+
+            if (bestCluster == null)
+            {
+                Clusters.Add(new BaseCluster(new List<Buildable> { buildable }, buildable.Position, Configuration.Instance.InitialRadius));
+                return;
+            }
+
+            bestCluster.Buildables.Add(buildable);
         }
 
-        private void BarricadeTransformed(CSteamID instigator, byte x, byte y, ushort plant, uint instanceID, ref Vector3 point, ref byte angle_x, ref byte angle_y, ref byte angle_z, ref bool shouldAllow)
+        private void StructureSalvaged(CSteamID steamId, byte x, byte y, ushort index, ref bool shouldAllow)
         {
+            if (!shouldAllow || !StructureManager.tryGetRegion(x, y, out var region)) return;
+
+            var clusters = Clusters.Where(k =>
+                k.Buildables.Any(l => l.InstanceId == region.structures[index].instanceID));
+
+            foreach (var cluster in clusters)
+            {
+                if (cluster.Buildables.Count == 1)
+                {
+                    DestroyCluster(cluster);
+                    continue;
+                }
+
+                var buildable =
+                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == region.structures[index].instanceID);
+                if (buildable == null)
+                {
+                    Logging.Verbose(this,
+                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
+                    continue;
+                }
+
+                Game.RemoveBarricadeStructure(buildable.Position);
+                cluster.Buildables.Remove(buildable);
+            }
         }
 
-        private void _changeOwnerAndGroup(BaseCluster cluster, ulong newOwner, ulong newGroup)
+        private void StructureTransformed(CSteamID instigator, byte x, byte y, uint instanceId, ref Vector3 point,
+            ref byte angleX, ref byte angleY, ref byte angleZ, ref bool shouldAllow)
+        {
+            if (!shouldAllow) return;
+
+            var cluster = Clusters.FirstOrDefault(k => k.Buildables.Any(k => k.InstanceId == instanceId));
+            if (cluster == null)
+            {
+                Logging.Verbose(this, $"Missed a barricade being added with instance ID {instanceId}");
+                return;
+            }
+
+            var buildable = cluster.Buildables.FirstOrDefault(k => k.InstanceId == instanceId);
+            cluster.Buildables.Remove(buildable);
+
+            if (cluster.Buildables.Count == 0)
+                DestroyCluster(cluster);
+
+            buildable.AngleX = angleX;
+            buildable.AngleY = angleY;
+            buildable.AngleZ = angleZ;
+            buildable.Position = point;
+
+            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxRadius);
+
+            if (bestCluster == null)
+            {
+                Clusters.Add(new BaseCluster(new List<Buildable> { buildable }, buildable.Position, Configuration.Instance.InitialRadius));
+                return;
+            }
+
+            bestCluster.Buildables.Add(buildable);
+        }
+
+        private void BarricadeDamaged(CSteamID instigatorSteamId, Transform barricadeTransform,
+            ref ushort pendingTotalDamage, ref bool shouldAllow, EDamageOrigin damageOrigin)
+        {
+            if (!shouldAllow || !BarricadeManager.tryGetInfo(barricadeTransform, out var x, out var y, out var plant, out var index, out var region)) return;
+
+            var bData = region.barricades[index];
+
+            if (bData.barricade.isDead)
+            {
+                foreach (var cluster in Clusters.Where(k => k.Buildables.Any(l => l.InstanceId == bData.instanceID)))
+                {
+                    if (cluster.Buildables.Count == 1)
+                    {
+                        DestroyCluster(cluster);
+                        continue;
+                    }
+
+                    var buildable =
+                        cluster.Buildables.FirstOrDefault(k => k.InstanceId == bData.instanceID);
+                    if (buildable == null)
+                    {
+                        Logging.Verbose(this,
+                            "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
+                        continue;
+                    }
+
+                    Game.RemoveBarricadeStructure(buildable.Position);
+                    cluster.Buildables.Remove(buildable);
+                }
+                return;
+            }
+
+            if (pendingTotalDamage < 1 || pendingTotalDamage < bData.barricade.health) return;
+
+            var clusters = Clusters.Where(k =>
+                k.Buildables.Any(l => l.InstanceId == bData.instanceID));
+
+            foreach (var cluster in clusters)
+            {
+                if (cluster.Buildables.Count == 1)
+                {
+                    DestroyCluster(cluster);
+                    continue;
+                }
+
+                var buildable =
+                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == bData.instanceID);
+                if (buildable == null)
+                {
+                    Logging.Verbose(this,
+                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
+                    continue;
+                }
+
+                Game.RemoveBarricadeStructure(buildable.Position);
+                cluster.Buildables.Remove(buildable);
+            }
+        }
+
+        private void BarricadeSpawned(BarricadeData data, BarricadeDrop drop)
+        {
+            var buildable = new Buildable(data.angle_x, data.angle_y, data.angle_z, data.barricade.id, data.barricade.health, data.instanceID, data.owner, data.group, data.point, drop.asset, drop.model, drop.interactable, data.barricade.state);
+
+            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxRadius);
+
+            if (bestCluster == null)
+            {
+                Clusters.Add(new BaseCluster(new List<Buildable> { buildable }, buildable.Position, Configuration.Instance.InitialRadius));
+                return;
+            }
+
+            bestCluster.Buildables.Add(buildable);
+        }
+
+        private void BarricadeSalvaged(CSteamID steamId, byte x, byte y, ushort plant, ushort index,
+            ref bool shouldAllow)
+        {
+            if (!shouldAllow || !BarricadeManager.tryGetRegion(x, y, plant, out var region)) return;
+
+            var clusters = Clusters.Where(k =>
+                k.Buildables.Any(l => l.InstanceId == region.barricades[index].instanceID));
+
+            foreach (var cluster in clusters)
+            {
+                if (cluster.Buildables.Count == 1)
+                {
+                    DestroyCluster(cluster);
+                    continue;
+                }
+
+                var buildable =
+                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == region.barricades[index].instanceID);
+                if (buildable == null)
+                {
+                    Logging.Verbose(this,
+                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
+                    continue;
+                }
+
+                Game.RemoveBarricadeStructure(buildable.Position);
+                cluster.Buildables.Remove(buildable);
+            }
+        }
+
+        private void PlantHarvested(CSteamID steamId, byte x, byte y, ushort plant, ushort index, ref bool shouldAllow)
+        {
+            if (!shouldAllow || !BarricadeManager.tryGetRegion(x, y, plant, out var region)) return;
+
+            var clusters = Clusters.Where(k =>
+                k.Buildables.Any(l => l.InstanceId == region.barricades[index].instanceID));
+
+            foreach (var cluster in clusters)
+            {
+                if (cluster.Buildables.Count == 1)
+                {
+                    DestroyCluster(cluster);
+                    continue;
+                }
+
+                var buildable =
+                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == region.barricades[index].instanceID);
+                if (buildable == null)
+                {
+                    Logging.Verbose(this,
+                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
+                    continue;
+                }
+
+                Game.RemoveBarricadeStructure(buildable.Position);
+                cluster.Buildables.Remove(buildable);
+            }
+        }
+
+        private void BarricadeTransformed(CSteamID instigator, byte x, byte y, ushort plant, uint instanceId,
+            ref Vector3 point, ref byte angleX, ref byte angleY, ref byte angleZ, ref bool shouldAllow)
+        {
+            if (!shouldAllow) return;
+
+            var cluster = Clusters.FirstOrDefault(k => k.Buildables.Any(k => k.InstanceId == instanceId));
+            if (cluster == null)
+            {
+                Logging.Verbose(this, $"Missed a barricade being added with instance ID {instanceId}");
+                return;
+            }
+
+            var buildable = cluster.Buildables.FirstOrDefault(k => k.InstanceId == instanceId);            
+            cluster.Buildables.Remove(buildable);
+
+            if (cluster.Buildables.Count == 0)
+                DestroyCluster(cluster);
+
+            buildable.AngleX = angleX;
+            buildable.AngleY = angleY;
+            buildable.AngleZ = angleZ;
+            buildable.Position = point;
+
+            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxRadius);
+
+            if (bestCluster == null)
+            {
+                Clusters.Add(new BaseCluster(new List<Buildable> { buildable }, buildable.Position, Configuration.Instance.InitialRadius));
+                return;
+            }
+
+            bestCluster.Buildables.Add(buildable);
+        }
+
+        private void _changeOwnerAndGroup([NotNull] BaseCluster cluster, ulong newOwner, ulong newGroup)
         {
             foreach (var buildable in cluster.Buildables)
             {
@@ -213,13 +525,13 @@ namespace Pustalorc.Plugins.BaseClustering
             }
         }
 
-        private void _damage(BaseCluster cluster, ushort damage, CSteamID instigator, EDamageOrigin damageOrigin)
+        private void _damage([NotNull] BaseCluster cluster, ushort damage)
         {
             foreach (var buildable in cluster.Buildables)
                 Game.DamageBarricadeStructure(buildable.Position, damage);
         }
 
-        private void _destroyCluster(BaseCluster cluster)
+        private void _destroyCluster([NotNull] BaseCluster cluster)
         {
             foreach (var buildable in cluster.Buildables.ToList())
             {
@@ -230,7 +542,7 @@ namespace Pustalorc.Plugins.BaseClustering
             Clusters.Remove(cluster);
         }
 
-        private void _repair(BaseCluster cluster, float amount, float times)
+        private void _repair([NotNull] BaseCluster cluster, float amount, float times)
         {
             foreach (var buildable in cluster.Buildables)
                 Game.RepairBarricadeStructure(buildable.Position, amount, times);
@@ -248,116 +560,6 @@ namespace Pustalorc.Plugins.BaseClustering
 
                 Clusters.Remove(cluster);
             }
-        }
-
-        private void GenerateAndLoadAllClusters()
-        {
-            Clusters = new List<BaseCluster>();
-
-            var allBuildables = Game.GetBuilds(CSteamID.Nil).ToList();
-
-            while (allBuildables.Count > 0)
-            {
-                var radius = Configuration.Instance.InitialRadius;
-                var center = Vector3.zero;
-
-                // Find Center-most Point
-                var globalMean = allBuildables.AverageCenter(k => k.Position);
-                var globalScalar = allBuildables.GetScalar(k => k.Position);
-                var globalDensity = allBuildables.GetDensity(k => k.Position, globalMean, globalScalar);
-                var centerIndex = globalDensity.IndexOf(globalDensity.MinVector3());
-
-                // Find Points Belonging to Cluster
-                var include =
-                    allBuildables.SubtractMaintainOriginalIndices(k => k.Position, allBuildables[centerIndex].Position);
-                var radSq = Math.Pow(radius, 2);
-                include = include.DivideDictionaryVector3(radSq);
-                include = include.GetMatchingWithOriginal(allBuildables.Select(k => k.Position).ToList(), v => v.x < 1 && v.y < 1 && v.z < 1);
-
-                // Remove outliers
-                var dist = include.GetDistances(allBuildables[centerIndex].Position);
-                var average = dist.Values.Average();
-                for (var i = 0; i < dist.Count; i++)
-                {
-                    var std = ExtendedMath.StandardDeviation(dist.Values);
-
-                    if (double.IsNaN(std))
-                        continue;
-
-                    if (dist.Values.ToList()[i] - average <= 3 * std)
-                        continue;
-
-                    include.Remove(i);
-                    dist.Remove(dist.Keys.ToList()[i]);
-                    i--;
-                }
-
-                // Move cluster centre to local densest point
-                var locMean = include.Values.AverageCenter();
-                var locScalar = include.GetLocalScalar();
-                var locDens = include.GetLocalDensity(locMean, locScalar);
-                centerIndex = locDens.MinVector3();
-                center = allBuildables[centerIndex].Position;
-                var currentRechecks = 0;
-                var changed = false;
-
-                do
-                {
-                    changed = false;
-                    currentRechecks++;
-                    // Assign data to new centre
-                    include = allBuildables.SubtractMaintainOriginalIndices(k => k.Position, center);
-                    radSq = Math.Pow(radius, 2);
-                    include = include.DivideDictionaryVector3(radSq);
-                    include = include.GetMatchingWithOriginal(allBuildables.Select(k => k.Position).ToList(), v => v.x < 1 && v.y < 1 && v.z < 1);
-
-                    // Remove outliers
-                    dist = include.GetDistances(center);
-                    average = dist.Values.Average();
-                    for (var i = 0; i < dist.Count; i++)
-                    {
-                        var std = ExtendedMath.StandardDeviation(dist.Values);
-
-                        if (double.IsNaN(std))
-                            continue;
-
-                        if (dist.Values.ToList()[i] - average <= 3 * std)
-                            continue;
-
-                        include.Remove(i);
-                        dist.Remove(dist.Keys.ToList()[i]);
-                        i--;
-                    }
-
-                    // Update radii to maximum distance
-                    var radiiDist = include.GetDistances(center);
-                    if (radiiDist.Values.Max() > 0)
-                    {
-                        var newRadius = radiiDist.Values.Max();
-
-                        if (newRadius != radius)
-                            changed = true;
-
-                        if (newRadius > Configuration.Instance.MaxRadius)
-                            newRadius = Configuration.Instance.MaxRadius;
-
-                        radius = newRadius;
-                    }
-                }
-                while (changed && Configuration.Instance.MaxRadiusRechecks > currentRechecks && radius < Configuration.Instance.MaxRadius);
-
-                // Assign data to final clusters
-                var builds = new List<Buildable>();
-                for (var i = 0; i < include.Count; i++)
-                {
-                    builds.Add(allBuildables[include.ElementAt(i).Key - i]);
-                    allBuildables.RemoveAt(include.ElementAt(i).Key - i);
-                }
-
-                Clusters.Add(new BaseCluster(builds, center, radius));
-            }
-
-            Logging.Write(this, $"Clusters Loaded: {Clusters.Count}");
         }
     }
 }
