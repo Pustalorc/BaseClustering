@@ -40,7 +40,7 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             BarricadeManager.onSalvageBarricadeRequested -= BarricadeSalvaged;
             BarricadeManager.onDamageBarricadeRequested -= BarricadeDamaged;
-            BarricadeManager.onHarvestPlantRequested -= PlantHarvested;
+            BarricadeManager.onHarvestPlantRequested -= BarricadeSalvaged;
             BarricadeManager.onTransformRequested -= BarricadeTransformed;
             PatchBarricadeSpawnInternal.OnNewBarricadeSpawned -= BarricadeSpawned;
 
@@ -214,7 +214,7 @@ namespace Pustalorc.Plugins.BaseClustering
 
             BarricadeManager.onSalvageBarricadeRequested += BarricadeSalvaged;
             BarricadeManager.onDamageBarricadeRequested += BarricadeDamaged;
-            BarricadeManager.onHarvestPlantRequested += PlantHarvested;
+            BarricadeManager.onHarvestPlantRequested += BarricadeSalvaged;
             BarricadeManager.onTransformRequested += BarricadeTransformed;
             PatchBarricadeSpawnInternal.OnNewBarricadeSpawned += BarricadeSpawned;
 
@@ -233,54 +233,13 @@ namespace Pustalorc.Plugins.BaseClustering
 
             if (sData.structure.isDead)
             {
-                foreach (var cluster in Clusters.Where(k => k.Buildables.Any(l => l.InstanceId == sData.instanceID)).ToList())
-                {
-                    if (cluster.Buildables.Count == 1)
-                    {
-                        DestroyCluster(cluster);
-                        continue;
-                    }
-
-                    var buildable =
-                        cluster.Buildables.FirstOrDefault(k => k.InstanceId == sData.instanceID);
-                    if (buildable == null)
-                    {
-                        Logging.Verbose(this,
-                            "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
-                        continue;
-                    }
-
-                    Game.RemoveBarricadeStructure(buildable.Position);
-                    cluster.Buildables.Remove(buildable);
-                }
+                RemoveBuildable(sData.instanceID);
                 return;
             }
 
             if (pendingTotalDamage < 1 || pendingTotalDamage < sData.structure.health) return;
 
-            var clusters = Clusters.Where(k =>
-                k.Buildables.Any(l => l.InstanceId == sData.instanceID));
-
-            foreach (var cluster in clusters.ToList())
-            {
-                if (cluster.Buildables.Count == 1)
-                {
-                    DestroyCluster(cluster);
-                    continue;
-                }
-
-                var buildable =
-                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == sData.instanceID);
-                if (buildable == null)
-                {
-                    Logging.Verbose(this,
-                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
-                    continue;
-                }
-
-                Game.RemoveBarricadeStructure(buildable.Position);
-                cluster.Buildables.Remove(buildable);
-            }
+            RemoveBuildable(sData.instanceID);
         }
 
         private void StructureSpawned(StructureData data, StructureDrop drop)
@@ -302,29 +261,7 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             if (!shouldAllow || !StructureManager.tryGetRegion(x, y, out var region)) return;
 
-            var clusters = Clusters.Where(k =>
-                k.Buildables.Any(l => l.InstanceId == region.structures[index].instanceID));
-
-            foreach (var cluster in clusters.ToList())
-            {
-                if (cluster.Buildables.Count == 1)
-                {
-                    DestroyCluster(cluster);
-                    continue;
-                }
-
-                var buildable =
-                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == region.structures[index].instanceID);
-                if (buildable == null)
-                {
-                    Logging.Verbose(this,
-                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
-                    continue;
-                }
-
-                Game.RemoveBarricadeStructure(buildable.Position);
-                cluster.Buildables.Remove(buildable);
-            }
+            RemoveBuildable(region.structures[index].instanceID);
         }
 
         private void StructureTransformed(CSteamID instigator, byte x, byte y, uint instanceId, ref Vector3 point,
@@ -370,44 +307,32 @@ namespace Pustalorc.Plugins.BaseClustering
 
             if (bData.barricade.isDead)
             {
-                foreach (var cluster in Clusters.Where(k => k.Buildables.Any(l => l.InstanceId == bData.instanceID)).ToList())
-                {
-                    if (cluster.Buildables.Count == 1)
-                    {
-                        DestroyCluster(cluster);
-                        continue;
-                    }
-
-                    var buildable =
-                        cluster.Buildables.FirstOrDefault(k => k.InstanceId == bData.instanceID);
-                    if (buildable == null)
-                    {
-                        Logging.Verbose(this,
-                            "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
-                        continue;
-                    }
-
-                    Game.RemoveBarricadeStructure(buildable.Position);
-                    cluster.Buildables.Remove(buildable);
-                }
+                RemoveBuildable(bData.instanceID);
                 return;
             }
 
             if (pendingTotalDamage < 1 || pendingTotalDamage < bData.barricade.health) return;
 
+            RemoveBuildable(bData.instanceID);
+        }
+
+        private void RemoveBuildable(uint instanceId)
+        {
             var clusters = Clusters.Where(k =>
-                k.Buildables.Any(l => l.InstanceId == bData.instanceID));
+                k.Buildables.Any(l => l.InstanceId == instanceId));
 
             foreach (var cluster in clusters.ToList())
             {
+                var buildable =
+                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == instanceId);
+
                 if (cluster.Buildables.Count == 1)
                 {
+                    cluster.Buildables.Clear();
                     DestroyCluster(cluster);
                     continue;
                 }
 
-                var buildable =
-                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == bData.instanceID);
                 if (buildable == null)
                 {
                     Logging.Verbose(this,
@@ -415,7 +340,6 @@ namespace Pustalorc.Plugins.BaseClustering
                     continue;
                 }
 
-                Game.RemoveBarricadeStructure(buildable.Position);
                 cluster.Buildables.Remove(buildable);
             }
         }
@@ -440,58 +364,7 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             if (!shouldAllow || !BarricadeManager.tryGetRegion(x, y, plant, out var region)) return;
 
-            var clusters = Clusters.Where(k =>
-                k.Buildables.Any(l => l.InstanceId == region.barricades[index].instanceID));
-
-            foreach (var cluster in clusters.ToList())
-            {
-                if (cluster.Buildables.Count == 1)
-                {
-                    DestroyCluster(cluster);
-                    continue;
-                }
-
-                var buildable =
-                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == region.barricades[index].instanceID);
-                if (buildable == null)
-                {
-                    Logging.Verbose(this,
-                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
-                    continue;
-                }
-
-                Game.RemoveBarricadeStructure(buildable.Position);
-                cluster.Buildables.Remove(buildable);
-            }
-        }
-
-        private void PlantHarvested(CSteamID steamId, byte x, byte y, ushort plant, ushort index, ref bool shouldAllow)
-        {
-            if (!shouldAllow || !BarricadeManager.tryGetRegion(x, y, plant, out var region)) return;
-
-            var clusters = Clusters.Where(k =>
-                k.Buildables.Any(l => l.InstanceId == region.barricades[index].instanceID));
-
-            foreach (var cluster in clusters.ToList())
-            {
-                if (cluster.Buildables.Count == 1)
-                {
-                    DestroyCluster(cluster);
-                    continue;
-                }
-
-                var buildable =
-                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == region.barricades[index].instanceID);
-                if (buildable == null)
-                {
-                    Logging.Verbose(this,
-                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
-                    continue;
-                }
-
-                Game.RemoveBarricadeStructure(buildable.Position);
-                cluster.Buildables.Remove(buildable);
-            }
+            RemoveBuildable(region.barricades[index].instanceID);
         }
 
         private void BarricadeTransformed(CSteamID instigator, byte x, byte y, ushort plant, uint instanceId,
