@@ -138,6 +138,34 @@ namespace Pustalorc.Plugins.BaseClustering
                 TaskDispatcher.QueueOnMainThread(_removeAllClusters);
         }
 
+        private void RemoveBuildable(uint instanceId)
+        {
+            var clusters = Clusters.Where(k =>
+                k.Buildables.Any(l => l.InstanceId == instanceId));
+
+            foreach (var cluster in clusters.ToList())
+            {
+                var buildable =
+                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == instanceId);
+
+                if (cluster.Buildables.Count == 1)
+                {
+                    cluster.Buildables.Clear();
+                    DestroyCluster(cluster);
+                    continue;
+                }
+
+                if (buildable == null)
+                {
+                    Logging.Verbose(this,
+                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
+                    continue;
+                }
+
+                cluster.Buildables.Remove(buildable);
+            }
+        }
+
         internal void GenerateAndLoadAllClusters()
         {
             var start = DateTime.Now;
@@ -314,34 +342,6 @@ namespace Pustalorc.Plugins.BaseClustering
             if (pendingTotalDamage < 1 || pendingTotalDamage < bData.barricade.health) return;
 
             RemoveBuildable(bData.instanceID);
-        }
-
-        private void RemoveBuildable(uint instanceId)
-        {
-            var clusters = Clusters.Where(k =>
-                k.Buildables.Any(l => l.InstanceId == instanceId));
-
-            foreach (var cluster in clusters.ToList())
-            {
-                var buildable =
-                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == instanceId);
-
-                if (cluster.Buildables.Count == 1)
-                {
-                    cluster.Buildables.Clear();
-                    DestroyCluster(cluster);
-                    continue;
-                }
-
-                if (buildable == null)
-                {
-                    Logging.Verbose(this,
-                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
-                    continue;
-                }
-
-                cluster.Buildables.Remove(buildable);
-            }
         }
 
         private void BarricadeSpawned(BarricadeData data, BarricadeDrop drop)
