@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.Patches
 {
-    [HarmonyPatch(typeof(StructureManager), "dropBarricadeIntoRegionInternal")]
+    [HarmonyPatch(typeof(StructureManager), "dropReplicatedStructure")]
     public static class PatchStructureSpawnInternal
     {
         public static event StructureSpawned OnNewStructureSpawned;
