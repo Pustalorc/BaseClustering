@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Linq;
 using HarmonyLib;
 using JetBrains.Annotations;
@@ -57,7 +59,22 @@ namespace Pustalorc.Plugins.BaseClustering
             Logging.PluginUnloaded(this);
         }
 
-        public List<BaseCluster> Clusters { get; set; }
+        private ObservableCollection<BaseCluster> _clusters;
+
+        public ObservableCollection<BaseCluster> Clusters
+        {
+            get => _clusters;
+            private set
+            {
+                if (_clusters != null)
+                    _clusters.CollectionChanged -= ClustersChanged;
+
+                _clusters = value;
+
+                _clusters.CollectionChanged -= ClustersChanged;
+                _clusters.CollectionChanged += ClustersChanged;
+            }
+        }
 
         [NotNull] public List<Buildable> Buildables => Clusters?.SelectMany(k => k.Buildables).ToList() ?? new List<Buildable>();
 
@@ -173,7 +190,7 @@ namespace Pustalorc.Plugins.BaseClustering
         internal void GenerateAndLoadAllClusters()
         {
             var start = DateTime.Now;
-            Clusters = new List<BaseCluster>();
+            Clusters = new ObservableCollection<BaseCluster>();
 
             var allBuildables = Game.GetBuilds(CSteamID.Nil).ToList();
             Logging.Write(this, $"Total buildables: {allBuildables.Count}");
@@ -229,10 +246,7 @@ namespace Pustalorc.Plugins.BaseClustering
                     allBuildables.RemoveAt(localCluster.ElementAt(i).Key - i);
                 }
 
-                var cluster = new BaseCluster(builds, center, radius);
-                Clusters.Add(cluster);
-                Logging.Verbose(this,
-                    $"New cluster created at: {center}\nRadius: {radius}\nAverage Center: {cluster.AverageCenterPosition}\nMost common group: {cluster.CommonGroup}\nMost common owner: {cluster.CommonOwner}\nAll buildables: {string.Join(", ", cluster.Buildables.Select(k => k.Position))}");
+                Clusters.Add(new BaseCluster(builds, center, radius));
             }
 
             var end = DateTime.Now;
@@ -462,6 +476,33 @@ namespace Pustalorc.Plugins.BaseClustering
                 }
 
                 Clusters.Remove(cluster);
+            }
+        }
+
+        private void ClustersChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            Logging.Verbose(this, $"Clusters were modified. Action: {e.Action}");
+            switch (e.Action)
+            {
+                case NotifyCollectionChangedAction.Add:
+                    foreach (var cluster in e.NewItems.Cast<BaseCluster>())
+                    {
+                        Logging.Verbose(this,
+                            $"New cluster created at: {cluster.CenterBuildable}\nRadius: {cluster.Radius}\nAverage Center: {cluster.AverageCenterPosition}\nMost common group: {cluster.CommonGroup}\nMost common owner: {cluster.CommonOwner}\nAll buildables: {string.Join(", ", cluster.Buildables.Select(k => k.Position))}");
+                    }
+                    break;
+                case NotifyCollectionChangedAction.Move:
+                    Logging.Verbose(this, $"Cluster moved from index {e.OldStartingIndex} to index {e.NewStartingIndex}");
+                    break;
+                case NotifyCollectionChangedAction.Remove:
+                    Logging.Verbose(this, $"Cluster removed at index {e.OldStartingIndex}");
+                    break;
+                case NotifyCollectionChangedAction.Replace:
+                    Logging.Verbose(this, $"Cluster replaced at index {e.OldStartingIndex}");
+                    break;
+                case NotifyCollectionChangedAction.Reset:
+                    Logging.Verbose(this, $"Clusters collection was reset. Most likely a Clear() call.");
+                    break;
             }
         }
     }
