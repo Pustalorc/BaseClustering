@@ -1,8 +1,6 @@
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Linq;
 using System.Threading;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Classes;
 using Rocket.Core.Utils;
 using SDG.Unturned;
 using Steamworks;
@@ -10,139 +8,24 @@ using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Statics
 {
-    public static class Game
+    public static class WriteOnlyGame
     {
-        [NotNull]
-        public static IEnumerable<Buildable> GetBuilds(CSteamID id)
-        {
-            var barricades = GetBarricades(id);
-            var barricadeDrops = GetBarricadeDrops();
-            var structures = GetStructures(id);
-            var structureDrops = GetStructureDrops();
-
-            var result = barricades.Select(k =>
-            {
-                var drop = barricadeDrops.FirstOrDefault(l => l.instanceID == k.instanceID);
-                if (drop == null)
-                    return new Buildable(k.angle_x, k.angle_y, k.angle_z, k.barricade.id, k.barricade.health,
-                        k.instanceID, k.owner, k.group, k.point, k.barricade.asset, null, null, k.barricade.state);
-
-                return new Buildable(k.angle_x, k.angle_y, k.angle_z, k.barricade.id, k.barricade.health, k.instanceID,
-                    k.owner, k.group, k.point, k.barricade.asset, drop.model, drop.interactable, k.barricade.state);
-            }).ToList();
-
-            result.AddRange(structures.Select(k =>
-            {
-                var drop = structureDrops.FirstOrDefault(l => l.instanceID == k.instanceID);
-                if (drop == null)
-                    return new Buildable(k.angle_x, k.angle_y, k.angle_z, k.structure.id, k.structure.health,
-                        k.instanceID, k.owner, k.group, k.point, k.structure.asset, null, null, null);
-
-                return new Buildable(k.angle_x, k.angle_y, k.angle_z, k.structure.id, k.structure.health, k.instanceID,
-                    k.owner, k.group, k.point, k.structure.asset, drop.model, null, null);
-            }));
-
-            return result;
-        }
-
-        [NotNull]
-        public static IEnumerable<BarricadeDrop> GetBarricadeDrops()
-        {
-            var result = BarricadeManager.regions.Cast<BarricadeRegion>().SelectMany(brd => brd.drops).ToList();
-            result.AddRange(BarricadeManager.plants.SelectMany(region => region.drops));
-
-            return result;
-        }
-
-        [NotNull]
-        public static IEnumerable<StructureDrop> GetStructureDrops()
-        {
-            var result = StructureManager.regions.Cast<StructureRegion>().SelectMany(brd => brd.drops).ToList();
-
-            return result;
-        }
-
-        [NotNull]
-        public static IEnumerable<BarricadeData> GetBarricades(CSteamID id)
-        {
-            var result = BarricadeManager.regions.Cast<BarricadeRegion>().SelectMany(brd => brd.barricades).ToList();
-            result.AddRange(BarricadeManager.plants.SelectMany(region => region.barricades));
-
-            return id == CSteamID.Nil ? result : result.Where(k => k.owner == (ulong) id);
-        }
-
-        [NotNull]
-        public static IEnumerable<StructureData> GetStructures(CSteamID id)
-        {
-            var result = StructureManager.regions.Cast<StructureRegion>().SelectMany(brd => brd.structures).ToList();
-
-            return id == CSteamID.Nil ? result : result.Where(k => k.owner == (ulong) id);
-        }
-
-        public static bool TryGetStructureRegion(Vector3 position, out byte x, out byte y, out ushort index,
-            [CanBeNull] out StructureRegion region)
-        {
-            x = 0;
-            y = 0;
-            index = 0;
-            region = null;
-
-            if (!Regions.tryGetCoordinate(position, out x, out y)) return false;
-
-            region = StructureManager.regions[x, y];
-            var fIndex = region.structures.FindIndex(k => k.point == position);
-
-            if (fIndex <= -1) return false;
-
-            index = (ushort) fIndex;
-            return true;
-        }
-
-        public static bool TryGetBarricadePlantAndRegion(Vector3 position, out byte x, out byte y, out ushort plant,
-            out ushort index, [CanBeNull] out BarricadeRegion region)
-        {
-            x = 0;
-            y = 0;
-            plant = 0;
-            index = 0;
-            int fIndex;
-            region = null;
-
-            while (plant < BarricadeManager.plants.Count)
-            {
-                region = BarricadeManager.plants[plant];
-                fIndex = region.barricades.FindIndex(k => k.point == position);
-
-                if (fIndex > -1)
-                {
-                    index = (ushort) fIndex;
-                    return true;
-                }
-
-                plant += 1;
-            }
-
-            plant = ushort.MaxValue;
-
-            if (!Regions.tryGetCoordinate(position, out x, out y)) return false;
-
-            region = BarricadeManager.regions[x, y];
-            fIndex = region.barricades.FindIndex(k => k.point == position);
-
-            if (fIndex <= -1) return false;
-
-            index = (ushort) fIndex;
-            return true;
-        }
-
         public static void ChangeOwnerAndGroup(Vector3 position, ulong newOwner, ulong newGroup)
         {
-            if (TryGetBarricadePlantAndRegion(position, out _, out _, out _, out var index,
+            if (Thread.CurrentThread.IsGameThread())
+                _changeOwnerAndGroup(position, newOwner, newGroup);
+            else
+                TaskDispatcher.QueueOnMainThread(() => _changeOwnerAndGroup(position, newOwner, newGroup));
+        }
+
+        private static void _changeOwnerAndGroup(Vector3 position, ulong newOwner, ulong newGroup)
+        {
+            if (ReadOnlyGame.TryGetBarricadePlantAndRegion(position, out _, out _, out _, out var index,
                     out var bRegion))
                 // ReSharper disable once PossibleNullReferenceException
                 BarricadeManager.changeOwnerAndGroup(bRegion.drops[index].model, newOwner, newGroup);
 
-            if (TryGetStructureRegion(position, out _, out _, out index, out var sRegion))
+            if (ReadOnlyGame.TryGetStructureRegion(position, out _, out _, out index, out var sRegion))
                 // ReSharper disable once PossibleNullReferenceException
                 StructureManager.changeOwnerAndGroup(sRegion.drops[index].model, newOwner, newGroup);
         }
@@ -157,19 +40,19 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
 
         private static void _damageBarricadeStructure(Vector3 position, ushort damage)
         {
-            if (TryGetBarricadePlantAndRegion(position, out var x, out var y, out var plant, out var index,
+            if (ReadOnlyGame.TryGetBarricadePlantAndRegion(position, out var x, out var y, out var plant, out var index,
                     out var bRegion))
                 // ReSharper disable once AssignNullToNotNullAttribute
                 DamageBarricade(damage, x, y, plant, index, bRegion);
 
-            if (!TryGetStructureRegion(position, out x, out y, out index, out var sRegion) ||
+            if (!ReadOnlyGame.TryGetStructureRegion(position, out x, out y, out index, out var sRegion) ||
                 // ReSharper disable once PossibleNullReferenceException
                 !sRegion.structures.Exists(k => k.point == position)) return;
 
             DamageStructure(damage, x, y, index, sRegion, Vector3.zero);
         }
 
-        public static void DamageStructure(ushort damage, byte x, byte y, ushort index,
+        private static void DamageStructure(ushort damage, byte x, byte y, ushort index,
             [NotNull] StructureRegion region,
             Vector3 direction)
         {
@@ -197,7 +80,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             }
         }
 
-        public static void DamageBarricade(ushort damage, byte x, byte y, ushort plant, ushort index,
+        private static void DamageBarricade(ushort damage, byte x, byte y, ushort plant, ushort index,
             [NotNull] BarricadeRegion bRegion)
         {
             using (new BarricadeRegionSyncTest(bRegion, "damage"))
@@ -249,7 +132,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                         (float) region.structures[index].structure.asset.health * 100f));
         }
 
-        public static void SendBarricadeHealthChanged(byte x, byte y, ushort plant, ushort index,
+        private static void SendBarricadeHealthChanged(byte x, byte y, ushort plant, ushort index,
             [NotNull] BarricadeRegion region)
         {
             var barricade = region.barricades[index];
@@ -274,12 +157,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 }
         }
 
-        public static bool CheckToggle(ulong player, ulong group)
-        {
-            return !Dedicator.isDedicated && CheckToggle(Provider.client, player, Player.player.quests.groupID, group);
-        }
-
-        public static bool CheckToggle(CSteamID playerSource, ulong playerTarget, CSteamID groupSource,
+        private static bool CheckToggle(CSteamID playerSource, ulong playerTarget, CSteamID groupSource,
             ulong groupTarget)
         {
             return Provider.isServer && !Dedicator.isDedicated || playerSource.m_SteamID == playerTarget ||
@@ -296,11 +174,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
 
         private static void _removeBarricadeStructure(Vector3 position)
         {
-            if (TryGetBarricadePlantAndRegion(position, out var x, out var y, out var plant, out var index,
+            if (ReadOnlyGame.TryGetBarricadePlantAndRegion(position, out var x, out var y, out var plant, out var index,
                 out var bRegion))
                 BarricadeManager.destroyBarricade(bRegion, x, y, plant, index);
 
-            if (!TryGetStructureRegion(position, out x, out y, out index, out var sRegion) ||
+            if (!ReadOnlyGame.TryGetStructureRegion(position, out x, out y, out index, out var sRegion) ||
                 // ReSharper disable once PossibleNullReferenceException
                 !sRegion.structures.Exists(k => k.point == position)) return;
 
@@ -315,14 +193,14 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 TaskDispatcher.QueueOnMainThread(() => _repairBarricadeStructure(position, damage, times));
         }
 
-        public static void _repairBarricadeStructure(Vector3 position, float damage, float times)
+        private static void _repairBarricadeStructure(Vector3 position, float damage, float times)
         {
-            if (TryGetBarricadePlantAndRegion(position, out _, out _, out _, out var index,
+            if (ReadOnlyGame.TryGetBarricadePlantAndRegion(position, out _, out _, out _, out var index,
                     out var bRegion))
                 // ReSharper disable once PossibleNullReferenceException
                 BarricadeManager.repair(bRegion.drops[index].model, damage, times);
 
-            if (!TryGetStructureRegion(position, out _, out _, out index, out var sRegion) ||
+            if (!ReadOnlyGame.TryGetStructureRegion(position, out _, out _, out index, out var sRegion) ||
                 // ReSharper disable once PossibleNullReferenceException
                 !sRegion.structures.Exists(k => k.point == position)) return;
 
