@@ -1,7 +1,7 @@
-﻿using Rocket.API;
-using Rocket.Unturned.Chat;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using JetBrains.Annotations;
+using Rocket.API;
+using Rocket.Unturned.Chat;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
@@ -21,8 +21,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
-            UnturnedChat.Say(caller,
-                "WARNING! This operation can take a heavy amount of time! The more buildables and the bigger the auto-radius increment, the longer it will take! Please see console for when it is done.");
+            UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("clusters_regen_warning"));
             BaseClusteringPlugin.Instance.GenerateAndLoadAllClusters();
         }
     }
