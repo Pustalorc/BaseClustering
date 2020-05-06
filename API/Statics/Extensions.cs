@@ -10,12 +10,15 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
     public static class Extensions
     {
         [CanBeNull]
-        public static BaseCluster FindBestCluster([NotNull] this IEnumerable<BaseCluster> source, Buildable target, float maxDist)
+        public static BaseCluster FindBestCluster([NotNull] this IEnumerable<BaseCluster> source, Buildable target,
+            float maxDist)
         {
             var validClusters = source.Where(k => Vector3.Distance(k.CenterBuildable, target.Position) <= maxDist);
 
             var baseClusters = validClusters.ToList();
-            return baseClusters.Count == 0 ? null : baseClusters.OrderBy(k => Vector3.Distance(k.CenterBuildable, target.Position)).FirstOrDefault();
+            return baseClusters.Count == 0
+                ? null
+                : baseClusters.OrderBy(k => Vector3.Distance(k.CenterBuildable, target.Position)).FirstOrDefault();
         }
 
         public static int GetLocalCenterIndex([NotNull] this Dictionary<int, Vector3> source)
