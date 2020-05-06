@@ -45,6 +45,12 @@
       <HintPath>libs\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="PlayerInfoLib">
+      <HintPath>Libraries\PlayerInfoLib.dll</HintPath>
+    </Reference>
+    <Reference Include="Pustalorc.Libraries.MySqlConnectorWrapper">
+      <HintPath>Libraries\Pustalorc.Libraries.MySqlConnectorWrapper.dll</HintPath>
+    </Reference>
     <Reference Include="Rocket.API, Version=2.6.4.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>libs\Rocket.API.dll</HintPath>
       <Private>False</Private>
@@ -81,11 +87,19 @@
     <Compile Include="API\Delegates\StructureSpawned.cs" />
     <Compile Include="API\Statics\ExtendedMath.cs" />
     <Compile Include="API\Statics\Extensions.cs" />
-    <Compile Include="API\Statics\Game.cs" />
+    <Compile Include="API\Statics\ReadOnlyGame.cs" />
     <Compile Include="API\Statics\Logging.cs" />
     <Compile Include="API\Statics\ThreadUtil2.cs" />
+    <Compile Include="API\Statics\WriteOnlyGame.cs" />
     <Compile Include="BaseClusteringPlugin.cs" />
     <Compile Include="Commands\ClustersRegenCommand.cs" />
+    <Compile Include="Commands\FindBuildsCommand.cs" />
+    <Compile Include="Commands\FindClustersCommand.cs" />
+    <Compile Include="Commands\FindPlayerBuildsCommand.cs" />
+    <Compile Include="Commands\TeleportToBuildCommand.cs" />
+    <Compile Include="Commands\TopBuildersCommand.cs" />
+    <Compile Include="Commands\WreckCommand.cs" />
+    <Compile Include="Commands\WreckVehicleCommand.cs" />
     <Compile Include="Config\BaseClusteringPluginConfiguration.cs" />
     <Compile Include="Patches\PatchBarricadeSpawnInternal.cs" />
     <Compile Include="Patches\PatchStructureSpawnInternal.cs" />
@@ -93,6 +107,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Libraries\PlayerInfoLib.dll" />
+    <Content Include="Libraries\Pustalorc.Libraries.MySqlConnectorWrapper.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
