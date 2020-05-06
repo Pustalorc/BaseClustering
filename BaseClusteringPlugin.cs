@@ -9,6 +9,7 @@ using Pustalorc.Plugins.BaseClustering.API.Classes;
 using Pustalorc.Plugins.BaseClustering.API.Statics;
 using Pustalorc.Plugins.BaseClustering.Config;
 using Pustalorc.Plugins.BaseClustering.Patches;
+using Rocket.API.Collections;
 using Rocket.Core.Plugins;
 using Rocket.Core.Utils;
 using SDG.Unturned;
@@ -23,6 +24,29 @@ namespace Pustalorc.Plugins.BaseClustering
     {
         public static BaseClusteringPlugin Instance { get; private set; }
         private Harmony _harmony;
+
+        [NotNull]
+        public override TranslationList DefaultTranslations => new TranslationList
+        {
+            {
+                "clusters_regen_warning",
+                "WARNING! This operation can take a heavy amount of time! The more buildables and the bigger the auto-radius increment, the longer it will take! Please see console for when it is done."
+            },
+            {"top_builder_format", "At number {0}, {1} [{2}] with {3} buildables!"},
+            {
+                "no_vehicle_found",
+                "Couldn't find a vehicle in the direction you're looking, or you are too far away from one. Maximum distance is 10 units."
+            },
+            {"vehicle_dead", "The vehicle you are looking at is destroyed and cannot be wrecked. Please look at a vehicle that isn't destroyed."},
+            {"vehicle_no_plant", "The vehicle appears to have no assigned barricades to it, please make sure that it has barricades before asking to wreck them."},
+            {"build_count", "There are a total of {0} builds."},
+            {"not_valid_float", "{0} is not a valid number of type float."},
+            {"not_valid_uint16", "{0} is not a valid number of type uint16."},
+            {"find_builds_wrong_argument", "Specifier for vehicles should be written as \"vehicles\", not something else."},
+            {"cannot_be_executed_from_console", "That command cannot be executed from console with those arguments."},
+            {"fpb_usage", "Wrong command usage, should be /fpb <player> [\"vehicles\"] [id] [radius]"},
+            {"not_valid_player", "{0} is not a currently online player, or a valid Steam64ID"}
+        };
 
         protected override void Load()
         {
@@ -76,7 +100,10 @@ namespace Pustalorc.Plugins.BaseClustering
             }
         }
 
-        [NotNull] public List<Buildable> Buildables => Clusters?.SelectMany(k => k.Buildables).ToList() ?? new List<Buildable>();
+        [NotNull]
+        // ReSharper disable once ReturnTypeCanBeEnumerable.Global
+        public IReadOnlyList<Buildable> Buildables =>
+            Clusters?.SelectMany(k => k.Buildables).ToList() ?? new List<Buildable>();
 
         /// <summary>
         ///     Retrieves all clusters within the specified radius.
@@ -192,7 +219,7 @@ namespace Pustalorc.Plugins.BaseClustering
             var start = DateTime.Now;
             Clusters = new ObservableCollection<BaseCluster>();
 
-            var allBuildables = Game.GetBuilds(CSteamID.Nil).ToList();
+            var allBuildables = ReadOnlyGame.GetBuilds(CSteamID.Nil, false).ToList();
             Logging.Write(this, $"Total buildables: {allBuildables.Count}");
 
             while (allBuildables.Count > 0)
@@ -436,7 +463,7 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             foreach (var buildable in cluster.Buildables.ToList())
             {
-                Game.ChangeOwnerAndGroup(buildable.Position, newOwner, newGroup);
+                WriteOnlyGame.ChangeOwnerAndGroup(buildable.Position, newOwner, newGroup);
                 buildable.Owner = newOwner;
                 buildable.Group = newGroup;
             }
@@ -445,14 +472,14 @@ namespace Pustalorc.Plugins.BaseClustering
         private void _damage([NotNull] BaseCluster cluster, ushort damage)
         {
             foreach (var buildable in cluster.Buildables.ToList())
-                Game.DamageBarricadeStructure(buildable.Position, damage);
+                WriteOnlyGame.DamageBarricadeStructure(buildable.Position, damage);
         }
 
         private void _destroyCluster([NotNull] BaseCluster cluster)
         {
             foreach (var buildable in cluster.Buildables.ToList())
             {
-                Game.RemoveBarricadeStructure(buildable.Position);
+                WriteOnlyGame.RemoveBarricadeStructure(buildable.Position);
                 cluster.Buildables.Remove(buildable);
             }
 
@@ -462,7 +489,7 @@ namespace Pustalorc.Plugins.BaseClustering
         private void _repair([NotNull] BaseCluster cluster, float amount, float times)
         {
             foreach (var buildable in cluster.Buildables.ToList())
-                Game.RepairBarricadeStructure(buildable.Position, amount, times);
+                WriteOnlyGame.RepairBarricadeStructure(buildable.Position, amount, times);
         }
 
         private void _removeAllClusters()
@@ -471,7 +498,7 @@ namespace Pustalorc.Plugins.BaseClustering
             {
                 foreach (var buildable in cluster.Buildables.ToList())
                 {
-                    Game.RemoveBarricadeStructure(buildable.Position);
+                    WriteOnlyGame.RemoveBarricadeStructure(buildable.Position);
                     cluster.Buildables.Remove(buildable);
                 }
 
@@ -479,20 +506,19 @@ namespace Pustalorc.Plugins.BaseClustering
             }
         }
 
-        private void ClustersChanged(object sender, NotifyCollectionChangedEventArgs e)
+        private void ClustersChanged(object sender, [NotNull] NotifyCollectionChangedEventArgs e)
         {
             Logging.Verbose(this, $"Clusters were modified. Action: {e.Action}");
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
                     foreach (var cluster in e.NewItems.Cast<BaseCluster>())
-                    {
                         Logging.Verbose(this,
                             $"New cluster created at: {cluster.CenterBuildable}\nRadius: {cluster.Radius}\nAverage Center: {cluster.AverageCenterPosition}\nMost common group: {cluster.CommonGroup}\nMost common owner: {cluster.CommonOwner}\nAll buildables: {string.Join(", ", cluster.Buildables.Select(k => k.Position))}");
-                    }
                     break;
                 case NotifyCollectionChangedAction.Move:
-                    Logging.Verbose(this, $"Cluster moved from index {e.OldStartingIndex} to index {e.NewStartingIndex}");
+                    Logging.Verbose(this,
+                        $"Cluster moved from index {e.OldStartingIndex} to index {e.NewStartingIndex}");
                     break;
                 case NotifyCollectionChangedAction.Remove:
                     Logging.Verbose(this, $"Cluster removed at index {e.OldStartingIndex}");
@@ -501,7 +527,7 @@ namespace Pustalorc.Plugins.BaseClustering
                     Logging.Verbose(this, $"Cluster replaced at index {e.OldStartingIndex}");
                     break;
                 case NotifyCollectionChangedAction.Reset:
-                    Logging.Verbose(this, $"Clusters collection was reset. Most likely a Clear() call.");
+                    Logging.Verbose(this, "Clusters collection was reset. Most likely a Clear() call.");
                     break;
             }
         }
