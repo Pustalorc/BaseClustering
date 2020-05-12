@@ -83,6 +83,8 @@
   <ItemGroup>
     <Compile Include="API\Classes\BaseCluster.cs" />
     <Compile Include="API\Classes\Buildable.cs" />
+    <Compile Include="API\Classes\WreckAction.cs" />
+    <Compile Include="API\Classes\WreckClustersAction.cs" />
     <Compile Include="API\Delegates\BarricadeSpawned.cs" />
     <Compile Include="API\Delegates\StructureSpawned.cs" />
     <Compile Include="API\Statics\ExtendedMath.cs" />
@@ -95,9 +97,11 @@
     <Compile Include="Commands\ClustersRegenCommand.cs" />
     <Compile Include="Commands\FindBuildsCommand.cs" />
     <Compile Include="Commands\FindClustersCommand.cs" />
-    <Compile Include="Commands\FindPlayerBuildsCommand.cs" />
     <Compile Include="Commands\TeleportToBuildCommand.cs" />
+    <Compile Include="Commands\TeleportToClusterCommand.cs" />
     <Compile Include="Commands\TopBuildersCommand.cs" />
+    <Compile Include="Commands\TopClustersCommand.cs" />
+    <Compile Include="Commands\WreckClustersCommand.cs" />
     <Compile Include="Commands\WreckCommand.cs" />
     <Compile Include="Commands\WreckVehicleCommand.cs" />
     <Compile Include="Config\BaseClusteringPluginConfiguration.cs" />

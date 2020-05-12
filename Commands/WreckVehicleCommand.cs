@@ -27,7 +27,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
         public void Execute(IRocketPlayer caller, string[] command)
         {
             var player = (UnturnedPlayer) caller;
-            var raycastInfo = DamageTool.raycast(new Ray(player.Player.look.aim.position, player.Player.look.aim.forward), 10f, RayMasks.VEHICLE);
+            var raycastInfo =
+                DamageTool.raycast(new Ray(player.Player.look.aim.position, player.Player.look.aim.forward), 10f,
+                    RayMasks.VEHICLE);
 
             if (raycastInfo.vehicle == null)
             {
@@ -51,7 +53,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            for (var i = region.barricades.Count - 1; i > 0; i--) BarricadeManager.destroyBarricade(region, x, y, plant, (ushort) i);
+            for (var i = region.barricades.Count - 1; i > 0; i--)
+                BarricadeManager.destroyBarricade(region, x, y, plant, (ushort) i);
 
             UnturnedChat.Say(caller,
                 BaseClusteringPlugin.Instance.Translate("vehicle_wreck", raycastInfo.vehicle.asset.name,

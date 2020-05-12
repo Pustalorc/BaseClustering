@@ -2,6 +2,7 @@
 using System.Linq;
 using JetBrains.Annotations;
 using PlayerInfoLibrary;
+using Pustalorc.Plugins.BaseClustering.API.Statics;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Steamworks;
@@ -16,17 +17,25 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         [NotNull] public string Help => "Displays the top 5 builders in the game.";
 
-        [NotNull] public string Syntax => "[include]";
+        [NotNull] public string Syntax => "v";
 
         [NotNull] public List<string> Aliases => new List<string> {"topb"};
 
         [NotNull] public List<string> Permissions => new List<string> {"topbuilders"};
 
-        public void Execute(IRocketPlayer caller, string[] command)
+        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
         {
-            var topBuilders = BaseClusteringPlugin.Instance.Buildables.GroupBy(k => k.Owner).OrderBy(k => k.Count());
+            var args = command.ToList();
 
-            for (var i = 0; i < 5; i++)
+            var plants = args.CheckArgsIncludeString("v", out var index);
+            if (index > -1)
+                args.RemoveAt(index);
+
+            var builds = plants ? ReadOnlyGame.GetBuilds(CSteamID.Nil, true) : BaseClusteringPlugin.Instance.Buildables;
+
+            var topBuilders = builds.GroupBy(k => k.Owner).OrderBy(k => k.Count()).Take(5).ToList();
+
+            for (var i = 0; i < topBuilders.Count; i++)
             {
                 var builder = topBuilders.ElementAt(i);
                 var pInfo = PlayerInfoLib.Instance.database.QueryById(new CSteamID(builder.Key));

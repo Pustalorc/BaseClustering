@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Classes;
+using Rocket.API;
+using Rocket.Unturned.Player;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Statics
@@ -223,6 +225,40 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 total++;
 
             return total >= 2;
+        }
+
+        public static bool CheckArgsIncludeString([NotNull] this IEnumerable<string> args, string include, out int index)
+        {
+            index = args.ToList().FindIndex(k => k.Equals(include, StringComparison.OrdinalIgnoreCase));
+            return index > -1;
+        }
+
+        public static ushort GetUshort([NotNull] this IEnumerable<string> args, out int index)
+        {
+            var output = ushort.MaxValue;
+            index = args.ToList().FindIndex(k => ushort.TryParse(k, out output));
+            return output;
+        }
+
+        public static float GetFloat([NotNull] this IEnumerable<string> args, out int index)
+        {
+            var output = float.MaxValue;
+            index = args.ToList().FindIndex(k => float.TryParse(k, out output));
+            return output;
+        }
+
+        public static IRocketPlayer GetIRocketPlayer([NotNull] this IEnumerable<string> args, out int index)
+        {
+            IRocketPlayer output = null;
+            index = args.ToList().FindIndex(k =>
+            {
+                output = UnturnedPlayer.FromName(k);
+                if (output == null && ulong.TryParse(k, out var id) && id > 76561197960265728)
+                    output = new RocketPlayer(id.ToString());
+
+                return output == null;
+            });
+            return output;
         }
     }
 }

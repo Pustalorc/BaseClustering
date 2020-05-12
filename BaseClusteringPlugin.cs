@@ -37,15 +37,28 @@ namespace Pustalorc.Plugins.BaseClustering
                 "no_vehicle_found",
                 "Couldn't find a vehicle in the direction you're looking, or you are too far away from one. Maximum distance is 10 units."
             },
-            {"vehicle_dead", "The vehicle you are looking at is destroyed and cannot be wrecked. Please look at a vehicle that isn't destroyed."},
-            {"vehicle_no_plant", "The vehicle appears to have no assigned barricades to it, please make sure that it has barricades before asking to wreck them."},
+            {
+                "vehicle_dead",
+                "The vehicle you are looking at is destroyed and cannot be wrecked. Please look at a vehicle that isn't destroyed."
+            },
+            {
+                "vehicle_no_plant",
+                "The vehicle appears to have no assigned barricades to it, please make sure that it has barricades before asking to wreck them."
+            },
             {"build_count", "There are a total of {0} builds."},
             {"not_valid_float", "{0} is not a valid number of type float."},
             {"not_valid_uint16", "{0} is not a valid number of type uint16."},
-            {"find_builds_wrong_argument", "Specifier for vehicles should be written as \"vehicles\", not something else."},
+            {
+                "find_builds_wrong_argument",
+                "Specifier for vehicles should be written as \"vehicles\", not something else."
+            },
             {"cannot_be_executed_from_console", "That command cannot be executed from console with those arguments."},
             {"fpb_usage", "Wrong command usage, should be /fpb <player> [\"vehicles\"] [id] [radius]"},
-            {"not_valid_player", "{0} is not a currently online player, or a valid Steam64ID"}
+            {"not_valid_player", "{0} is not a currently online player, or a valid Steam64ID"},
+            {
+                "cannot_teleport_no_builds",
+                "Cannot teleport anywhere, as there were no buildables left with the specified filters."
+            }
         };
 
         protected override void Load()

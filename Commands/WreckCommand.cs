@@ -1,134 +1,159 @@
-﻿using Rocket.API;
+﻿using System.Collections.Generic;
+using System.Linq;
+using JetBrains.Annotations;
+using Pustalorc.Plugins.BaseClustering.API.Classes;
+using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Rocket.API;
 using Rocket.Unturned.Chat;
-using Rocket.Unturned.Commands;
-using SDG.Framework.Translations;
-using System;
-using System.Collections.Generic;
+using Rocket.Unturned.Player;
+using SDG.Unturned;
+using Steamworks;
+using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class WreckCommand : IRocketCommand
     {
+        private Dictionary<CSteamID, WreckAction> WreckActions = new Dictionary<CSteamID, WreckAction>();
+
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
-        public string Name => "wreck";
+        [NotNull] public string Name => "wreck";
 
-        public string Help => "Destroys buildables from the map.";
+        [NotNull] public string Help => "Destroys buildables from the map.";
 
-        public string Syntax => "confirm | abort | b [radius] | s [radius] | <item> [radius] | v [item] [radius] | <player> [item] [radius]";
+        [NotNull]
+        public string Syntax =>
+            "confirm | abort | b [radius] | s [radius] | <item> [radius] | v [item] [radius] | <player> [item] [radius]";
 
-        public List<string> Aliases => new List<string> { "w" };
+        [NotNull] public List<string> Aliases => new List<string> {"w"};
 
-        public List<string> Permissions => new List<string> { "wreck" };
+        [NotNull] public List<string> Permissions => new List<string> {"wreck"};
 
-        public void Execute(IRocketPlayer caller, string[] command)
+        public void Execute([NotNull] IRocketPlayer caller, [NotNull] string[] command)
         {
-            switch (command.Length)
+            var cId = new CSteamID(ulong.Parse(caller.Id));
+            var args = command.ToList();
+
+            var abort = args.CheckArgsIncludeString("abort", out var index);
+            if (index > -1)
+                args.RemoveAt(index);
+
+            var confirm = args.CheckArgsIncludeString("confirm", out index);
+            if (index > -1)
+                args.RemoveAt(index);
+
+            var plants = args.CheckArgsIncludeString("v", out index);
+            if (index > -1)
+                args.RemoveAt(index);
+
+            var barricades = args.CheckArgsIncludeString("b", out index);
+            if (index > -1)
+                args.RemoveAt(index);
+
+            var structs = args.CheckArgsIncludeString("s", out index);
+            if (index > -1)
+                args.RemoveAt(index);
+
+            var target = args.GetIRocketPlayer(out index);
+            if (index > -1)
+                args.RemoveAt(index);
+
+            var id = args.GetUshort(out index);
+            if (index > -1)
+                args.RemoveAt(index);
+
+            var radius = args.GetFloat(out index);
+            if (index > -1)
+                args.RemoveAt(index);
+
+
+            if (abort)
             {
-                case 1:
-                    var arg1 = command[0];
-                    var player = (IRocketPlayer) command.GetUnturnedPlayerParameter(0) ?? command.GetRocketPlayerParameter(0);
-                    if (arg1.Equals("confirm", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Do wreck action
-                    }
-                    else if (arg1.Equals("abort", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Remove wreck action
-                    }
-                    else if (arg1.Equals("b", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Wreck all barricades
-                    }
-                    else if (arg1.Equals("s", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Wreck all structures
-                    }
-                    else if (arg1.Equals("v", StringComparison.OrdinalIgnoreCase))
-                    {
-                        // Wreck all barricades
-                    }
-                    else if (ushort.TryParse(arg1, out var id))
-                    {
-                        // Wreck all equaling ID
-                    }
-                    else if (player != null)
-                    {
-                        // Wreck all from user
-                    }
+                if (WreckActions.TryGetValue(cId, out _))
+                {
+                    WreckActions.Remove(cId);
+                    UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("action_cancelled"));
                     return;
-                case 2:
-                    arg1 = command[0];
-                    var arg2 = command[1];
-                    player = (IRocketPlayer)command.GetUnturnedPlayerParameter(0) ?? command.GetRocketPlayerParameter(0);
-                    if (arg1.Equals("confirm", StringComparison.OrdinalIgnoreCase))
-                    {
-                        UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("wreck_usage"));
-                    }
-                    else if (arg1.Equals("abort", StringComparison.OrdinalIgnoreCase))
-                    {
-                        UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("wreck_usage"));
-                    }
-                    else if (arg1.Equals("b", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (!float.TryParse(arg2, out var range))
-                        {
-                            UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("wreck_usage"));
-                            return;
-                        }
+                }
 
-                        // Wreck all barricades within range
-                    }
-                    else if (arg1.Equals("s", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (!float.TryParse(arg2, out var range))
-                        {
-                            UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("wreck_usage"));
-                            return;
-                        }
-
-                        // Wreck all structures within range
-                    }
-                    else if (arg1.Equals("v", StringComparison.OrdinalIgnoreCase))
-                    {
-                        if (!float.TryParse(arg2, out var range))
-                        {
-                            UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("wreck_usage"));
-                            return;
-                        }
-
-                        // Wreck all barricades within range
-                    }
-                    else if (ushort.TryParse(arg1, out var id))
-                    {
-                        if (!float.TryParse(arg2, out var range))
-                        {
-                            UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("wreck_usage"));
-                            return;
-                        }
-
-                        // Wreck all equaling ID within range
-                    }
-                    else if (player != null)
-                    {
-                        if (!ushort.TryParse(arg2, out id))
-                        {
-                            if (!float.TryParse(arg2, out var range))
-                            {
-                                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("wreck_usage"));
-                                return;
-                            }
-
-                            // wreck all from user within range
-                        }
-
-                        // Wreck all from user of specific ID
-                    }
-                    return;
-                default:
-                    UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("wreck_usage"));
-                    return;
+                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("no_action_queued"));
+                return;
             }
+
+            if (confirm)
+            {
+                if (!WreckActions.TryGetValue(cId, out var action))
+                {
+                    UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("no_action_queued"));
+                    return;
+                }
+
+                WreckActions.Remove(cId);
+
+                var remove = action.IncludeVehicles
+                    ? ReadOnlyGame.GetBuilds(CSteamID.Nil, true)
+                    : BaseClusteringPlugin.Instance.Buildables;
+
+                if (action.TargetId != CSteamID.Nil)
+                    remove = remove.Where(k => k.Owner.ToString().Equals(action.TargetId));
+
+                if (action.FilterForBarricades) remove = remove.Where(k => k.Asset is ItemBarricadeAsset);
+                else if (action.FilterForStructures) remove = remove.Where(k => k.Asset is ItemStructureAsset);
+
+                if (action.ItemId != ushort.MaxValue) remove = remove.Where(k => k.AssetId == action.ItemId);
+
+                if (action.Center != Vector3.negativeInfinity)
+                    remove = remove.Where(k => Vector3.Distance(k.Position, action.Center) <= action.Radius);
+
+                var buildables = remove.ToList();
+                if (!buildables.Any())
+                {
+                    UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("cannot_wreck_no_builds"));
+                    return;
+                }
+
+                foreach (var build in buildables)
+                    WriteOnlyGame.RemoveBarricadeStructure(build.Position);
+
+                BaseClusteringPlugin.Instance.Translate("wrecked", buildables.Count);
+
+                return;
+            }
+
+            var builds = plants ? ReadOnlyGame.GetBuilds(CSteamID.Nil, true) : BaseClusteringPlugin.Instance.Buildables;
+
+            if (target != null) builds = builds.Where(k => k.Owner.ToString().Equals(target.Id));
+
+            if (barricades) builds = builds.Where(k => k.Asset is ItemBarricadeAsset);
+            else if (structs) builds = builds.Where(k => k.Asset is ItemStructureAsset);
+
+            if (id != ushort.MaxValue) builds = builds.Where(k => k.AssetId == id);
+
+            var center = Vector3.negativeInfinity;
+
+            if (radius != float.MaxValue)
+            {
+                if (!(caller is UnturnedPlayer cPlayer))
+                {
+                    UnturnedChat.Say(caller,
+                        BaseClusteringPlugin.Instance.Translate("cannot_be_executed_from_console"));
+                    return;
+                }
+
+                center = cPlayer.Position;
+                builds = builds.Where(k => Vector3.Distance(k.Position, center) <= radius);
+            }
+
+            if (!builds.Any())
+            {
+                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("cannot_wreck_no_builds"));
+                return;
+            }
+
+            WreckActions.Add(cId,
+                new WreckAction(plants, barricades, structs,
+                    target == null ? CSteamID.Nil : new CSteamID(ulong.Parse(target.Id)), center, id, radius));
         }
     }
 }
