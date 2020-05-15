@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Classes;
 using Pustalorc.Plugins.BaseClustering.API.Statics;
 using Rocket.API;
 using Rocket.Unturned.Chat;
@@ -54,7 +53,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             var builds = plants ? ReadOnlyGame.GetBuilds(CSteamID.Nil, true) : BaseClusteringPlugin.Instance.Buildables;
 
-            if (target != null) builds = builds.Where(k => k.Owner.ToString().Equals(target.Id));
+            builds = target != null
+                ? builds.Where(k => k.Owner.ToString().Equals(target.Id))
+                : builds.Where(k => Vector3.Distance(k.Position, player.Position) > 20);
 
             if (barricades) builds = builds.Where(k => k.Asset is ItemBarricadeAsset);
             else if (structs) builds = builds.Where(k => k.Asset is ItemStructureAsset);
@@ -64,21 +65,30 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             var buildsL = builds.ToList();
             if (!buildsL.Any())
             {
-                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_builds", itemAsset != null ? itemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"), target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"), plants, barricades, structs));
+                UnturnedChat.Say(caller,
+                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_builds",
+                        itemAsset != null
+                            ? itemAsset.itemName
+                            : BaseClusteringPlugin.Instance.Translate("not_available"),
+                        target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
+                        plants, barricades, structs));
                 return;
             }
 
-            Buildable build;
-            do
-            {
-                build = buildsL[Random.Range(0, buildsL.Count - 1)];
-            }
-            while (target != null && Vector3.Distance(player.Position, build.Position) > 20);
+            var build = buildsL[Random.Range(0, buildsL.Count - 1)];
 
             if (build != null)
-                player.Teleport(new Vector3(build.Position.x, plants ? build.Position.y + 4 : build.Position.y + 2, build.Position.z),player.Rotation);
+                player.Teleport(
+                    new Vector3(build.Position.x, plants ? build.Position.y + 4 : build.Position.y + 2,
+                        build.Position.z), player.Rotation);
             else
-                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("cannot_teleport_builds_too_close", itemAsset != null ? itemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"), target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"), plants, barricades, structs));
+                UnturnedChat.Say(caller,
+                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_builds_too_close",
+                        itemAsset != null
+                            ? itemAsset.itemName
+                            : BaseClusteringPlugin.Instance.Translate("not_available"),
+                        target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
+                        plants, barricades, structs));
         }
     }
 }

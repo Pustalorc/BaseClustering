@@ -40,16 +40,26 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             var clustersL = clusters.ToList();
             if (!clustersL.Any())
             {
-                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_clusters", target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available")));
+                UnturnedChat.Say(caller,
+                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_clusters",
+                        target != null
+                            ? target.DisplayName
+                            : BaseClusteringPlugin.Instance.Translate("not_available")));
                 return;
             }
 
             var cluster = clustersL[Random.Range(0, clustersL.Count - 1)];
 
-            if (cluster == null)
-                player.Teleport(new Vector3(cluster.AverageCenterPosition.x, cluster.AverageCenterPosition.y + 4, cluster.AverageCenterPosition.z), player.Rotation);
+            if (cluster != null)
+                player.Teleport(
+                    new Vector3(cluster.AverageCenterPosition.x, cluster.AverageCenterPosition.y + 4,
+                        cluster.AverageCenterPosition.z), player.Rotation);
             else
-                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_clusters", target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available")));
+                UnturnedChat.Say(caller,
+                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_clusters",
+                        target != null
+                            ? target.DisplayName
+                            : BaseClusteringPlugin.Instance.Translate("not_available")));
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using Rocket.API;
 using SDG.Unturned;
-using Steamworks;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Classes

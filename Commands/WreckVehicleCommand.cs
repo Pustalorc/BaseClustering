@@ -44,7 +44,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             }
 
             var id = raycastInfo.vehicle.lockedOwner;
-            var pId = PlayerInfoLib.Instance?.database?.QueryById(id) ?? null;
+            PlayerData pId = null;
+            if (PlayerInfoLib.Instance != null)
+                pId = PlayerInfoLib.Instance.database?.QueryById(id);
 
             if (!BarricadeManager.tryGetPlant(raycastInfo.transform, out var x, out var y, out var plant,
                 out var region))

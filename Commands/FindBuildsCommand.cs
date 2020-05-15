@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Statics;
@@ -73,7 +74,14 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 builds = builds.Where(k => Vector3.Distance(k.Position, cPlayer.Position) <= radius);
             }
 
-            UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("build_count", builds.Count(), itemAsset != null ? itemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"), radius != float.NegativeInfinity ? radius.ToString() : BaseClusteringPlugin.Instance.Translate("not_available"), target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"), plants, barricades, structs));
+            UnturnedChat.Say(caller,
+                BaseClusteringPlugin.Instance.Translate("build_count", builds.Count(),
+                    itemAsset != null ? itemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"),
+                    radius != float.NegativeInfinity
+                        ? radius.ToString(CultureInfo.CurrentCulture)
+                        : BaseClusteringPlugin.Instance.Translate("not_available"),
+                    target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
+                    plants, barricades, structs));
         }
     }
 }

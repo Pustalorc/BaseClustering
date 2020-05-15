@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Classes;
@@ -98,7 +99,17 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 foreach (var cluster in baseClusters)
                     BaseClusteringPlugin.Instance.DestroyCluster(cluster);
 
-                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("wrecked_clusters", baseClusters.Count, action.ItemAsset != null ? action.ItemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"), action.Radius != float.NegativeInfinity ? action.Radius.ToString() : BaseClusteringPlugin.Instance.Translate("not_available"), action.TargetPlayer != null ? action.TargetPlayer.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available")));
+                UnturnedChat.Say(caller,
+                    BaseClusteringPlugin.Instance.Translate("wrecked_clusters", baseClusters.Count,
+                        action.ItemAsset != null
+                            ? action.ItemAsset.itemName
+                            : BaseClusteringPlugin.Instance.Translate("not_available"),
+                        action.Radius != float.NegativeInfinity
+                            ? action.Radius.ToString(CultureInfo.CurrentCulture)
+                            : BaseClusteringPlugin.Instance.Translate("not_available"),
+                        action.TargetPlayer != null
+                            ? action.TargetPlayer.DisplayName
+                            : BaseClusteringPlugin.Instance.Translate("not_available")));
                 return;
             }
 
