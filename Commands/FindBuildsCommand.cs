@@ -44,7 +44,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var id = args.GetUshort(out index);
+            var itemAsset = args.GetItemAsset(out index);
             if (index > -1)
                 args.RemoveAt(index);
 
@@ -59,9 +59,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (barricades) builds = builds.Where(k => k.Asset is ItemBarricadeAsset);
             else if (structs) builds = builds.Where(k => k.Asset is ItemStructureAsset);
 
-            if (id != ushort.MaxValue) builds = builds.Where(k => k.AssetId == id);
+            if (itemAsset != null) builds = builds.Where(k => k.AssetId == itemAsset.id);
 
-            if (radius != float.MaxValue)
+            if (radius != float.NegativeInfinity)
             {
                 if (!(caller is UnturnedPlayer cPlayer))
                 {
@@ -73,7 +73,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 builds = builds.Where(k => Vector3.Distance(k.Position, cPlayer.Position) <= radius);
             }
 
-            UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("build_count", builds.Count()));
+            UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("build_count", builds.Count(), itemAsset != null ? itemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"), radius != float.NegativeInfinity ? radius.ToString() : BaseClusteringPlugin.Instance.Translate("not_available"), target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"), plants, barricades, structs));
         }
     }
 }

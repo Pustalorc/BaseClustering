@@ -5,7 +5,9 @@ using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Classes;
 using Rocket.API;
 using Rocket.Unturned.Player;
+using SDG.Unturned;
 using UnityEngine;
+using Math = System.Math;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Statics
 {
@@ -192,7 +194,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
 
         public static Vector3 MinVector3([NotNull] this IEnumerable<Vector3> vectors)
         {
-            var smallestVector = new Vector3(float.MaxValue, float.MaxValue, float.MaxValue);
+            var smallestVector = Vector3.positiveInfinity;
 
             foreach (var vector in vectors.Where(vector => IsSmaller(vector, smallestVector)))
                 smallestVector = vector;
@@ -202,8 +204,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
 
         public static int MinVector3([NotNull] this Dictionary<int, Vector3> vectors)
         {
-            var smallestVector = new KeyValuePair<int, Vector3>(int.MaxValue,
-                new Vector3(float.MaxValue, float.MaxValue, float.MaxValue));
+            var smallestVector = new KeyValuePair<int, Vector3>(int.MaxValue, Vector3.positiveInfinity);
 
             foreach (var vector in vectors.Where(vector => IsSmaller(vector.Value, smallestVector.Value)))
                 smallestVector = vector;
@@ -233,16 +234,27 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             return index > -1;
         }
 
-        public static ushort GetUshort([NotNull] this IEnumerable<string> args, out int index)
+        public static ItemAsset GetItemAsset([NotNull] this IEnumerable<string> args, out int index)
         {
-            var output = ushort.MaxValue;
-            index = args.ToList().FindIndex(k => ushort.TryParse(k, out output));
-            return output;
+            var argsL = args.ToList();
+            var assets = Assets.find(EAssetType.ITEM).Cast<ItemAsset>().Where(k => k?.itemName != null && k?.name != null).OrderBy(k => k.itemName.Length);
+
+            for (index = 0; index < argsL.Count; index++)
+            {
+                var itemAsset = assets.FirstOrDefault(k => argsL[0].Equals(k.id.ToString(), StringComparison.OrdinalIgnoreCase) || argsL[0].Split(' ').All(l => k.itemName.ToLower().Contains(l)) || argsL[0].Split(' ').All(l => k.name.ToLower().Contains(l)));
+
+                if (itemAsset == null)
+                    continue;
+
+                return itemAsset;
+            }
+
+            return null;
         }
 
         public static float GetFloat([NotNull] this IEnumerable<string> args, out int index)
         {
-            var output = float.MaxValue;
+            var output = float.NegativeInfinity;
             index = args.ToList().FindIndex(k => float.TryParse(k, out output));
             return output;
         }

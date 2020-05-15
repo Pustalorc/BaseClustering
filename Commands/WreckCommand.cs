@@ -59,7 +59,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var id = args.GetUshort(out index);
+            var itemAsset = args.GetItemAsset(out index);
             if (index > -1)
                 args.RemoveAt(index);
 
@@ -95,13 +95,13 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     ? ReadOnlyGame.GetBuilds(CSteamID.Nil, true)
                     : BaseClusteringPlugin.Instance.Buildables;
 
-                if (action.TargetId != CSteamID.Nil)
-                    remove = remove.Where(k => k.Owner.ToString().Equals(action.TargetId));
+                if (action.TargetPlayer != null)
+                    remove = remove.Where(k => k.Owner.ToString().Equals(action.TargetPlayer.Id));
 
                 if (action.FilterForBarricades) remove = remove.Where(k => k.Asset is ItemBarricadeAsset);
                 else if (action.FilterForStructures) remove = remove.Where(k => k.Asset is ItemStructureAsset);
 
-                if (action.ItemId != ushort.MaxValue) remove = remove.Where(k => k.AssetId == action.ItemId);
+                if (action.ItemAsset != null) remove = remove.Where(k => k.AssetId == action.ItemAsset.id);
 
                 if (action.Center != Vector3.negativeInfinity)
                     remove = remove.Where(k => Vector3.Distance(k.Position, action.Center) <= action.Radius);
@@ -116,8 +116,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 foreach (var build in buildables)
                     WriteOnlyGame.RemoveBarricadeStructure(build.Position);
 
-                BaseClusteringPlugin.Instance.Translate("wrecked", buildables.Count);
-
+                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("wrecked", buildables.Count, action.ItemAsset != null ? action.ItemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"), action.Radius != float.NegativeInfinity ? action.Radius.ToString() : BaseClusteringPlugin.Instance.Translate("not_available"), action.TargetPlayer != null ? action.TargetPlayer.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"), action.IncludeVehicles, action.FilterForBarricades, action.FilterForStructures));
                 return;
             }
 
@@ -128,11 +127,11 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (barricades) builds = builds.Where(k => k.Asset is ItemBarricadeAsset);
             else if (structs) builds = builds.Where(k => k.Asset is ItemStructureAsset);
 
-            if (id != ushort.MaxValue) builds = builds.Where(k => k.AssetId == id);
+            if (itemAsset != null) builds = builds.Where(k => k.AssetId == itemAsset.id);
 
             var center = Vector3.negativeInfinity;
 
-            if (radius != float.MaxValue)
+            if (radius != float.NegativeInfinity)
             {
                 if (!(caller is UnturnedPlayer cPlayer))
                 {
@@ -151,9 +150,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            WreckActions.Add(cId,
-                new WreckAction(plants, barricades, structs,
-                    target == null ? CSteamID.Nil : new CSteamID(ulong.Parse(target.Id)), center, id, radius));
+            WreckActions.Add(cId, new WreckAction(plants, barricades, structs, target, center, itemAsset, radius));
         }
     }
 }

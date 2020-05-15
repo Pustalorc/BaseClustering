@@ -45,7 +45,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var id = args.GetUshort(out index);
+            var itemAsset = args.GetItemAsset(out index);
             if (index > -1)
                 args.RemoveAt(index);
 
@@ -76,14 +76,13 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
                 WreckActions.Remove(cId);
 
-
-                var remove = action.TargetId != CSteamID.Nil
+                var remove = action.TargetPlayer != null
                     ? BaseClusteringPlugin.Instance.Clusters.Where(
-                        k => k.CommonOwner.ToString().Equals(action.TargetId))
+                        k => k.CommonOwner.ToString().Equals(action.TargetPlayer.Id))
                     : BaseClusteringPlugin.Instance.Clusters;
 
-                if (action.ItemId != ushort.MaxValue)
-                    remove = remove.Where(k => k.Buildables.Any(l => l.AssetId == action.ItemId));
+                if (action.ItemAsset != null)
+                    remove = remove.Where(k => k.Buildables.Any(l => l.AssetId == action.ItemAsset.id));
 
                 if (action.Center != Vector3.negativeInfinity)
                     remove = remove.Where(k =>
@@ -99,8 +98,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 foreach (var cluster in baseClusters)
                     BaseClusteringPlugin.Instance.DestroyCluster(cluster);
 
-                BaseClusteringPlugin.Instance.Translate("wrecked_clusters", baseClusters.Count);
-
+                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("wrecked_clusters", baseClusters.Count, action.ItemAsset != null ? action.ItemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"), action.Radius != float.NegativeInfinity ? action.Radius.ToString() : BaseClusteringPlugin.Instance.Translate("not_available"), action.TargetPlayer != null ? action.TargetPlayer.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available")));
                 return;
             }
 
@@ -108,11 +106,11 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 ? BaseClusteringPlugin.Instance.Clusters.Where(k => k.CommonOwner.ToString().Equals(target.Id))
                 : BaseClusteringPlugin.Instance.Clusters;
 
-            if (id != ushort.MaxValue) clusters = clusters.Where(k => k.Buildables.Any(l => l.AssetId == id));
+            if (itemAsset != null) clusters = clusters.Where(k => k.Buildables.Any(l => l.AssetId == itemAsset.id));
 
             var center = Vector3.negativeInfinity;
 
-            if (radius != float.MaxValue)
+            if (radius != float.NegativeInfinity)
             {
                 if (!(caller is UnturnedPlayer cPlayer))
                 {
@@ -131,9 +129,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            WreckActions.Add(cId,
-                new WreckClustersAction(target == null ? CSteamID.Nil : new CSteamID(ulong.Parse(target.Id)), center,
-                    id, radius));
+            WreckActions.Add(cId, new WreckClustersAction(target, center, itemAsset, radius));
         }
     }
 }
