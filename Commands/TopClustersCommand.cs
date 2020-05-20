@@ -26,7 +26,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
         {
             var clusters = BaseClusteringPlugin.Instance.Clusters;
 
-            var topClusters = clusters.GroupBy(k => k.CommonOwner).OrderBy(k => k.Count()).Take(5).ToList();
+            var topClusters = clusters.GroupBy(k => k.CommonOwner).OrderByDescending(k => k.Count()).Take(5).ToList();
 
             for (var i = 0; i < topClusters.Count; i++)
             {

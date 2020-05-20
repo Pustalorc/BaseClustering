@@ -1,9 +1,7 @@
 ﻿using System.Linq;
 using System.Threading;
-using JetBrains.Annotations;
 using Rocket.Core.Utils;
 using SDG.Unturned;
-using Steamworks;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Statics
@@ -40,16 +38,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
 
         private static void _damageBarricadeStructure(Vector3 position, ushort damage)
         {
-            if (ReadOnlyGame.TryGetBarricadePlantAndRegion(position, out var x, out var y, out var plant, out var index,
-                    out var bRegion))
-                // ReSharper disable once AssignNullToNotNullAttribute
-                BarricadeManager.damage(bRegion.drops.FirstOrDefault(k => k.instanceID == bRegion.barricades[index].instanceID)?.model, damage, 1, false);
+            if (ReadOnlyGame.TryGetBarricadePlantAndRegion(position, out _, out _, out _, out var index,
+                out var bRegion) && bRegion != null)
+                BarricadeManager.damage(
+                    bRegion.drops.FirstOrDefault(k => k.instanceID == bRegion.barricades[index].instanceID)?.model,
+                    damage, 1, false);
 
-            if (!ReadOnlyGame.TryGetStructureRegion(position, out x, out y, out index, out var sRegion) ||
-                // ReSharper disable once PossibleNullReferenceException
-                !sRegion.structures.Exists(k => k.point == position)) return;
+            if (!ReadOnlyGame.TryGetStructureRegion(position, out _, out _, out index, out var sRegion) ||
+                sRegion?.structures.Exists(k => k.point == position) == false) return;
 
-            StructureManager.damage(sRegion.drops.FirstOrDefault(k => k.instanceID == sRegion.structures[index].instanceID)?.model, Vector3.zero, damage, 1, false);
+            StructureManager.damage(
+                sRegion?.drops.FirstOrDefault(k => k.instanceID == sRegion.structures[index].instanceID)?.model,
+                Vector3.zero, damage, 1, false);
         }
 
         public static void RemoveBarricadeStructure(Vector3 position)
@@ -60,17 +60,37 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 TaskDispatcher.QueueOnMainThread(() => _removeBarricadeStructure(position));
         }
 
+        public static void RemoveBarricadeStructure(Transform model)
+        {
+            if (Thread.CurrentThread.IsGameThread())
+                _removeBarricadeStructure(model);
+            else
+                TaskDispatcher.QueueOnMainThread(() => _removeBarricadeStructure(model));
+        }
+
         private static void _removeBarricadeStructure(Vector3 position)
         {
             if (ReadOnlyGame.TryGetBarricadePlantAndRegion(position, out var x, out var y, out var plant, out var index,
                 out var bRegion))
+            {
                 BarricadeManager.destroyBarricade(bRegion, x, y, plant, index);
+                return;
+            }
 
-            if (!ReadOnlyGame.TryGetStructureRegion(position, out x, out y, out index, out var sRegion) ||
-                // ReSharper disable once PossibleNullReferenceException
-                !sRegion.structures.Exists(k => k.point == position)) return;
+            if (ReadOnlyGame.TryGetStructureRegion(position, out x, out y, out index, out var sRegion))
+                StructureManager.destroyStructure(sRegion, x, y, index, Vector3.zero);
+        }
 
-            StructureManager.destroyStructure(sRegion, x, y, index, Vector3.zero);
+        private static void _removeBarricadeStructure(Transform model)
+        {
+            if (BarricadeManager.tryGetInfo(model, out var x, out var y, out var plant, out var index, out var bRegion))
+            {
+                BarricadeManager.destroyBarricade(bRegion, x, y, plant, index);
+                return;
+            }
+
+            if (StructureManager.tryGetInfo(model, out x, out y, out index, out var sRegion))
+                StructureManager.destroyStructure(sRegion, x, y, index, Vector3.zero);
         }
 
         public static void RepairBarricadeStructure(Vector3 position, float damage, float times)

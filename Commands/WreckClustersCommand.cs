@@ -7,15 +7,14 @@ using Pustalorc.Plugins.BaseClustering.API.Statics;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
-using Steamworks;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class WreckClustersCommand : IRocketCommand
     {
-        private Dictionary<CSteamID, WreckClustersAction>
-            WreckActions = new Dictionary<CSteamID, WreckClustersAction>();
+        private Dictionary<string, WreckClustersAction>
+            _wreckActions = new Dictionary<string, WreckClustersAction>();
 
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
@@ -31,7 +30,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public void Execute([NotNull] IRocketPlayer caller, [NotNull] string[] command)
         {
-            var cId = new CSteamID(ulong.Parse(caller.Id));
+            var cId = caller.Id;
             var args = command.ToList();
 
             var abort = args.CheckArgsIncludeString("abort", out var index);
@@ -56,9 +55,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (abort)
             {
-                if (WreckActions.TryGetValue(cId, out _))
+                if (_wreckActions.TryGetValue(cId, out _))
                 {
-                    WreckActions.Remove(cId);
+                    _wreckActions.Remove(cId);
                     UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("action_cancelled"));
                     return;
                 }
@@ -69,13 +68,13 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (confirm)
             {
-                if (!WreckActions.TryGetValue(cId, out var action))
+                if (!_wreckActions.TryGetValue(cId, out var action))
                 {
                     UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("no_action_queued"));
                     return;
                 }
 
-                WreckActions.Remove(cId);
+                _wreckActions.Remove(cId);
 
                 var remove = action.TargetPlayer != null
                     ? BaseClusteringPlugin.Instance.Clusters.Where(
@@ -85,7 +84,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 if (action.ItemAsset != null)
                     remove = remove.Where(k => k.Buildables.Any(l => l.AssetId == action.ItemAsset.id));
 
-                if (action.Center != Vector3.negativeInfinity)
+                if (!action.Center.IsNegativeInfinity())
                     remove = remove.Where(k =>
                         k.Buildables.Any(l => Vector3.Distance(l.Position, action.Center) <= action.Radius));
 
@@ -140,7 +139,28 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            WreckActions.Add(cId, new WreckClustersAction(target, center, itemAsset, radius));
+            if (_wreckActions.TryGetValue(cId, out _))
+            {
+                _wreckActions[cId] = new WreckClustersAction(target, center, itemAsset, radius);
+                UnturnedChat.Say(caller,
+                    BaseClusteringPlugin.Instance.Translate("wreck_clusters_action_queued_new",
+                        target?.DisplayName ?? BaseClusteringPlugin.Instance.Translate("not_available"),
+                        itemAsset?.itemName ?? BaseClusteringPlugin.Instance.Translate("not_available"),
+                        radius != float.NegativeInfinity
+                            ? radius.ToString(CultureInfo.CurrentCulture)
+                            : BaseClusteringPlugin.Instance.Translate("not_available")));
+            }
+            else
+            {
+                _wreckActions.Add(cId, new WreckClustersAction(target, center, itemAsset, radius));
+                UnturnedChat.Say(caller,
+                    BaseClusteringPlugin.Instance.Translate("wreck_clusters_action_queued",
+                        target?.DisplayName ?? BaseClusteringPlugin.Instance.Translate("not_available"),
+                        itemAsset?.itemName ?? BaseClusteringPlugin.Instance.Translate("not_available"),
+                        radius != float.NegativeInfinity
+                            ? radius.ToString(CultureInfo.CurrentCulture)
+                            : BaseClusteringPlugin.Instance.Translate("not_available")));
+            }
         }
     }
 }

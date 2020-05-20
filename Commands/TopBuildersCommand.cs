@@ -33,7 +33,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             var builds = plants ? ReadOnlyGame.GetBuilds(CSteamID.Nil, true) : BaseClusteringPlugin.Instance.Buildables;
 
-            var topBuilders = builds.GroupBy(k => k.Owner).OrderBy(k => k.Count()).Take(5).ToList();
+            var topBuilders = builds.GroupBy(k => k.Owner).OrderByDescending(k => k.Count()).Take(5).ToList();
 
             for (var i = 0; i < topBuilders.Count; i++)
             {

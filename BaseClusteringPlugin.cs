@@ -57,10 +57,26 @@ namespace Pustalorc.Plugins.BaseClustering
             {"no_action_queued", "There is no wreck action queued."},
             {"cannot_wreck_no_clusters", "There are no clusters selected, so nothing can be wrecked."},
             {"wrecked_clusters", "Wrecked a total of {0} clusters. Specific Item: {1}, Radius: {2}, Player: {3}"},
+            {
+                "wreck_clusters_action_queued",
+                "Queued a wreck clusters action. Confirm with /wc confirm. Player: {0}, Specific Item: {1}, Radius: {2}, "
+            },
+            {
+                "wreck_clusters_action_queued_new",
+                "Discarded previous queued action and queued a new wreck clusters action. Confirm with /wc confirm. Player: {0}, Specific Item: {1}, Radius: {2}, "
+            },
             {"cannot_wreck_no_builds", "There are no buildables selected, so nothing can be wrecked."},
             {
                 "wrecked",
                 "Wrecked a total of {0} buildables. Specific Item: {1}, Radius: {2}, Player: {3}, Planted Barricades Included: {4}, Filter by Barricades: {5}, Filter by Structures: {6}"
+            },
+            {
+                "wreck_action_queued",
+                "Queued a wreck action. Confirm with /w confirm. Specific Item: {0}, Radius: {1}, Player: {2}, Planted Barricades Included: {3}, Filter by Barricades: {4}, Filter by Structures: {5}"
+            },
+            {
+                "wreck_action_queued_new",
+                "Discarded previous queued action and queued a new wreck action. Confirm with /w confirm. Specific Item: {0}, Radius: {1}, Player: {2}, Planted Barricades Included: {3}, Filter by Barricades: {4}, Filter by Structures: {5}"
             },
             {
                 "no_vehicle_found",
@@ -98,11 +114,13 @@ namespace Pustalorc.Plugins.BaseClustering
             BarricadeManager.onHarvestPlantRequested -= BarricadeSalvaged;
             BarricadeManager.onTransformRequested -= BarricadeTransformed;
             PatchBarricadeSpawnInternal.OnNewBarricadeSpawned -= BarricadeSpawned;
+            PatchBarricadeDestroy.OnBarricadeDestroyed -= BuildableDestroyed;
 
             StructureManager.onTransformRequested -= StructureTransformed;
             StructureManager.onSalvageStructureRequested -= StructureSalvaged;
             StructureManager.onDamageStructureRequested -= StructureDamaged;
             PatchStructureSpawnInternal.OnNewStructureSpawned -= StructureSpawned;
+            PatchStructureDestroy.OnStructureDestroyed -= BuildableDestroyed;
 
             _harmony.UnpatchAll();
             _harmony = null;
@@ -214,28 +232,28 @@ namespace Pustalorc.Plugins.BaseClustering
         /// <summary>
         ///     Removes a specific buildable from all the clusters where it is found at.
         /// </summary>
-        /// <param name="instanceId"></param>
-        public void RemoveBuildable(uint instanceId)
+        /// <param name="model">The model of the buildable to remove</param>
+        public void RemoveBuildable(Transform model)
         {
             var clusters = Clusters.Where(k =>
-                k.Buildables.Any(l => l.InstanceId == instanceId));
+                k.Buildables.Any(l => l.Model == model));
 
             foreach (var cluster in clusters.ToList())
             {
                 var buildable =
-                    cluster.Buildables.FirstOrDefault(k => k.InstanceId == instanceId);
+                    cluster.Buildables.FirstOrDefault(l => l.Model == model);
+
+                if (buildable == null)
+                {
+                    Logging.Verbose(this,
+                        "Missed a buildable at some point. Unable to remove from cluster.");
+                    continue;
+                }
 
                 if (cluster.Buildables.Count == 1)
                 {
                     cluster.Buildables.Clear();
                     DestroyCluster(cluster);
-                    continue;
-                }
-
-                if (buildable == null)
-                {
-                    Logging.Verbose(this,
-                        "Missed a buildable at some point. Unable to remove from cluster when salvaged.");
                     continue;
                 }
 
@@ -320,11 +338,18 @@ namespace Pustalorc.Plugins.BaseClustering
             BarricadeManager.onHarvestPlantRequested += BarricadeSalvaged;
             BarricadeManager.onTransformRequested += BarricadeTransformed;
             PatchBarricadeSpawnInternal.OnNewBarricadeSpawned += BarricadeSpawned;
+            PatchBarricadeDestroy.OnBarricadeDestroyed += BuildableDestroyed;
 
             StructureManager.onTransformRequested += StructureTransformed;
             StructureManager.onSalvageStructureRequested += StructureSalvaged;
             StructureManager.onDamageStructureRequested += StructureDamaged;
             PatchStructureSpawnInternal.OnNewStructureSpawned += StructureSpawned;
+            PatchStructureDestroy.OnStructureDestroyed += BuildableDestroyed;
+        }
+
+        private void BuildableDestroyed(Transform model)
+        {
+            RemoveBuildable(model);
         }
 
         private void StructureDamaged(CSteamID instigatorSteamId, Transform structureTransform,
@@ -334,16 +359,17 @@ namespace Pustalorc.Plugins.BaseClustering
                 out var region)) return;
 
             var sData = region.structures[index];
+            var sDrop = region.drops.FirstOrDefault(k => k.instanceID == sData.instanceID);
 
             if (sData.structure.isDead)
             {
-                RemoveBuildable(sData.instanceID);
+                RemoveBuildable(sDrop.model);
                 return;
             }
 
             if (pendingTotalDamage < 1 || pendingTotalDamage < sData.structure.health) return;
 
-            RemoveBuildable(sData.instanceID);
+            RemoveBuildable(sDrop.model);
         }
 
         private void StructureSpawned([NotNull] StructureData data, [NotNull] StructureDrop drop)
@@ -368,7 +394,8 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             if (!shouldAllow || !StructureManager.tryGetRegion(x, y, out var region)) return;
 
-            RemoveBuildable(region.structures[index].instanceID);
+            RemoveBuildable(region.drops.FirstOrDefault(k => k.instanceID == region.structures[index].instanceID)
+                .model);
         }
 
         private void StructureTransformed(CSteamID instigator, byte x, byte y, uint instanceId, ref Vector3 point,
@@ -414,16 +441,17 @@ namespace Pustalorc.Plugins.BaseClustering
                 out var index, out var region)) return;
 
             var bData = region.barricades[index];
+            var bDrop = region.drops.FirstOrDefault(k => k.instanceID == bData.instanceID);
 
             if (bData.barricade.isDead)
             {
-                RemoveBuildable(bData.instanceID);
+                RemoveBuildable(bDrop.model);
                 return;
             }
 
             if (pendingTotalDamage < 1 || pendingTotalDamage < bData.barricade.health) return;
 
-            RemoveBuildable(bData.instanceID);
+            RemoveBuildable(bDrop.model);
         }
 
         private void BarricadeSpawned([NotNull] BarricadeData data, [NotNull] BarricadeDrop drop)
@@ -449,7 +477,8 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             if (!shouldAllow || !BarricadeManager.tryGetRegion(x, y, plant, out var region)) return;
 
-            RemoveBuildable(region.barricades[index].instanceID);
+            RemoveBuildable(region.drops.FirstOrDefault(k => k.instanceID == region.barricades[index].instanceID)
+                .model);
         }
 
         private void BarricadeTransformed(CSteamID instigator, byte x, byte y, ushort plant, uint instanceId,

@@ -51,15 +51,23 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             var cluster = clustersL[Random.Range(0, clustersL.Count - 1)];
 
             if (cluster != null)
-                player.Teleport(
-                    new Vector3(cluster.AverageCenterPosition.x, cluster.AverageCenterPosition.y + 4,
-                        cluster.AverageCenterPosition.z), player.Rotation);
+            {
+                var offset = new Vector3(0, 4, 0);
+
+                while (!player.Player.stance.wouldHaveHeightClearanceAtPosition(cluster.AverageCenterPosition + offset,
+                    0.5f))
+                    offset.y++;
+
+                player.Teleport(cluster.AverageCenterPosition + offset, player.Rotation);
+            }
             else
+            {
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_clusters",
                         target != null
                             ? target.DisplayName
                             : BaseClusteringPlugin.Instance.Translate("not_available")));
+            }
         }
     }
 }

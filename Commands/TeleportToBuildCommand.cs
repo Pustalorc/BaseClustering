@@ -78,10 +78,16 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             var build = buildsL[Random.Range(0, buildsL.Count - 1)];
 
             if (build != null)
-                player.Teleport(
-                    new Vector3(build.Position.x, plants ? build.Position.y + 4 : build.Position.y + 2,
-                        build.Position.z), player.Rotation);
+            {
+                var offset = new Vector3(0, plants ? 4 : 2, 0);
+
+                while (!player.Player.stance.wouldHaveHeightClearanceAtPosition(build.Position + offset, 0.5f))
+                    offset.y++;
+
+                player.Teleport(build.Position + offset, player.Rotation);
+            }
             else
+            {
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("cannot_teleport_builds_too_close",
                         itemAsset != null
@@ -89,6 +95,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                             : BaseClusteringPlugin.Instance.Translate("not_available"),
                         target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
                         plants, barricades, structs));
+            }
         }
     }
 }

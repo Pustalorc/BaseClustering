@@ -86,6 +86,7 @@
     <Compile Include="API\Classes\WreckAction.cs" />
     <Compile Include="API\Classes\WreckClustersAction.cs" />
     <Compile Include="API\Delegates\BarricadeSpawned.cs" />
+    <Compile Include="API\Delegates\BuildableDestroyed.cs" />
     <Compile Include="API\Delegates\StructureSpawned.cs" />
     <Compile Include="API\Statics\ExtendedMath.cs" />
     <Compile Include="API\Statics\Extensions.cs" />
@@ -105,7 +106,9 @@
     <Compile Include="Commands\WreckCommand.cs" />
     <Compile Include="Commands\WreckVehicleCommand.cs" />
     <Compile Include="Config\BaseClusteringPluginConfiguration.cs" />
+    <Compile Include="Patches\PatchBarricadeDestroy.cs" />
     <Compile Include="Patches\PatchBarricadeSpawnInternal.cs" />
+    <Compile Include="Patches\PatchStructureDestroy.cs" />
     <Compile Include="Patches\PatchStructureSpawnInternal.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

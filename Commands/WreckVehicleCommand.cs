@@ -59,7 +59,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 BarricadeManager.destroyBarricade(region, x, y, plant, (ushort) i);
 
             UnturnedChat.Say(caller,
-                BaseClusteringPlugin.Instance.Translate("vehicle_wreck", raycastInfo.vehicle.asset.name,
+                BaseClusteringPlugin.Instance.Translate("vehicle_wreck",
+                    raycastInfo.vehicle.asset.vehicleName ?? raycastInfo.vehicle.asset.name,
                     raycastInfo.vehicle.id, raycastInfo.vehicle.instanceID,
                     id == CSteamID.Nil ? "N/A" : pId?.CharacterName ?? raycastInfo.vehicle.lockedOwner.ToString()));
         }

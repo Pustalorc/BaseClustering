@@ -255,6 +255,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 return itemAsset;
             }
 
+            index = -1;
             return null;
         }
 
@@ -274,9 +275,15 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 if (output == null && ulong.TryParse(k, out var id) && id > 76561197960265728)
                     output = new RocketPlayer(id.ToString());
 
-                return output == null;
+                return output != null;
             });
             return output;
+        }
+
+        public static bool IsNegativeInfinity(this Vector3 vector)
+        {
+            return float.IsNegativeInfinity(vector.x) || float.IsNegativeInfinity(vector.y) ||
+                   float.IsNegativeInfinity(vector.z);
         }
     }
 }
