@@ -92,9 +92,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
                 _wreckActions.Remove(cId);
 
-                var remove = action.IncludeVehicles
-                    ? ReadOnlyGame.GetBuilds(CSteamID.Nil, true)
-                    : BaseClusteringPlugin.Instance.Buildables;
+                var remove = ReadOnlyGame.GetBuilds(CSteamID.Nil, true, action.IncludeVehicles);
 
                 if (action.TargetPlayer != null)
                     remove = remove.Where(k => k.Owner.ToString().Equals(action.TargetPlayer.Id));
@@ -132,7 +130,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            var builds = plants ? ReadOnlyGame.GetBuilds(CSteamID.Nil, true) : BaseClusteringPlugin.Instance.Buildables;
+            var builds = ReadOnlyGame.GetBuilds(CSteamID.Nil, true, plants);
 
             if (target != null) builds = builds.Where(k => k.Owner.ToString().Equals(target.Id));
 

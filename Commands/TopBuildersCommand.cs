@@ -31,7 +31,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var builds = plants ? ReadOnlyGame.GetBuilds(CSteamID.Nil, true) : BaseClusteringPlugin.Instance.Buildables;
+            var builds = ReadOnlyGame.GetBuilds(CSteamID.Nil, true, plants);
 
             var topBuilders = builds.GroupBy(k => k.Owner).OrderByDescending(k => k.Count()).Take(5).ToList();
 

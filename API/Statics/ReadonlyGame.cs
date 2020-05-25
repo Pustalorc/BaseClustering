@@ -11,8 +11,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
     public static class ReadOnlyGame
     {
         [NotNull]
-        public static IEnumerable<Buildable> GetBuilds(CSteamID id, bool includePlants)
+        public static IEnumerable<Buildable> GetBuilds(CSteamID id, bool includePlants, bool usePreProcessedData)
         {
+            if (usePreProcessedData && BaseClusteringPlugin.Instance != null)
+                return BaseClusteringPlugin.Instance.Buildables.Where(
+                    k => id == CSteamID.Nil || k.Owner == id.m_SteamID);
+
             var barricades = GetBarricades(id, includePlants);
             var barricadeDrops = GetBarricadeDrops();
             var structures = GetStructures(id);

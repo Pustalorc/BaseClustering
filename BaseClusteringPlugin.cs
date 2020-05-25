@@ -266,7 +266,7 @@ namespace Pustalorc.Plugins.BaseClustering
             var start = DateTime.Now;
             Clusters = new ObservableCollection<BaseCluster>();
 
-            var allBuildables = ReadOnlyGame.GetBuilds(CSteamID.Nil, false).ToList();
+            var allBuildables = ReadOnlyGame.GetBuilds(CSteamID.Nil, false, false).ToList();
             Logging.Write(this, $"Total buildables: {allBuildables.Count}");
 
             while (allBuildables.Count > 0)
