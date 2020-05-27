@@ -1,5 +1,7 @@
 # BaseClustering
-Unturned Plugin to cluster Buildables &amp; Structures (UNFINISHED)
+Unturned Plugin to cluster Buildables &amp; Structures
+
+WARNING: This plugin uses a modified version of PIL that does NOT WORK WITH OLD DATA AND VERSIONS of PIL
 
 Download is available on the [Releases](https://github.com/Pustalorc/BaseClustering/releases/)
 
