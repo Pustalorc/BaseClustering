@@ -23,6 +23,8 @@ namespace Pustalorc.Plugins.BaseClustering
     public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConfiguration>
     {
         public static BaseClusteringPlugin Instance { get; private set; }
+        public static event OnVoidDelegate OnDataProcessed;
+
         private Harmony _harmony;
 
         [NotNull]
@@ -163,6 +165,17 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             return Clusters?.Where(k => Vector3.Distance(k.CenterBuildable, center) < sqrRadius) ??
                    new List<BaseCluster>();
+        }
+
+        /// <summary>
+        ///     Retrieves all clusters that have the player as the most common owner.
+        /// </summary>
+        /// <param name="player">The player to use for the search as the most common owner.</param>
+        /// <returns></returns>
+        [NotNull]
+        public IEnumerable<BaseCluster> GetMostOwnedClusters(CSteamID player)
+        {
+            return Clusters?.Where(k => k.CommonOwner == player.m_SteamID) ?? new List<BaseCluster>();
         }
 
         /// <summary>
@@ -331,8 +344,6 @@ namespace Pustalorc.Plugins.BaseClustering
 
         private void OnLevelLoaded(int level)
         {
-            GenerateAndLoadAllClusters();
-
             BarricadeManager.onSalvageBarricadeRequested += BarricadeSalvaged;
             BarricadeManager.onDamageBarricadeRequested += BarricadeDamaged;
             BarricadeManager.onHarvestPlantRequested += BarricadeSalvaged;
@@ -345,6 +356,9 @@ namespace Pustalorc.Plugins.BaseClustering
             StructureManager.onDamageStructureRequested += StructureDamaged;
             PatchStructureSpawnInternal.OnNewStructureSpawned += StructureSpawned;
             PatchStructureDestroy.OnStructureDestroyed += BuildableDestroyed;
+
+            GenerateAndLoadAllClusters();
+            OnDataProcessed?.Invoke();
         }
 
         private void BuildableDestroyed(Transform model)
