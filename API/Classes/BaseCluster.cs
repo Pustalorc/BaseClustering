@@ -12,6 +12,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
     {
         private ObservableCollection<Buildable> _buildables;
 
+        private static float MaxExpandRadius => BaseClusteringPlugin.Instance != null
+            ? BaseClusteringPlugin.Instance.Configuration.Instance.MaxClusterSelfExpandRadius
+            : 75f;
+
         public ulong TotalHealth => _buildables.SumUlong(k => k.Health);
 
         public ulong CommonOwner => _buildables.GroupBy(k => k.Owner)
@@ -104,8 +108,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
 
             var newRadius = radiiDist.Max();
 
-            if (newRadius > BaseClusteringPlugin.Instance.Configuration.Instance.MaxRadius)
-                newRadius = BaseClusteringPlugin.Instance.Configuration.Instance.MaxRadius;
+            if (newRadius > MaxExpandRadius)
+                newRadius = MaxExpandRadius;
 
             Radius = newRadius;
         }

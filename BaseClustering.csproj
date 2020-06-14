@@ -95,6 +95,7 @@
     <Compile Include="API\Statics\ReadOnlyGame.cs" />
     <Compile Include="API\Statics\Logging.cs" />
     <Compile Include="API\Statics\ThreadUtil2.cs" />
+    <Compile Include="API\Statics\Utils.cs" />
     <Compile Include="API\Statics\WriteOnlyGame.cs" />
     <Compile Include="BaseClusteringPlugin.cs" />
     <Compile Include="Commands\ClustersRegenCommand.cs" />
@@ -108,6 +109,9 @@
     <Compile Include="Commands\WreckCommand.cs" />
     <Compile Include="Commands\WreckVehicleCommand.cs" />
     <Compile Include="Config\BaseClusteringPluginConfiguration.cs" />
+    <Compile Include="Config\BruteforceOptions.cs" />
+    <Compile Include="Config\EClusteringStyle.cs" />
+    <Compile Include="Config\RustOptions.cs" />
     <Compile Include="Patches\PatchBarricadeDestroy.cs" />
     <Compile Include="Patches\PatchBarricadeSpawnInternal.cs" />
     <Compile Include="Patches\PatchStructureDestroy.cs" />

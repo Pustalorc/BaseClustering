@@ -277,69 +277,24 @@ namespace Pustalorc.Plugins.BaseClustering
         internal void GenerateAndLoadAllClusters()
         {
             var start = DateTime.Now;
-            Clusters = new ObservableCollection<BaseCluster>();
 
             var allBuildables = ReadOnlyGame.GetBuilds(CSteamID.Nil, false, false).ToList();
-            Logging.Write(this, $"Total buildables: {allBuildables.Count}");
+            Logging.Write(this,
+                $"Total buildables: {allBuildables.Count}. Took {(int) DateTime.Now.Subtract(start).TotalMilliseconds}ms");
 
-            while (allBuildables.Count > 0)
+            Clusters = Configuration.Instance.ClusteringStyle switch
             {
-                var radius = Configuration.Instance.InitialRadius;
-
-                // Get center-most buildable
-                var centerIndex = allBuildables.GetCenterIndex();
-                var center = allBuildables[centerIndex].Position;
-
-                // Select all buildables that are within the radius of the cluster, but are not outliers
-                var localCluster = allBuildables.GetCluster(center, radius);
-
-                // Move cluster centre to local densest point
-                centerIndex = localCluster.GetLocalCenterIndex();
-                center = allBuildables[centerIndex].Position;
-
-                // Auto expand cluster and select new buildables
-                var currentRechecks = 0;
-                bool changed;
-                do
-                {
-                    changed = false;
-                    currentRechecks++;
-
-                    // Select all buildables that are within the radius of the new center, but are not outliers
-                    localCluster = allBuildables.GetCluster(center, radius);
-
-                    // Update radii to maximum distance
-                    var radiiDist = localCluster.GetDistances(center);
-
-                    if (!(radiiDist.Values.Max() > 0)) continue;
-
-                    var newRadius = radiiDist.Values.Max();
-
-                    if (newRadius != radius)
-                        changed = true;
-
-                    if (newRadius > Configuration.Instance.MaxRadius)
-                        newRadius = Configuration.Instance.MaxRadius;
-
-                    radius = newRadius;
-                } while (changed && Configuration.Instance.MaxRadiusRechecks > currentRechecks &&
-                         radius < Configuration.Instance.MaxRadius);
-
-                // Assign data to final clusters
-                var builds = new List<Buildable>();
-                for (var i = 0; i < localCluster.Count; i++)
-                {
-                    builds.Add(allBuildables[localCluster.ElementAt(i).Key - i]);
-                    allBuildables.RemoveAt(localCluster.ElementAt(i).Key - i);
-                }
-
-                Clusters.Add(new BaseCluster(builds, center, radius));
-            }
-
-            var end = DateTime.Now;
+                EClusteringStyle.Bruteforce => new ObservableCollection<BaseCluster>(
+                    Utils.BruteforceClustering(allBuildables, Configuration.Instance.BruteforceOptions)),
+                EClusteringStyle.Rust => new ObservableCollection<BaseCluster>(
+                    Utils.RustClustering(allBuildables, Configuration.Instance.RustOptions)),
+                EClusteringStyle.Hybrid => new ObservableCollection<BaseCluster>(Utils.HybridClustering(allBuildables,
+                    Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions)),
+                _ => Clusters
+            };
 
             Logging.Write(this,
-                $"Clusters Loaded: {Clusters.Count}. Took {(int) end.Subtract(start).TotalMilliseconds}ms.");
+                $"Clusters Loaded: {Clusters.Count}. Took {(int) DateTime.Now.Subtract(start).TotalMilliseconds}ms.");
         }
 
         private void OnLevelLoaded(int level)
@@ -392,12 +347,19 @@ namespace Pustalorc.Plugins.BaseClustering
                 data.structure.health, data.instanceID, data.owner, data.group, data.point, data.structure.asset,
                 drop.model, null, null);
 
-            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxRadius);
+            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
 
             if (bestCluster == null)
             {
+                var config = Configuration.Instance;
                 Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                    Configuration.Instance.InitialRadius));
+                    config.ClusteringStyle switch
+                    {
+                        EClusteringStyle.Bruteforce => config.BruteforceOptions.InitialRadius,
+                        EClusteringStyle.Rust => 1.73205078f + config.RustOptions.ExtraRadius,
+                        EClusteringStyle.Hybrid => 1.73205078f + config.RustOptions.ExtraRadius,
+                        _ => 1.73205078f + config.RustOptions.ExtraRadius
+                    }));
                 return;
             }
 
@@ -436,12 +398,19 @@ namespace Pustalorc.Plugins.BaseClustering
             buildable.AngleZ = angleZ;
             buildable.Position = point;
 
-            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxRadius);
+            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
 
             if (bestCluster == null)
             {
+                var config = Configuration.Instance;
                 Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                    Configuration.Instance.InitialRadius));
+                    config.ClusteringStyle switch
+                    {
+                        EClusteringStyle.Bruteforce => config.BruteforceOptions.InitialRadius,
+                        EClusteringStyle.Rust => 1.73205078f + config.RustOptions.ExtraRadius,
+                        EClusteringStyle.Hybrid => 1.73205078f + config.RustOptions.ExtraRadius,
+                        _ => 1.73205078f + config.RustOptions.ExtraRadius
+                    }));
                 return;
             }
 
@@ -474,12 +443,19 @@ namespace Pustalorc.Plugins.BaseClustering
                 data.barricade.health, data.instanceID, data.owner, data.group, data.point, drop.asset, drop.model,
                 drop.interactable, data.barricade.state);
 
-            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxRadius);
+            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
 
             if (bestCluster == null)
             {
+                var config = Configuration.Instance;
                 Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                    Configuration.Instance.InitialRadius));
+                    config.ClusteringStyle switch
+                    {
+                        EClusteringStyle.Bruteforce => config.BruteforceOptions.InitialRadius,
+                        EClusteringStyle.Rust => 1.73205078f + config.RustOptions.ExtraRadius,
+                        EClusteringStyle.Hybrid => 1.73205078f + config.RustOptions.ExtraRadius,
+                        _ => 1.73205078f + config.RustOptions.ExtraRadius
+                    }));
                 return;
             }
 
@@ -519,12 +495,19 @@ namespace Pustalorc.Plugins.BaseClustering
             buildable.AngleZ = angleZ;
             buildable.Position = point;
 
-            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxRadius);
+            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
 
             if (bestCluster == null)
             {
+                var config = Configuration.Instance;
                 Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                    Configuration.Instance.InitialRadius));
+                    config.ClusteringStyle switch
+                    {
+                        EClusteringStyle.Bruteforce => config.BruteforceOptions.InitialRadius,
+                        EClusteringStyle.Rust => 1.73205078f + config.RustOptions.ExtraRadius,
+                        EClusteringStyle.Hybrid => 1.73205078f + config.RustOptions.ExtraRadius,
+                        _ => 1.73205078f + config.RustOptions.ExtraRadius
+                    }));
                 return;
             }
 
