@@ -74,7 +74,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
         }
 
         [NotNull]
-        public static List<BaseCluster> RustClustering([NotNull] List<Buildable> allBuildables, RustOptions options, bool remainingIntoOmegaCluster)
+        public static List<BaseCluster> RustClustering([NotNull] List<Buildable> allBuildables, RustOptions options,
+            bool remainingIntoOmegaCluster)
         {
             var output = new List<BaseCluster>();
 
