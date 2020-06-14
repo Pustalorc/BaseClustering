@@ -11,7 +11,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
     public static class Utils
     {
         [NotNull]
-        public static List<BaseCluster> BruteforceClustering([NotNull] List<Buildable> allBuildables, BruteforceOptions options)
+        public static List<BaseCluster> BruteforceClustering([NotNull] List<Buildable> allBuildables,
+            BruteforceOptions options)
         {
             var output = new List<BaseCluster>();
 
@@ -77,7 +78,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
         {
             var output = new List<BaseCluster>();
 
-            var allFloors = allBuildables.Where(k => k.Asset is ItemStructureAsset && options.FloorIds.Contains(k.AssetId)).ToList();
+            var allFloors = allBuildables
+                .Where(k => k.Asset is ItemStructureAsset && options.FloorIds.Contains(k.AssetId)).ToList();
 
             while (allFloors.Count > 0)
             {
