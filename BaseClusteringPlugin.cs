@@ -287,7 +287,7 @@ namespace Pustalorc.Plugins.BaseClustering
                 EClusteringStyle.Bruteforce => new ObservableCollection<BaseCluster>(
                     Utils.BruteforceClustering(allBuildables, Configuration.Instance.BruteforceOptions)),
                 EClusteringStyle.Rust => new ObservableCollection<BaseCluster>(
-                    Utils.RustClustering(allBuildables, Configuration.Instance.RustOptions)),
+                    Utils.RustClustering(allBuildables, Configuration.Instance.RustOptions, true)),
                 EClusteringStyle.Hybrid => new ObservableCollection<BaseCluster>(Utils.HybridClustering(allBuildables,
                     Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions)),
                 _ => Clusters
@@ -352,14 +352,28 @@ namespace Pustalorc.Plugins.BaseClustering
             if (bestCluster == null)
             {
                 var config = Configuration.Instance;
-                Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                    config.ClusteringStyle switch
-                    {
-                        EClusteringStyle.Bruteforce => config.BruteforceOptions.InitialRadius,
-                        EClusteringStyle.Rust => 1.73205078f + config.RustOptions.ExtraRadius,
-                        EClusteringStyle.Hybrid => 1.73205078f + config.RustOptions.ExtraRadius,
-                        _ => 1.73205078f + config.RustOptions.ExtraRadius
-                    }));
+
+                switch (config.ClusteringStyle)
+                {
+                    case EClusteringStyle.Bruteforce:
+                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                            config.BruteforceOptions.InitialRadius, false));
+                        break;
+                    case EClusteringStyle.Rust:
+                        var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
+                        if (globalCluster != null) globalCluster.Buildables.Add(buildable);
+                        else
+                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                                1.73205078f + config.RustOptions.ExtraRadius, true));
+                        break;
+                    case EClusteringStyle.Hybrid:
+                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                            config.RustOptions.FloorIds.Contains(buildable.AssetId)
+                                ? 1.73205078f + config.RustOptions.ExtraRadius
+                                : config.BruteforceOptions.InitialRadius, false));
+                        break;
+                }
+
                 return;
             }
 
@@ -403,14 +417,28 @@ namespace Pustalorc.Plugins.BaseClustering
             if (bestCluster == null)
             {
                 var config = Configuration.Instance;
-                Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                    config.ClusteringStyle switch
-                    {
-                        EClusteringStyle.Bruteforce => config.BruteforceOptions.InitialRadius,
-                        EClusteringStyle.Rust => 1.73205078f + config.RustOptions.ExtraRadius,
-                        EClusteringStyle.Hybrid => 1.73205078f + config.RustOptions.ExtraRadius,
-                        _ => 1.73205078f + config.RustOptions.ExtraRadius
-                    }));
+
+                switch (config.ClusteringStyle)
+                {
+                    case EClusteringStyle.Bruteforce:
+                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                            config.BruteforceOptions.InitialRadius, false));
+                        break;
+                    case EClusteringStyle.Rust:
+                        var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
+                        if (globalCluster != null) globalCluster.Buildables.Add(buildable);
+                        else
+                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                                1.73205078f + config.RustOptions.ExtraRadius, true));
+                        break;
+                    case EClusteringStyle.Hybrid:
+                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                            config.RustOptions.FloorIds.Contains(buildable.AssetId)
+                                ? 1.73205078f + config.RustOptions.ExtraRadius
+                                : config.BruteforceOptions.InitialRadius, false));
+                        break;
+                }
+
                 return;
             }
 
@@ -448,14 +476,28 @@ namespace Pustalorc.Plugins.BaseClustering
             if (bestCluster == null)
             {
                 var config = Configuration.Instance;
-                Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                    config.ClusteringStyle switch
-                    {
-                        EClusteringStyle.Bruteforce => config.BruteforceOptions.InitialRadius,
-                        EClusteringStyle.Rust => 1.73205078f + config.RustOptions.ExtraRadius,
-                        EClusteringStyle.Hybrid => 1.73205078f + config.RustOptions.ExtraRadius,
-                        _ => 1.73205078f + config.RustOptions.ExtraRadius
-                    }));
+
+                switch (config.ClusteringStyle)
+                {
+                    case EClusteringStyle.Bruteforce:
+                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                            config.BruteforceOptions.InitialRadius, false));
+                        break;
+                    case EClusteringStyle.Rust:
+                        var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
+                        if (globalCluster != null) globalCluster.Buildables.Add(buildable);
+                        else
+                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                                1.73205078f + config.RustOptions.ExtraRadius, true));
+                        break;
+                    case EClusteringStyle.Hybrid:
+                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                            config.RustOptions.FloorIds.Contains(buildable.AssetId)
+                                ? 1.73205078f + config.RustOptions.ExtraRadius
+                                : config.BruteforceOptions.InitialRadius, false));
+                        break;
+                }
+
                 return;
             }
 
@@ -500,14 +542,28 @@ namespace Pustalorc.Plugins.BaseClustering
             if (bestCluster == null)
             {
                 var config = Configuration.Instance;
-                Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                    config.ClusteringStyle switch
-                    {
-                        EClusteringStyle.Bruteforce => config.BruteforceOptions.InitialRadius,
-                        EClusteringStyle.Rust => 1.73205078f + config.RustOptions.ExtraRadius,
-                        EClusteringStyle.Hybrid => 1.73205078f + config.RustOptions.ExtraRadius,
-                        _ => 1.73205078f + config.RustOptions.ExtraRadius
-                    }));
+
+                switch (config.ClusteringStyle)
+                {
+                    case EClusteringStyle.Bruteforce:
+                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                            config.BruteforceOptions.InitialRadius, false));
+                        break;
+                    case EClusteringStyle.Rust:
+                        var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
+                        if (globalCluster != null) globalCluster.Buildables.Add(buildable);
+                        else
+                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                                1.73205078f + config.RustOptions.ExtraRadius, true));
+                        break;
+                    case EClusteringStyle.Hybrid:
+                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                            config.RustOptions.FloorIds.Contains(buildable.AssetId)
+                                ? 1.73205078f + config.RustOptions.ExtraRadius
+                                : config.BruteforceOptions.InitialRadius, false));
+                        break;
+                }
+
                 return;
             }
 

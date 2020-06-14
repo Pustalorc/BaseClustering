@@ -67,14 +67,14 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                     allBuildables.RemoveAt(localCluster.ElementAt(i).Key - i);
                 }
 
-                output.Add(new BaseCluster(builds, center, radius));
+                output.Add(new BaseCluster(builds, center, radius, false));
             }
 
             return output;
         }
 
         [NotNull]
-        public static List<BaseCluster> RustClustering([NotNull] List<Buildable> allBuildables, RustOptions options)
+        public static List<BaseCluster> RustClustering([NotNull] List<Buildable> allBuildables, RustOptions options, bool remainingIntoOmegaCluster)
         {
             var output = new List<BaseCluster>();
 
@@ -120,8 +120,15 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
 
                 var avgCenter = elementsOfCluster.AverageCenter(k => k.Position);
                 output.Add(new BaseCluster(elementsOfCluster, avgCenter,
-                    elementsOfCluster.GetDistances(k => k.Position, avgCenter).Max()));
+                    elementsOfCluster.GetDistances(k => k.Position, avgCenter).Max() + options.ExtraRadius, false));
             }
+
+            if (!remainingIntoOmegaCluster) return output;
+
+            var center = allBuildables.AverageCenter(k => k.Position);
+            output.Add(new BaseCluster(allBuildables, center,
+                allBuildables.GetDistances(k => k.Position, center).Max() + options.ExtraRadius, true));
+            allBuildables.Clear();
 
             return output;
         }
@@ -130,7 +137,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
         public static List<BaseCluster> HybridClustering([NotNull] List<Buildable> allBuildables,
             BruteforceOptions bruteforceOptions, RustOptions rustOptions)
         {
-            var output = RustClustering(allBuildables, rustOptions);
+            var output = RustClustering(allBuildables, rustOptions, false);
 
             output.AddRange(BruteforceClustering(allBuildables, bruteforceOptions));
 

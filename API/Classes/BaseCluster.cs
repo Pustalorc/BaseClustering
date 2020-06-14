@@ -28,6 +28,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
 
         public Vector3 AverageCenterPosition => _buildables.AverageCenter(k => k.Position);
 
+        public bool IsGlobalCluster;
+
         public byte AngleX;
         public byte AngleY;
         public byte AngleZ;
@@ -58,7 +60,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
             AngleX = AngleY = AngleZ = 0;
         }
 
-        public BaseCluster([NotNull] List<Buildable> buildables, Vector3 center, double radius)
+        public BaseCluster([NotNull] List<Buildable> buildables, Vector3 center, double radius, bool isGlobalCluster)
         {
             Buildables = new ObservableCollection<Buildable>(buildables);
             CenterBuildable = center;
@@ -76,6 +78,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
             AngleX = (byte) (angleX / Buildables.Count);
             AngleY = (byte) (angleY / Buildables.Count);
             AngleZ = (byte) (angleZ / Buildables.Count);
+
+            IsGlobalCluster = isGlobalCluster;
         }
 
         private void BuildablesChanged(object sender, NotifyCollectionChangedEventArgs e)
