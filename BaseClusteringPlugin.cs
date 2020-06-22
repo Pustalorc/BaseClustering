@@ -179,6 +179,17 @@ namespace Pustalorc.Plugins.BaseClustering
         }
 
         /// <summary>
+        ///     Gets the cluster that contains the element with the provided position.
+        /// </summary>
+        /// <param name="position">The position of the buildable within a cluster.</param>
+        /// <returns></returns>
+        [CanBeNull]
+        public BaseCluster GetClusterWithElement(Vector3 position)
+        {
+            return Clusters?.FirstOrDefault(k => k.Buildables.Any(k => k.Position == position)) ?? null;
+        }
+
+        /// <summary>
         ///     Changes all owners and groups of a cluster to match a specific one.
         /// </summary>
         /// <param name="cluster">The specific cluster to change the groups in.</param>
