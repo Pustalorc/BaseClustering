@@ -186,7 +186,7 @@ namespace Pustalorc.Plugins.BaseClustering
         [CanBeNull]
         public BaseCluster GetClusterWithElement(Vector3 position)
         {
-            return Clusters?.FirstOrDefault(k => k.Buildables.Any(k => k.Position == position)) ?? null;
+            return Clusters?.FirstOrDefault(k => k.Buildables.Any(l => l.Position == position));
         }
 
         /// <summary>
@@ -338,8 +338,8 @@ namespace Pustalorc.Plugins.BaseClustering
             if (!shouldAllow || !StructureManager.tryGetInfo(structureTransform, out _, out _, out var index,
                 out var region)) return;
 
-            var sData = region.structures[index];
-            var sDrop = region.drops.FirstOrDefault(k => k.instanceID == sData.instanceID);
+            var sDrop = region.drops[index];
+            var sData = region.structures.FirstOrDefault(k => k.instanceID == sDrop.instanceID);
 
             if (sData.structure.isDead)
             {
@@ -462,8 +462,8 @@ namespace Pustalorc.Plugins.BaseClustering
             if (!shouldAllow || !BarricadeManager.tryGetInfo(barricadeTransform, out _, out _, out _,
                 out var index, out var region)) return;
 
-            var bData = region.barricades[index];
-            var bDrop = region.drops.FirstOrDefault(k => k.instanceID == bData.instanceID);
+            var bDrop = region.drops[index];
+            var bData = region.barricades.FirstOrDefault(k => k.instanceID == bDrop.instanceID);
 
             if (bData.barricade.isDead)
             {
