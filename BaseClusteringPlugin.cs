@@ -92,7 +92,8 @@ namespace Pustalorc.Plugins.BaseClustering
                 "vehicle_no_plant",
                 "The vehicle appears to have no assigned barricades to it, please make sure that it has barricades before asking to wreck them."
             },
-            {"vehicle_wreck", "Wrecked buildables from {0} [{1}]. Instance ID: {2}, Owner: {3}"}
+            {"vehicle_wreck", "Wrecked buildables from {0} [{1}]. Instance ID: {2}, Owner: {3}"},
+            {"not_enough_args", "You need more arguments to use this command."}
         };
 
         protected override void Load()

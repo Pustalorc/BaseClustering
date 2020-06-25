@@ -24,7 +24,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         [NotNull] public List<string> Permissions => new List<string> {"wreckvehicle"};
 
-        public void Execute(IRocketPlayer caller, string[] command)
+        public async void Execute(IRocketPlayer caller, string[] command)
         {
             var player = (UnturnedPlayer) caller;
             var raycastInfo =
@@ -46,7 +46,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             var id = raycastInfo.vehicle.lockedOwner;
             PlayerData pId = null;
             if (PlayerInfoLib.Instance != null)
-                pId = PlayerInfoLib.Instance.database?.QueryById(id);
+                pId = await PlayerInfoLib.Instance.database?.QueryById(id);
 
             if (!BarricadeManager.tryGetPlant(raycastInfo.transform, out var x, out var y, out var plant,
                 out var region))

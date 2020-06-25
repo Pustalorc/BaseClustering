@@ -36,6 +36,12 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             var cId = caller.Id;
             var args = command.ToList();
 
+            if (args.Count == 0)
+            {
+                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("not_enough_args"));
+                return;
+            }
+
             var abort = args.CheckArgsIncludeString("abort", out var index);
             if (index > -1)
                 args.RemoveAt(index);

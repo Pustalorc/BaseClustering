@@ -23,7 +23,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         [NotNull] public List<string> Permissions => new List<string> {"topbuilders"};
 
-        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
+        public async void Execute(IRocketPlayer caller, [NotNull] string[] command)
         {
             var args = command.ToList();
 
@@ -41,7 +41,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
                 PlayerData pInfo = null;
                 if (PlayerInfoLib.Instance != null)
-                    pInfo = PlayerInfoLib.Instance.database?.QueryById(new CSteamID(builder.Key));
+                    pInfo = await PlayerInfoLib.Instance.database?.QueryById(new CSteamID(builder.Key));
 
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("top_builder_format", i + 1,
