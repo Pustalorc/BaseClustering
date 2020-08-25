@@ -355,9 +355,7 @@ namespace Pustalorc.Plugins.BaseClustering
 
         private void StructureSpawned([NotNull] StructureData data, [NotNull] StructureDrop drop)
         {
-            var buildable = new Buildable(data.angle_x, data.angle_y, data.angle_z, data.structure.id,
-                data.structure.health, data.instanceID, data.owner, data.group, data.point, data.structure.asset,
-                drop.model, null, null);
+            var buildable = new Buildable(data, drop);
 
             var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
 
@@ -418,12 +416,6 @@ namespace Pustalorc.Plugins.BaseClustering
             if (cluster.Buildables.Count == 0)
                 DestroyCluster(cluster);
 
-            // ReSharper disable once PossibleNullReferenceException
-            buildable.AngleX = angleX;
-            buildable.AngleY = angleY;
-            buildable.AngleZ = angleZ;
-            buildable.Position = point;
-
             var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
 
             if (bestCluster == null)
@@ -479,9 +471,7 @@ namespace Pustalorc.Plugins.BaseClustering
 
         private void BarricadeSpawned([NotNull] BarricadeData data, [NotNull] BarricadeDrop drop)
         {
-            var buildable = new Buildable(data.angle_x, data.angle_y, data.angle_z, data.barricade.id,
-                data.barricade.health, data.instanceID, data.owner, data.group, data.point, drop.asset, drop.model,
-                drop.interactable, data.barricade.state);
+            var buildable = new Buildable(data, drop);
 
             var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
 
@@ -543,12 +533,6 @@ namespace Pustalorc.Plugins.BaseClustering
             if (cluster.Buildables.Count == 0)
                 DestroyCluster(cluster);
 
-            // ReSharper disable once PossibleNullReferenceException
-            buildable.AngleX = angleX;
-            buildable.AngleY = angleY;
-            buildable.AngleZ = angleZ;
-            buildable.Position = point;
-
             var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
 
             if (bestCluster == null)
@@ -585,11 +569,7 @@ namespace Pustalorc.Plugins.BaseClustering
         private void _changeOwnerAndGroup([NotNull] BaseCluster cluster, ulong newOwner, ulong newGroup)
         {
             foreach (var buildable in cluster.Buildables.ToList())
-            {
                 WriteOnlyGame.ChangeOwnerAndGroup(buildable.Position, newOwner, newGroup);
-                buildable.Owner = newOwner;
-                buildable.Group = newGroup;
-            }
         }
 
         private void _damage([NotNull] BaseCluster cluster, ushort damage)

@@ -25,23 +25,13 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             var result = barricades.Select(k =>
             {
                 var drop = barricadeDrops.FirstOrDefault(l => l.instanceID == k.instanceID);
-                if (drop == null)
-                    return new Buildable(k.angle_x, k.angle_y, k.angle_z, k.barricade.id, k.barricade.health,
-                        k.instanceID, k.owner, k.group, k.point, k.barricade.asset, null, null, k.barricade.state);
-
-                return new Buildable(k.angle_x, k.angle_y, k.angle_z, k.barricade.id, k.barricade.health, k.instanceID,
-                    k.owner, k.group, k.point, k.barricade.asset, drop.model, drop.interactable, k.barricade.state);
+                return new Buildable(k, drop);
             }).ToList();
 
             result.AddRange(structures.Select(k =>
             {
                 var drop = structureDrops.FirstOrDefault(l => l.instanceID == k.instanceID);
-                if (drop == null)
-                    return new Buildable(k.angle_x, k.angle_y, k.angle_z, k.structure.id, k.structure.health,
-                        k.instanceID, k.owner, k.group, k.point, k.structure.asset, null, null, null);
-
-                return new Buildable(k.angle_x, k.angle_y, k.angle_z, k.structure.id, k.structure.health, k.instanceID,
-                    k.owner, k.group, k.point, k.structure.asset, drop.model, null, null);
+                return new Buildable(k, drop);
             }));
 
             return result;
