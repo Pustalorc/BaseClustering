@@ -176,7 +176,17 @@ namespace Pustalorc.Plugins.BaseClustering
         [NotNull]
         public IEnumerable<BaseCluster> GetMostOwnedClusters(CSteamID player)
         {
-            return Clusters?.Where(k => k.CommonOwner == player.m_SteamID) ?? new List<BaseCluster>();
+            return GetClustersWithFilter(k => k.CommonOwner == player.m_SteamID);
+        }
+
+        /// <summary>
+        ///     Retrieves all clusters that satisfy the custom filter.
+        /// </summary>
+        /// <param name="filter">An anonymous function that takes BaseCluster as parameter and returns bool.</param>
+        /// <returns>A list of clusters that satisfy the filter.</returns>
+        public IEnumerable<BaseCluster> GetClustersWithFilter(Func<BaseCluster, bool> filter)
+        {
+            return Clusters?.Where(filter) ?? new List<BaseCluster>();
         }
 
         /// <summary>
