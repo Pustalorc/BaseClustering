@@ -48,8 +48,9 @@
       <HintPath>Libraries\PlayerInfoLib.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Pustalorc.Libraries.MySqlConnectorWrapper">
-      <HintPath>Libraries\Pustalorc.Libraries.MySqlConnectorWrapper.dll</HintPath>
+    <Reference Include="Pustalorc.MySqlConnectorWrapper, Version=2.2.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>Libraries\Pustalorc.MySqlConnectorWrapper.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Rocket.API, Version=2.6.4.0, Culture=neutral, PublicKeyToken=null">
@@ -130,14 +131,29 @@
     <Content Include="Libraries\I18N.West.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Libraries\K4os.Compression.LZ4.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Libraries\K4os.Compression.LZ4.Streams.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Libraries\K4os.Hash.xxHash.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Libraries\MySql.Data.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Libraries\PlayerInfoLib.dll" />
-    <Content Include="Libraries\Pustalorc.Libraries.MySqlConnectorWrapper.dll">
+    <Content Include="Libraries\Pustalorc.FrequencyCache.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Libraries\Pustalorc.MySqlConnectorWrapper.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Libraries\Renci.SshNet.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Libraries\System.Buffers.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Libraries\System.Data.dll">
@@ -146,13 +162,22 @@
     <Content Include="Libraries\System.Management.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Libraries\System.Memory.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Libraries\System.Numerics.Vectors.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Libraries\System.Runtime.CompilerServices.Unsafe.dll">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Libraries\System.Transactions.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Libraries\Ubiety.Dns.Core.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Libraries\UnityEngine.UnityWebRequestModule.dll">
+    <Content Include="Libraries\Zstandard.Net.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
