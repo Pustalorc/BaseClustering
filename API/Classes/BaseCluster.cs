@@ -10,23 +10,23 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
 {
     public class BaseCluster
     {
-        private ObservableCollection<Buildable> _buildables;
+        private ObservableCollection<Buildable> m_Buildables;
 
         private static float MaxExpandRadius => BaseClusteringPlugin.Instance != null
             ? BaseClusteringPlugin.Instance.Configuration.Instance.MaxClusterSelfExpandRadius
             : 75f;
 
-        public ulong TotalHealth => _buildables.SumUlong(k => k.Health);
+        public ulong TotalHealth => m_Buildables.SumUlong(k => k.Health);
 
-        public ulong CommonOwner => _buildables.GroupBy(k => k.Owner)
+        public ulong CommonOwner => m_Buildables.GroupBy(k => k.Owner)
             .OrderByDescending(k => k.Count())
             .Select(g => g.Key).ToList().FirstOrDefault();
 
-        public ulong CommonGroup => _buildables.GroupBy(k => k.Group)
+        public ulong CommonGroup => m_Buildables.GroupBy(k => k.Group)
             .OrderByDescending(k => k.Count())
             .Select(g => g.Key).ToList().FirstOrDefault();
 
-        public Vector3 AverageCenterPosition => _buildables.AverageCenter(k => k.Position);
+        public Vector3 AverageCenterPosition => m_Buildables.AverageCenter(k => k.Position);
 
         public bool IsGlobalCluster;
 
@@ -39,16 +39,16 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
 
         public ObservableCollection<Buildable> Buildables
         {
-            get => _buildables;
+            get => m_Buildables;
             private set
             {
-                if (_buildables != null)
-                    _buildables.CollectionChanged -= BuildablesChanged;
+                if (m_Buildables != null)
+                    m_Buildables.CollectionChanged -= BuildablesChanged;
 
-                _buildables = value;
+                m_Buildables = value;
 
-                _buildables.CollectionChanged -= BuildablesChanged;
-                _buildables.CollectionChanged += BuildablesChanged;
+                m_Buildables.CollectionChanged -= BuildablesChanged;
+                m_Buildables.CollectionChanged += BuildablesChanged;
             }
         }
 

@@ -25,7 +25,13 @@ namespace Pustalorc.Plugins.BaseClustering
         public static BaseClusteringPlugin Instance { get; private set; }
         public static event OnVoidDelegate OnDataProcessed;
 
-        private Harmony _harmony;
+        public delegate void OnClustersChanged(BaseCluster cluster);
+
+        public static event OnClustersChanged OnClusterAdded;
+        public static event OnClustersChanged OnClusterRemoved;
+        public static event OnVoidDelegate OnClustersCleared;
+
+        private Harmony m_Harmony;
 
         [NotNull]
         public override TranslationList DefaultTranslations => new TranslationList
@@ -99,8 +105,8 @@ namespace Pustalorc.Plugins.BaseClustering
         protected override void Load()
         {
             Instance = this;
-            _harmony = new Harmony("xyz.pustalorc.baseClustering");
-            _harmony.PatchAll();
+            m_Harmony = new Harmony("xyz.pustalorc.baseClustering");
+            m_Harmony.PatchAll();
 
             if (Level.isLoaded)
                 OnLevelLoaded(0);
@@ -125,28 +131,31 @@ namespace Pustalorc.Plugins.BaseClustering
             PatchStructureSpawnInternal.OnNewStructureSpawned -= StructureSpawned;
             PatchStructureDestroy.OnStructureDestroyed -= BuildableDestroyed;
 
-            _harmony.UnpatchAll();
-            _harmony = null;
+            m_Harmony.UnpatchAll();
+            m_Harmony = null;
 
             Instance = null;
 
             Logging.PluginUnloaded(this);
         }
 
-        private ObservableCollection<BaseCluster> _clusters;
+        private ObservableCollection<BaseCluster> m_Clusters;
 
         public ObservableCollection<BaseCluster> Clusters
         {
-            get => _clusters;
+            get => m_Clusters;
             private set
             {
-                if (_clusters != null)
-                    _clusters.CollectionChanged -= ClustersChanged;
+                if (m_Clusters == null)
+                {
+                    m_Clusters = value;
+                    m_Clusters.CollectionChanged += ClustersChanged;
+                    return;
+                }
 
-                _clusters = value;
-
-                _clusters.CollectionChanged -= ClustersChanged;
-                _clusters.CollectionChanged += ClustersChanged;
+                m_Clusters.Clear();
+                foreach (var cluster in value)
+                    m_Clusters.Add(cluster);
             }
         }
 
@@ -184,6 +193,7 @@ namespace Pustalorc.Plugins.BaseClustering
         /// </summary>
         /// <param name="filter">An anonymous function that takes BaseCluster as parameter and returns bool.</param>
         /// <returns>A list of clusters that satisfy the filter.</returns>
+        [NotNull]
         public IEnumerable<BaseCluster> GetClustersWithFilter(Func<BaseCluster, bool> filter)
         {
             return Clusters?.Where(filter) ?? new List<BaseCluster>();
@@ -350,7 +360,7 @@ namespace Pustalorc.Plugins.BaseClustering
                 out var region)) return;
 
             var sDrop = region.drops[index];
-            var sData = region.structures.FirstOrDefault(k => k.instanceID == sDrop.instanceID);
+            var sData = region.structures.First(k => k.instanceID == sDrop.instanceID);
 
             if (sData.structure.isDead)
             {
@@ -404,8 +414,7 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             if (!shouldAllow || !StructureManager.tryGetRegion(x, y, out var region)) return;
 
-            RemoveBuildable(region.drops.FirstOrDefault(k => k.instanceID == region.structures[index].instanceID)
-                .model);
+            RemoveBuildable(region.drops.First(k => k.instanceID == region.structures[index].instanceID).model);
         }
 
         private void StructureTransformed(CSteamID instigator, byte x, byte y, uint instanceId, ref Vector3 point,
@@ -420,7 +429,7 @@ namespace Pustalorc.Plugins.BaseClustering
                 return;
             }
 
-            var buildable = cluster.Buildables.FirstOrDefault(k => k.InstanceId == instanceId);
+            var buildable = cluster.Buildables.First(k => k.InstanceId == instanceId);
             cluster.Buildables.Remove(buildable);
 
             if (cluster.Buildables.Count == 0)
@@ -466,7 +475,7 @@ namespace Pustalorc.Plugins.BaseClustering
                 out var index, out var region)) return;
 
             var bDrop = region.drops[index];
-            var bData = region.barricades.FirstOrDefault(k => k.instanceID == bDrop.instanceID);
+            var bData = region.barricades.First(k => k.instanceID == bDrop.instanceID);
 
             if (bData.barricade.isDead)
             {
@@ -521,8 +530,7 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             if (!shouldAllow || !BarricadeManager.tryGetRegion(x, y, plant, out var region)) return;
 
-            RemoveBuildable(region.drops.FirstOrDefault(k => k.instanceID == region.barricades[index].instanceID)
-                .model);
+            RemoveBuildable(region.drops.First(k => k.instanceID == region.barricades[index].instanceID).model);
         }
 
         private void BarricadeTransformed(CSteamID instigator, byte x, byte y, ushort plant, uint instanceId,
@@ -537,7 +545,7 @@ namespace Pustalorc.Plugins.BaseClustering
                 return;
             }
 
-            var buildable = cluster.Buildables.FirstOrDefault(k => k.InstanceId == instanceId);
+            var buildable = cluster.Buildables.First(k => k.InstanceId == instanceId);
             cluster.Buildables.Remove(buildable);
 
             if (cluster.Buildables.Count == 0)
@@ -625,22 +633,35 @@ namespace Pustalorc.Plugins.BaseClustering
             switch (e.Action)
             {
                 case NotifyCollectionChangedAction.Add:
+                    // Raise an event for every single item added.
                     foreach (var cluster in e.NewItems.Cast<BaseCluster>())
+                    {
                         Logging.Verbose(this,
                             $"New cluster created at: {cluster.CenterBuildable}\nRadius: {cluster.Radius}\nAverage Center: {cluster.AverageCenterPosition}\nMost common group: {cluster.CommonGroup}\nMost common owner: {cluster.CommonOwner}\nAll buildables: {string.Join(", ", cluster.Buildables.Select(k => k.Position))}");
+                        OnClusterAdded?.Invoke(cluster);
+                    }
+
                     break;
                 case NotifyCollectionChangedAction.Move:
+                    // No event needed, it was just switched in the position of the list.
                     Logging.Verbose(this,
                         $"Cluster moved from index {e.OldStartingIndex} to index {e.NewStartingIndex}");
                     break;
                 case NotifyCollectionChangedAction.Remove:
+                    // Raise an event for every single item removed.
                     Logging.Verbose(this, $"Cluster removed at index {e.OldStartingIndex}");
+                    foreach (var cluster in e.OldItems.Cast<BaseCluster>())
+                        OnClusterRemoved?.Invoke(cluster);
                     break;
                 case NotifyCollectionChangedAction.Replace:
+                    // Raise an event for the cluster that was replaced (removed).
                     Logging.Verbose(this, $"Cluster replaced at index {e.OldStartingIndex}");
+                    foreach (var cluster in e.OldItems.Cast<BaseCluster>())
+                        OnClusterRemoved?.Invoke(cluster);
                     break;
                 case NotifyCollectionChangedAction.Reset:
                     Logging.Verbose(this, "Clusters collection was reset. Most likely a Clear() call.");
+                    OnClustersCleared?.Invoke();
                     break;
             }
         }

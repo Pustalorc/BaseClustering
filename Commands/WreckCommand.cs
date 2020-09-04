@@ -15,7 +15,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class WreckCommand : IRocketCommand
     {
-        private Dictionary<string, WreckAction> _wreckActions = new Dictionary<string, WreckAction>();
+        private Dictionary<string, WreckAction> m_WreckActions = new Dictionary<string, WreckAction>();
 
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
@@ -77,9 +77,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (abort)
             {
-                if (_wreckActions.TryGetValue(cId, out _))
+                if (m_WreckActions.TryGetValue(cId, out _))
                 {
-                    _wreckActions.Remove(cId);
+                    m_WreckActions.Remove(cId);
                     UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("action_cancelled"));
                     return;
                 }
@@ -90,13 +90,13 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (confirm)
             {
-                if (!_wreckActions.TryGetValue(cId, out var action))
+                if (!m_WreckActions.TryGetValue(cId, out var action))
                 {
                     UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("no_action_queued"));
                     return;
                 }
 
-                _wreckActions.Remove(cId);
+                m_WreckActions.Remove(cId);
 
                 var remove = ReadOnlyGame.GetBuilds(CSteamID.Nil, true, action.IncludeVehicles);
 
@@ -166,9 +166,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            if (_wreckActions.TryGetValue(cId, out _))
+            if (m_WreckActions.TryGetValue(cId, out _))
             {
-                _wreckActions[cId] = new WreckAction(plants, barricades, structs, target, center, itemAsset, radius);
+                m_WreckActions[cId] = new WreckAction(plants, barricades, structs, target, center, itemAsset, radius);
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("wreck_action_queued_new",
                         itemAsset != null
@@ -182,7 +182,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             }
             else
             {
-                _wreckActions.Add(cId, new WreckAction(plants, barricades, structs, target, center, itemAsset, radius));
+                m_WreckActions.Add(cId,
+                    new WreckAction(plants, barricades, structs, target, center, itemAsset, radius));
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("wreck_action_queued",
                         itemAsset != null
