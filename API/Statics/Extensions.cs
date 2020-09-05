@@ -17,6 +17,13 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
         public static BaseCluster FindBestCluster([NotNull] this IEnumerable<BaseCluster> source, Buildable target,
             float maxDist)
         {
+            return source.FindBestCluster(target.Position, maxDist);
+        }
+
+
+        [CanBeNull]
+        public static BaseCluster FindBestCluster([NotNull] this IEnumerable<BaseCluster> source, Vector3 target, float maxDist)
+        {
             var allClusters = source.ToList();
 
             // Get global cluster (rust only)
@@ -27,13 +34,13 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             // Get all clusters that we are close enough to
             var validClusters = allClusters.Where(k =>
             {
-                var distance = Vector3.Distance(k.CenterBuildable, target.Position);
+                var distance = Vector3.Distance(k.CenterBuildable, target);
                 return distance <= k.Radius || distance <= maxDist;
             }).ToList();
 
             return validClusters.Count == 0
                 ? globalCluster
-                : validClusters.OrderBy(k => Vector3.Distance(k.CenterBuildable, target.Position)).FirstOrDefault();
+                : validClusters.OrderBy(k => Vector3.Distance(k.CenterBuildable, target)).FirstOrDefault();
         }
 
         public static int GetLocalCenterIndex([NotNull] this Dictionary<int, Vector3> source)
