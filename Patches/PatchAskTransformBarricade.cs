@@ -12,8 +12,7 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
         public static event BuildableTransformed OnBarricadeTransformed;
 
         [HarmonyPrefix]
-        public static bool AskTransformBarricade(CSteamID steamID, byte x, byte y, ushort plant, uint instanceID,
-            Vector3 point, byte angleX, byte angleY, byte angleZ)
+        public static bool AskTransformBarricade(CSteamID steamID, byte x, byte y, ushort plant, uint instanceID, Vector3 point, byte angle_x, byte angle_y, byte angle_z)
         {
             ThreadUtil.assertIsGameThread();
 
@@ -25,18 +24,18 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
 
             var flag = true;
             if (BarricadeManager.onTransformRequested != null)
-                BarricadeManager.onTransformRequested(steamID, x, y, plant, instanceID, ref point, ref angleX,
-                    ref angleY, ref angleZ, ref flag);
+                BarricadeManager.onTransformRequested(steamID, x, y, plant, instanceID, ref point, ref angle_x,
+                    ref angle_y, ref angle_z, ref flag);
 
             if (!flag) return false;
 
             if (plant == 65535)
                 BarricadeManager.instance.channel.send("tellTransformBarricade", ESteamCall.ALL, x, y,
                     BarricadeManager.BARRICADE_REGIONS, ESteamPacket.UPDATE_RELIABLE_BUFFER, x, y, plant, instanceID,
-                    point, angleX, angleY, angleZ);
+                    point, angle_x, angle_y, angle_z);
             else
                 BarricadeManager.instance.channel.send("tellTransformBarricade", ESteamCall.ALL,
-                    ESteamPacket.UPDATE_RELIABLE_BUFFER, x, y, plant, instanceID, point, angleX, angleY, angleZ);
+                    ESteamPacket.UPDATE_RELIABLE_BUFFER, x, y, plant, instanceID, point, angle_x, angle_y, angle_z);
 
             OnBarricadeTransformed?.Invoke(instanceID);
             return false;
