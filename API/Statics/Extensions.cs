@@ -7,22 +7,52 @@ using Rocket.API;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
 using UnityEngine;
-using Math = System.Math;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Statics
 {
     public static class Extensions
     {
         [CanBeNull]
-        public static BaseCluster FindBestCluster([NotNull] this IEnumerable<BaseCluster> source, Buildable target,
-            float maxDist)
+        public static BaseCluster FindBestCluster([NotNull] this IEnumerable<BaseCluster> source, [NotNull] Buildable target,
+            float extraDist)
         {
-            return source.FindBestCluster(target.Position, maxDist);
+            return source.FindBestCluster(target.Position, extraDist);
         }
 
 
         [CanBeNull]
-        public static BaseCluster FindBestCluster([NotNull] this IEnumerable<BaseCluster> source, Vector3 target, float maxDist)
+        public static BaseCluster FindBestCluster([NotNull] this IEnumerable<BaseCluster> source, Vector3 target,
+            float extraDist)
+        {
+            var allClusters = source.ToList();
+
+            // Get global cluster (rust only)
+            var globalCluster = allClusters.FirstOrDefault(k => k.IsGlobalCluster);
+            if (globalCluster != null)
+                allClusters.Remove(globalCluster);
+
+            // Get all clusters that we are close enough to
+            var validClusters = allClusters.Where(k =>
+            {
+                var distance = Vector3.Distance(k.CenterBuildable, target);
+                return distance <= k.Radius || distance <= k.Radius + extraDist;
+            }).ToList();
+
+            return validClusters.Count == 0
+                ? globalCluster
+                : validClusters.OrderBy(k => Vector3.Distance(k.CenterBuildable, target)).FirstOrDefault();
+        }
+
+        [CanBeNull]
+        public static BaseCluster FindBestClusterWithMaxDistance([NotNull] this IEnumerable<BaseCluster> source,
+            [NotNull] Buildable target, float maxDist)
+        {
+            return source.FindBestCluster(target.Position, maxDist);
+        }
+
+        [CanBeNull]
+        public static BaseCluster FindBestClusterWithMaxDistance([NotNull] this IEnumerable<BaseCluster> source,
+            Vector3 target, float maxDist)
         {
             var allClusters = source.ToList();
 

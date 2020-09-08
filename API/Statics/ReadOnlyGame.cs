@@ -17,50 +17,55 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 return BaseClusteringPlugin.Instance.Buildables.Where(
                     k => id == CSteamID.Nil || k.Owner == id.m_SteamID);
 
-            var barricades = GetBarricades(id, includePlants);
-            var barricadeDrops = GetBarricadeDrops();
-            var structures = GetStructures(id);
-            var structureDrops = GetStructureDrops();
+            var barricadeRegions = BarricadeManager.regions.Cast<BarricadeRegion>();
 
-            var result = barricades.Select(k =>
-            {
-                var drop = barricadeDrops.FirstOrDefault(l => l.instanceID == k.instanceID);
-                return new Buildable(k, drop);
-            }).ToList();
+            if (includePlants)
+                barricadeRegions = barricadeRegions.Concat(BarricadeManager.vehicleRegions);
 
-            result.AddRange(structures.Select(k =>
-            {
-                var drop = structureDrops.FirstOrDefault(l => l.instanceID == k.instanceID);
-                return new Buildable(k, drop);
-            }));
+            var structureRegions = StructureManager.regions.Cast<StructureRegion>();
 
-            return result;
+            // ReSharper disable PossibleMultipleEnumeration
+            var barricadeDatas = barricadeRegions.SelectMany(brd => brd.barricades);
+            var barricadeDrops = barricadeRegions.SelectMany(brd => brd.drops);
+            var structureDatas = structureRegions.SelectMany(str => str.structures);
+            var structureDrops = structureRegions.SelectMany(str => str.drops);
+            // ReSharper restore PossibleMultipleEnumeration
+
+            return barricadeDatas
+                .Select((k, i) =>
+                {
+                    var drop = barricadeDrops.ElementAt(i);
+                    return drop == null ? null : new Buildable(k, drop);
+                })
+                .Concat(structureDatas.Select((k, i) =>
+                {
+                    var drop = structureDrops.ElementAt(i);
+                    return drop == null ? null : new Buildable(k, drop);
+                }))
+                .Where(d => d != null)
+                .ToList();
         }
 
         [NotNull]
         public static IEnumerable<BarricadeDrop> GetBarricadeDrops()
         {
-            var result = BarricadeManager.regions.Cast<BarricadeRegion>().SelectMany(brd => brd.drops).ToList();
-            result.AddRange(BarricadeManager.plants.SelectMany(region => region.drops));
-
-            return result;
+            return BarricadeManager.regions.Cast<BarricadeRegion>().Concat(BarricadeManager.vehicleRegions)
+                .SelectMany(k => k.drops);
         }
 
         [NotNull]
         public static IEnumerable<StructureDrop> GetStructureDrops()
         {
-            var result = StructureManager.regions.Cast<StructureRegion>().SelectMany(brd => brd.drops).ToList();
-
-            return result;
+            return StructureManager.regions.Cast<StructureRegion>().SelectMany(brd => brd.drops);
         }
 
         [NotNull]
         public static IEnumerable<BarricadeData> GetBarricades(CSteamID id, bool includePlants)
         {
-            var result = BarricadeManager.regions.Cast<BarricadeRegion>().SelectMany(brd => brd.barricades).ToList();
+            var result = BarricadeManager.regions.Cast<BarricadeRegion>().SelectMany(k => k.barricades);
 
             if (includePlants)
-                result.AddRange(BarricadeManager.plants.SelectMany(region => region.barricades));
+                result = result.Concat(BarricadeManager.vehicleRegions.SelectMany(k => k.barricades));
 
             return id == CSteamID.Nil ? result : result.Where(k => k.owner == (ulong) id);
         }
@@ -68,7 +73,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
         [NotNull]
         public static IEnumerable<StructureData> GetStructures(CSteamID id)
         {
-            var result = StructureManager.regions.Cast<StructureRegion>().SelectMany(brd => brd.structures).ToList();
+            var result = StructureManager.regions.Cast<StructureRegion>().SelectMany(brd => brd.structures);
 
             return id == CSteamID.Nil ? result : result.Where(k => k.owner == (ulong) id);
         }
@@ -102,9 +107,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             int fIndex;
             region = null;
 
-            while (plant < BarricadeManager.plants.Count)
+            while (plant < BarricadeManager.vehicleRegions.Count)
             {
-                region = BarricadeManager.plants[plant];
+                region = BarricadeManager.vehicleRegions[plant];
                 fIndex = region.barricades.FindIndex(k => k.point == position);
 
                 if (fIndex > -1)

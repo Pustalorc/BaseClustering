@@ -33,7 +33,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 var builder = topClusters.ElementAt(i);
                 PlayerData pInfo = null;
                 if (PlayerInfoLib.Instance != null)
-                    pInfo = await PlayerInfoLib.Instance.database?.QueryById(new CSteamID(builder.Key));
+                    pInfo = await PlayerInfoLib.Instance.database.QueryById(new CSteamID(builder.Key));
 
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("top_cluster_format", i + 1,

@@ -118,16 +118,11 @@ namespace Pustalorc.Plugins.BaseClustering
 
         protected override void Unload()
         {
-            BarricadeManager.onSalvageBarricadeRequested -= BarricadeSalvaged;
-            BarricadeManager.onDamageBarricadeRequested -= BarricadeDamaged;
-            BarricadeManager.onHarvestPlantRequested -= BarricadeSalvaged;
-            BarricadeManager.onTransformRequested -= BarricadeTransformed;
+            PatchAskTransformBarricade.OnBarricadeTransformed -= BarricadeTransformed;
             PatchBarricadeSpawnInternal.OnNewBarricadeSpawned -= BarricadeSpawned;
             PatchBarricadeDestroy.OnBarricadeDestroyed -= BuildableDestroyed;
 
-            StructureManager.onTransformRequested -= StructureTransformed;
-            StructureManager.onSalvageStructureRequested -= StructureSalvaged;
-            StructureManager.onDamageStructureRequested -= StructureDamaged;
+            PatchAskTransformStructure.OnStructureTransformed -= StructureTransformed;
             PatchStructureSpawnInternal.OnNewStructureSpawned -= StructureSpawned;
             PatchStructureDestroy.OnStructureDestroyed -= BuildableDestroyed;
 
@@ -331,16 +326,11 @@ namespace Pustalorc.Plugins.BaseClustering
 
         private void OnLevelLoaded(int level)
         {
-            BarricadeManager.onSalvageBarricadeRequested += BarricadeSalvaged;
-            BarricadeManager.onDamageBarricadeRequested += BarricadeDamaged;
-            BarricadeManager.onHarvestPlantRequested += BarricadeSalvaged;
-            BarricadeManager.onTransformRequested += BarricadeTransformed;
+            PatchAskTransformBarricade.OnBarricadeTransformed += BarricadeTransformed;
             PatchBarricadeSpawnInternal.OnNewBarricadeSpawned += BarricadeSpawned;
             PatchBarricadeDestroy.OnBarricadeDestroyed += BuildableDestroyed;
 
-            StructureManager.onTransformRequested += StructureTransformed;
-            StructureManager.onSalvageStructureRequested += StructureSalvaged;
-            StructureManager.onDamageStructureRequested += StructureDamaged;
+            PatchAskTransformStructure.OnStructureTransformed += StructureTransformed;
             PatchStructureSpawnInternal.OnNewStructureSpawned += StructureSpawned;
             PatchStructureDestroy.OnStructureDestroyed += BuildableDestroyed;
 
@@ -353,36 +343,19 @@ namespace Pustalorc.Plugins.BaseClustering
             RemoveBuildable(model);
         }
 
-        private void StructureDamaged(CSteamID instigatorSteamId, Transform structureTransform,
-            ref ushort pendingTotalDamage, ref bool shouldAllow, EDamageOrigin damageOrigin)
+        private void StructureSpawned([NotNull] Buildable buildable)
         {
-            if (!shouldAllow || !StructureManager.tryGetInfo(structureTransform, out _, out _, out var index,
-                out var region)) return;
+            var config = Configuration.Instance;
 
-            var sDrop = region.drops[index];
-            var sData = region.structures.First(k => k.instanceID == sDrop.instanceID);
-
-            if (sData.structure.isDead)
+            var bestCluster = config.ClusteringStyle switch
             {
-                RemoveBuildable(sDrop.model);
-                return;
-            }
-
-            if (pendingTotalDamage < 1 || pendingTotalDamage < sData.structure.health) return;
-
-            RemoveBuildable(sDrop.model);
-        }
-
-        private void StructureSpawned([NotNull] StructureData data, [NotNull] StructureDrop drop)
-        {
-            var buildable = new Buildable(data, drop);
-
-            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
+                EClusteringStyle.Bruteforce => Clusters.FindBestClusterWithMaxDistance(buildable,
+                    config.BruteforceOptions.MaxRadius),
+                _ => Clusters.FindBestCluster(buildable, config.RustOptions.ExtraRadius)
+            };
 
             if (bestCluster == null)
             {
-                var config = Configuration.Instance;
-
                 switch (config.ClusteringStyle)
                 {
                     case EClusteringStyle.Bruteforce:
@@ -394,12 +367,12 @@ namespace Pustalorc.Plugins.BaseClustering
                         if (globalCluster != null) globalCluster.Buildables.Add(buildable);
                         else
                             Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                1.73205078f + config.RustOptions.ExtraRadius, true));
+                                3.46410156f + config.RustOptions.ExtraRadius, true));
                         break;
                     case EClusteringStyle.Hybrid:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
                             config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 1.73205078f + config.RustOptions.ExtraRadius
+                                ? 3.46410156f + config.RustOptions.ExtraRadius
                                 : config.BruteforceOptions.InitialRadius, false));
                         break;
                 }
@@ -410,18 +383,9 @@ namespace Pustalorc.Plugins.BaseClustering
             bestCluster.Buildables.Add(buildable);
         }
 
-        private void StructureSalvaged(CSteamID steamId, byte x, byte y, ushort index, ref bool shouldAllow)
+        private void StructureTransformed(uint instanceId)
         {
-            if (!shouldAllow || !StructureManager.tryGetRegion(x, y, out var region)) return;
-
-            RemoveBuildable(region.drops.First(k => k.instanceID == region.structures[index].instanceID).model);
-        }
-
-        private void StructureTransformed(CSteamID instigator, byte x, byte y, uint instanceId, ref Vector3 point,
-            ref byte angleX, ref byte angleY, ref byte angleZ, ref bool shouldAllow)
-        {
-            if (!shouldAllow) return;
-
+            var config = Configuration.Instance;
             var cluster = Clusters.FirstOrDefault(k => k.Buildables.Any(l => l.InstanceId == instanceId));
             if (cluster == null)
             {
@@ -435,12 +399,15 @@ namespace Pustalorc.Plugins.BaseClustering
             if (cluster.Buildables.Count == 0)
                 DestroyCluster(cluster);
 
-            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
+            var bestCluster = config.ClusteringStyle switch
+            {
+                EClusteringStyle.Bruteforce => Clusters.FindBestClusterWithMaxDistance(buildable,
+                    config.BruteforceOptions.MaxRadius),
+                _ => Clusters.FindBestCluster(buildable, config.RustOptions.ExtraRadius)
+            };
 
             if (bestCluster == null)
             {
-                var config = Configuration.Instance;
-
                 switch (config.ClusteringStyle)
                 {
                     case EClusteringStyle.Bruteforce:
@@ -452,12 +419,12 @@ namespace Pustalorc.Plugins.BaseClustering
                         if (globalCluster != null) globalCluster.Buildables.Add(buildable);
                         else
                             Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                1.73205078f + config.RustOptions.ExtraRadius, true));
+                                3.46410156f + config.RustOptions.ExtraRadius, true));
                         break;
                     case EClusteringStyle.Hybrid:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
                             config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 1.73205078f + config.RustOptions.ExtraRadius
+                                ? 3.46410156f + config.RustOptions.ExtraRadius
                                 : config.BruteforceOptions.InitialRadius, false));
                         break;
                 }
@@ -468,36 +435,19 @@ namespace Pustalorc.Plugins.BaseClustering
             bestCluster.Buildables.Add(buildable);
         }
 
-        private void BarricadeDamaged(CSteamID instigatorSteamId, Transform barricadeTransform,
-            ref ushort pendingTotalDamage, ref bool shouldAllow, EDamageOrigin damageOrigin)
+        private void BarricadeSpawned([NotNull] Buildable buildable)
         {
-            if (!shouldAllow || !BarricadeManager.tryGetInfo(barricadeTransform, out _, out _, out _,
-                out var index, out var region)) return;
+            var config = Configuration.Instance;
 
-            var bDrop = region.drops[index];
-            var bData = region.barricades.First(k => k.instanceID == bDrop.instanceID);
-
-            if (bData.barricade.isDead)
+            var bestCluster = config.ClusteringStyle switch
             {
-                RemoveBuildable(bDrop.model);
-                return;
-            }
-
-            if (pendingTotalDamage < 1 || pendingTotalDamage < bData.barricade.health) return;
-
-            RemoveBuildable(bDrop.model);
-        }
-
-        private void BarricadeSpawned([NotNull] BarricadeData data, [NotNull] BarricadeDrop drop)
-        {
-            var buildable = new Buildable(data, drop);
-
-            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
+                EClusteringStyle.Bruteforce => Clusters.FindBestClusterWithMaxDistance(buildable,
+                    config.BruteforceOptions.MaxRadius),
+                _ => Clusters.FindBestCluster(buildable, config.RustOptions.ExtraRadius)
+            };
 
             if (bestCluster == null)
             {
-                var config = Configuration.Instance;
-
                 switch (config.ClusteringStyle)
                 {
                     case EClusteringStyle.Bruteforce:
@@ -509,12 +459,12 @@ namespace Pustalorc.Plugins.BaseClustering
                         if (globalCluster != null) globalCluster.Buildables.Add(buildable);
                         else
                             Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                1.73205078f + config.RustOptions.ExtraRadius, true));
+                                3.46410156f + config.RustOptions.ExtraRadius, true));
                         break;
                     case EClusteringStyle.Hybrid:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
                             config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 1.73205078f + config.RustOptions.ExtraRadius
+                                ? 3.46410156f + config.RustOptions.ExtraRadius
                                 : config.BruteforceOptions.InitialRadius, false));
                         break;
                 }
@@ -525,19 +475,9 @@ namespace Pustalorc.Plugins.BaseClustering
             bestCluster.Buildables.Add(buildable);
         }
 
-        private void BarricadeSalvaged(CSteamID steamId, byte x, byte y, ushort plant, ushort index,
-            ref bool shouldAllow)
+        private void BarricadeTransformed(uint instanceId)
         {
-            if (!shouldAllow || !BarricadeManager.tryGetRegion(x, y, plant, out var region)) return;
-
-            RemoveBuildable(region.drops.First(k => k.instanceID == region.barricades[index].instanceID).model);
-        }
-
-        private void BarricadeTransformed(CSteamID instigator, byte x, byte y, ushort plant, uint instanceId,
-            ref Vector3 point, ref byte angleX, ref byte angleY, ref byte angleZ, ref bool shouldAllow)
-        {
-            if (!shouldAllow) return;
-
+            var config = Configuration.Instance;
             var cluster = Clusters.FirstOrDefault(k => k.Buildables.Any(l => l.InstanceId == instanceId));
             if (cluster == null)
             {
@@ -551,12 +491,15 @@ namespace Pustalorc.Plugins.BaseClustering
             if (cluster.Buildables.Count == 0)
                 DestroyCluster(cluster);
 
-            var bestCluster = Clusters.FindBestCluster(buildable, Configuration.Instance.MaxClusterSelfExpandRadius);
+            var bestCluster = config.ClusteringStyle switch
+            {
+                EClusteringStyle.Bruteforce => Clusters.FindBestClusterWithMaxDistance(buildable,
+                    config.BruteforceOptions.MaxRadius),
+                _ => Clusters.FindBestCluster(buildable, config.RustOptions.ExtraRadius)
+            };
 
             if (bestCluster == null)
             {
-                var config = Configuration.Instance;
-
                 switch (config.ClusteringStyle)
                 {
                     case EClusteringStyle.Bruteforce:
@@ -568,12 +511,12 @@ namespace Pustalorc.Plugins.BaseClustering
                         if (globalCluster != null) globalCluster.Buildables.Add(buildable);
                         else
                             Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                1.73205078f + config.RustOptions.ExtraRadius, true));
+                                3.46410156f + config.RustOptions.ExtraRadius, true));
                         break;
                     case EClusteringStyle.Hybrid:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
                             config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 1.73205078f + config.RustOptions.ExtraRadius
+                                ? 3.46410156f + config.RustOptions.ExtraRadius
                                 : config.BruteforceOptions.InitialRadius, false));
                         break;
                 }

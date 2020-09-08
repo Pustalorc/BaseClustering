@@ -99,7 +99,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 // depending on if its true or false, causing future checks to become true when they were originally false
                 foreach (var next in sortedFloors)
                 {
-                    if (!elementsOfCluster.Exists(k => Vector3.Distance(next.Position, k.Position) <= 1.73205078f))
+                    if (!elementsOfCluster.Exists(k => Vector3.Distance(next.Position, k.Position) <= 3.46410156f))
                         continue;
 
                     elementsOfCluster.Add(next);

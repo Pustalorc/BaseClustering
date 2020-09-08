@@ -67,7 +67,6 @@
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>libs\UnityEngine.dll</HintPath>
@@ -87,9 +86,9 @@
     <Compile Include="API\Classes\Buildable.cs" />
     <Compile Include="API\Classes\WreckAction.cs" />
     <Compile Include="API\Classes\WreckClustersAction.cs" />
-    <Compile Include="API\Delegates\BarricadeSpawned.cs" />
+    <Compile Include="API\Delegates\BuildableSpawned.cs" />
     <Compile Include="API\Delegates\BuildableDestroyed.cs" />
-    <Compile Include="API\Delegates\StructureSpawned.cs" />
+    <Compile Include="API\Delegates\BuildableTransformed.cs" />
     <Compile Include="API\Statics\ExtendedMath.cs" />
     <Compile Include="API\Statics\Extensions.cs" />
     <Compile Include="API\Statics\ReadOnlyGame.cs" />
@@ -112,6 +111,8 @@
     <Compile Include="Config\BruteforceOptions.cs" />
     <Compile Include="Config\EClusteringStyle.cs" />
     <Compile Include="Config\RustOptions.cs" />
+    <Compile Include="Patches\PatchAskTransformBarricade.cs" />
+    <Compile Include="Patches\PatchAskTransformStructure.cs" />
     <Compile Include="Patches\PatchBarricadeDestroy.cs" />
     <Compile Include="Patches\PatchBarricadeSpawnInternal.cs" />
     <Compile Include="Patches\PatchStructureDestroy.cs" />

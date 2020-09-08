@@ -16,16 +16,14 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
         public static bool DestroyStructure([NotNull] StructureRegion region, byte x, byte y, ushort index,
             Vector3 ragdoll)
         {
-            using (new StructureRegionSyncTest(region, "destroyStructure"))
-            {
-                var drop = region.drops.FirstOrDefault(k => k.instanceID == region.structures[index].instanceID);
+            ThreadUtil.assertIsGameThread();
 
-                if (drop != null) OnStructureDestroyed?.Invoke(drop.model);
+            var drop = region.drops.FirstOrDefault(k => k.instanceID == region.structures[index].instanceID);
+            if (drop != null) OnStructureDestroyed?.Invoke(drop.model);
 
-                region.structures.RemoveAt(index);
-                StructureManager.instance.channel.send("tellTakeStructure", ESteamCall.ALL, x, y,
-                    StructureManager.STRUCTURE_REGIONS, ESteamPacket.UPDATE_RELIABLE_BUFFER, x, y, index, ragdoll);
-            }
+            region.structures.RemoveAt(index);
+            StructureManager.instance.channel.send("tellTakeStructure", ESteamCall.ALL, x, y,
+                StructureManager.STRUCTURE_REGIONS, ESteamPacket.UPDATE_RELIABLE_BUFFER, x, y, index, ragdoll);
 
             return false;
         }

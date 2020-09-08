@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.Linq;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Pustalorc.Plugins.BaseClustering.Config;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Classes
@@ -12,9 +14,21 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
     {
         private ObservableCollection<Buildable> m_Buildables;
 
-        private static float MaxExpandRadius => BaseClusteringPlugin.Instance != null
-            ? BaseClusteringPlugin.Instance.Configuration.Instance.MaxClusterSelfExpandRadius
-            : 75f;
+        private double MaxExpandRadius
+        {
+            get
+            {
+                if (BaseClusteringPlugin.Instance == null)
+                    return 75f;
+
+                var config = BaseClusteringPlugin.Instance.Configuration.Instance;
+                return config.ClusteringStyle switch
+                {
+                    EClusteringStyle.Bruteforce => config.BruteforceOptions.MaxRadius,
+                    _ => Radius + config.RustOptions.ExtraRadius
+                };
+            }
+        }
 
         public ulong TotalHealth => m_Buildables.SumUlong(k => k.Health);
 
@@ -110,12 +124,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
 
             if (!(radiiDist.Max() > 0)) return;
 
-            var newRadius = radiiDist.Max();
-
-            if (newRadius > MaxExpandRadius)
-                newRadius = MaxExpandRadius;
-
-            Radius = newRadius;
+            Radius = Math.Min(radiiDist.Max(), MaxExpandRadius);
         }
     }
 }
