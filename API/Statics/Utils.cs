@@ -99,7 +99,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 // depending on if its true or false, causing future checks to become true when they were originally false
                 foreach (var next in sortedFloors)
                 {
-                    if (!elementsOfCluster.Exists(k => Vector3.Distance(next.Position, k.Position) <= 3.46410156f))
+                    if (!elementsOfCluster.Exists(k => Vector3.Distance(next.Position, k.Position) <= 6.1f))
                         continue;
 
                     elementsOfCluster.Add(next);
@@ -119,9 +119,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                     allBuildables.Remove(element);
                 }
 
-                var avgCenter = elementsOfCluster.AverageCenter(k => k.Position);
-                output.Add(new BaseCluster(elementsOfCluster, avgCenter,
-                    elementsOfCluster.GetDistances(k => k.Position, avgCenter).Max() + options.ExtraRadius, false));
+                var centerIndex = elementsOfCluster.GetCenterIndex();
+                var centerBuild = elementsOfCluster[centerIndex];
+                output.Add(new BaseCluster(elementsOfCluster, centerBuild.Position,
+                    elementsOfCluster.GetDistances(k => k.Position, centerBuild.Position).Max() + options.ExtraRadius, false));
             }
 
             if (!remainingIntoOmegaCluster) return output;

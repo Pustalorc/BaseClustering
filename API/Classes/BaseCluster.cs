@@ -14,22 +14,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
     {
         private ObservableCollection<Buildable> m_Buildables;
 
-        private double MaxExpandRadius
-        {
-            get
-            {
-                if (BaseClusteringPlugin.Instance == null)
-                    return 75f;
-
-                var config = BaseClusteringPlugin.Instance.Configuration.Instance;
-                return config.ClusteringStyle switch
-                {
-                    EClusteringStyle.Bruteforce => config.BruteforceOptions.MaxRadius,
-                    _ => Radius + config.RustOptions.ExtraRadius
-                };
-            }
-        }
-
         public ulong TotalHealth => m_Buildables.SumUlong(k => k.Health);
 
         public ulong CommonOwner => m_Buildables.GroupBy(k => k.Owner)
@@ -94,6 +78,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
             AngleZ = (byte) (angleZ / Buildables.Count);
 
             IsGlobalCluster = isGlobalCluster;
+
+            Logging.Verbose("New cluster", $"A new cluster was created at {AverageCenterPosition} with {CenterBuildable} as the center buildable. Radius of {radius}. Total buildables: {Buildables.Count}. Global cluster {IsGlobalCluster}");
         }
 
         private void BuildablesChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -121,10 +107,22 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
             CenterBuildable = Buildables[centerIndex].Position;
 
             var radiiDist = Buildables.GetDistances(k => k.Position, CenterBuildable).ToList();
+            var radiiMax = radiiDist.Max();
 
-            if (!(radiiDist.Max() > 0)) return;
+            if (radiiMax <= 0) return;
 
-            Radius = Math.Min(radiiDist.Max(), MaxExpandRadius);
+            if (BaseClusteringPlugin.Instance == null)
+            {
+                Radius = Math.Min(radiiMax, 75f);
+                return;
+            }
+
+            var config = BaseClusteringPlugin.Instance.Configuration.Instance;
+            Radius = config.ClusteringStyle switch
+            {
+                EClusteringStyle.Bruteforce => Math.Min(radiiMax, config.BruteforceOptions.MaxRadius),
+                _ => radiiMax + config.RustOptions.ExtraRadius,
+            };
         }
     }
 }

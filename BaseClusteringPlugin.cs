@@ -367,12 +367,12 @@ namespace Pustalorc.Plugins.BaseClustering
                         if (globalCluster != null) globalCluster.Buildables.Add(buildable);
                         else
                             Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                3.46410156f + config.RustOptions.ExtraRadius, true));
+                                6.1f + config.RustOptions.ExtraRadius, true));
                         break;
                     case EClusteringStyle.Hybrid:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
                             config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 3.46410156f + config.RustOptions.ExtraRadius
+                                ? 6.1f + config.RustOptions.ExtraRadius
                                 : config.BruteforceOptions.InitialRadius, false));
                         break;
                 }
@@ -419,12 +419,12 @@ namespace Pustalorc.Plugins.BaseClustering
                         if (globalCluster != null) globalCluster.Buildables.Add(buildable);
                         else
                             Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                3.46410156f + config.RustOptions.ExtraRadius, true));
+                                6.1f + config.RustOptions.ExtraRadius, true));
                         break;
                     case EClusteringStyle.Hybrid:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
                             config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 3.46410156f + config.RustOptions.ExtraRadius
+                                ? 6.1f + config.RustOptions.ExtraRadius
                                 : config.BruteforceOptions.InitialRadius, false));
                         break;
                 }
@@ -459,12 +459,12 @@ namespace Pustalorc.Plugins.BaseClustering
                         if (globalCluster != null) globalCluster.Buildables.Add(buildable);
                         else
                             Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                3.46410156f + config.RustOptions.ExtraRadius, true));
+                                6.1f + config.RustOptions.ExtraRadius, true));
                         break;
                     case EClusteringStyle.Hybrid:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
                             config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 3.46410156f + config.RustOptions.ExtraRadius
+                                ? 6.1f + config.RustOptions.ExtraRadius
                                 : config.BruteforceOptions.InitialRadius, false));
                         break;
                 }
@@ -511,12 +511,12 @@ namespace Pustalorc.Plugins.BaseClustering
                         if (globalCluster != null) globalCluster.Buildables.Add(buildable);
                         else
                             Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                3.46410156f + config.RustOptions.ExtraRadius, true));
+                                6.1f + config.RustOptions.ExtraRadius, true));
                         break;
                     case EClusteringStyle.Hybrid:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
                             config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 3.46410156f + config.RustOptions.ExtraRadius
+                                ? 6.1f + config.RustOptions.ExtraRadius
                                 : config.BruteforceOptions.InitialRadius, false));
                         break;
                 }

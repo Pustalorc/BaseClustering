@@ -15,7 +15,7 @@ namespace Pustalorc.Plugins.BaseClustering.Config
             VerboseLogging = false;
             ClusteringStyle = EClusteringStyle.Hybrid;
             BruteforceOptions = new BruteforceOptions(25f, 75f, 10);
-            RustOptions = new RustOptions(new List<ushort> {31, 51, 52, 369, 1262, 1263, 1264}, 3.46410156f);
+            RustOptions = new RustOptions(new List<ushort> {31, 51, 52, 369, 1262, 1263, 1264}, 6.1f);
         }
     }
 }
