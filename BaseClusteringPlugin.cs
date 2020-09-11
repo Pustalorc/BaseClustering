@@ -118,12 +118,12 @@ namespace Pustalorc.Plugins.BaseClustering
 
         protected override void Unload()
         {
-            PatchAskTransformBarricade.OnBarricadeTransformed -= BarricadeTransformed;
-            PatchBarricadeSpawnInternal.OnNewBarricadeSpawned -= BarricadeSpawned;
+            PatchAskTransformBarricade.OnBarricadeTransformed -= BuildableTransformed;
+            PatchBarricadeSpawnInternal.OnNewBarricadeSpawned -= BuildableSpawned;
             PatchBarricadeDestroy.OnBarricadeDestroyed -= BuildableDestroyed;
 
-            PatchAskTransformStructure.OnStructureTransformed -= StructureTransformed;
-            PatchStructureSpawnInternal.OnNewStructureSpawned -= StructureSpawned;
+            PatchAskTransformStructure.OnStructureTransformed -= BuildableTransformed;
+            PatchStructureSpawnInternal.OnNewStructureSpawned -= BuildableSpawned;
             PatchStructureDestroy.OnStructureDestroyed -= BuildableDestroyed;
 
             m_Harmony.UnpatchAll();
@@ -275,6 +275,17 @@ namespace Pustalorc.Plugins.BaseClustering
         /// <param name="model">The model of the buildable to remove</param>
         public void RemoveBuildable(Transform model)
         {
+            RemoveBuildableWithAffected(model);
+        }
+
+        /// <summary>
+        ///     Removes a specific buildable from all the clusters where it is found at.
+        /// </summary>
+        /// <param name="model">The model of the buildable to remove</param>
+        /// <returns>The list of clusters modified.</returns>
+        public List<BaseCluster> RemoveBuildableWithAffected(Transform model)
+        {
+            var result = new List<BaseCluster>();
             var clusters = Clusters.Where(k =>
                 k.Buildables.Any(l => l.Model == model));
 
@@ -298,7 +309,10 @@ namespace Pustalorc.Plugins.BaseClustering
                 }
 
                 cluster.Buildables.Remove(buildable);
+                result.Add(cluster);
             }
+
+            return result;
         }
 
         internal void GenerateAndLoadAllClusters()
@@ -326,12 +340,12 @@ namespace Pustalorc.Plugins.BaseClustering
 
         private void OnLevelLoaded(int level)
         {
-            PatchAskTransformBarricade.OnBarricadeTransformed += BarricadeTransformed;
-            PatchBarricadeSpawnInternal.OnNewBarricadeSpawned += BarricadeSpawned;
+            PatchAskTransformBarricade.OnBarricadeTransformed += BuildableTransformed;
+            PatchBarricadeSpawnInternal.OnNewBarricadeSpawned += BuildableSpawned;
             PatchBarricadeDestroy.OnBarricadeDestroyed += BuildableDestroyed;
 
-            PatchAskTransformStructure.OnStructureTransformed += StructureTransformed;
-            PatchStructureSpawnInternal.OnNewStructureSpawned += StructureSpawned;
+            PatchAskTransformStructure.OnStructureTransformed += BuildableTransformed;
+            PatchStructureSpawnInternal.OnNewStructureSpawned += BuildableSpawned;
             PatchStructureDestroy.OnStructureDestroyed += BuildableDestroyed;
 
             GenerateAndLoadAllClusters();
@@ -340,50 +354,23 @@ namespace Pustalorc.Plugins.BaseClustering
 
         private void BuildableDestroyed(Transform model)
         {
-            RemoveBuildable(model);
-        }
+            var affected = RemoveBuildableWithAffected(model);
 
-        private void StructureSpawned([NotNull] Buildable buildable)
-        {
-            var config = Configuration.Instance;
-
-            var bestCluster = config.ClusteringStyle switch
+            foreach (var cluster in affected)
             {
-                EClusteringStyle.Bruteforce => Clusters.FindBestClusterWithMaxDistance(buildable,
-                    config.BruteforceOptions.MaxRadius),
-                _ => Clusters.FindBestCluster(buildable, config.RustOptions.ExtraRadius)
-            };
+                var clusterRegened = Utils.HybridClustering(cluster.Buildables.ToList(), Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions);
 
-            if (bestCluster == null)
-            {
-                switch (config.ClusteringStyle)
+                if (clusterRegened.Count > 1)
                 {
-                    case EClusteringStyle.Bruteforce:
-                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.BruteforceOptions.InitialRadius, false));
-                        break;
-                    case EClusteringStyle.Rust:
-                        var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
-                        if (globalCluster != null) globalCluster.Buildables.Add(buildable);
-                        else
-                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                6.1f + config.RustOptions.ExtraRadius, true));
-                        break;
-                    case EClusteringStyle.Hybrid:
-                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 6.1f + config.RustOptions.ExtraRadius
-                                : config.BruteforceOptions.InitialRadius, false));
-                        break;
+                    Clusters.Remove(cluster);
+
+                    foreach (var c in clusterRegened)
+                        Clusters.Add(c);
                 }
-
-                return;
             }
-
-            bestCluster.Buildables.Add(buildable);
         }
 
-        private void StructureTransformed(uint instanceId)
+        private void BuildableTransformed(uint instanceId)
         {
             var config = Configuration.Instance;
             var cluster = Clusters.FirstOrDefault(k => k.Buildables.Any(l => l.InstanceId == instanceId));
@@ -435,61 +422,9 @@ namespace Pustalorc.Plugins.BaseClustering
             bestCluster.Buildables.Add(buildable);
         }
 
-        private void BarricadeSpawned([NotNull] Buildable buildable)
+        private void BuildableSpawned([NotNull] Buildable buildable)
         {
             var config = Configuration.Instance;
-
-            var bestCluster = config.ClusteringStyle switch
-            {
-                EClusteringStyle.Bruteforce => Clusters.FindBestClusterWithMaxDistance(buildable,
-                    config.BruteforceOptions.MaxRadius),
-                _ => Clusters.FindBestCluster(buildable, config.RustOptions.ExtraRadius)
-            };
-
-            if (bestCluster == null)
-            {
-                switch (config.ClusteringStyle)
-                {
-                    case EClusteringStyle.Bruteforce:
-                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.BruteforceOptions.InitialRadius, false));
-                        break;
-                    case EClusteringStyle.Rust:
-                        var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
-                        if (globalCluster != null) globalCluster.Buildables.Add(buildable);
-                        else
-                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                6.1f + config.RustOptions.ExtraRadius, true));
-                        break;
-                    case EClusteringStyle.Hybrid:
-                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 6.1f + config.RustOptions.ExtraRadius
-                                : config.BruteforceOptions.InitialRadius, false));
-                        break;
-                }
-
-                return;
-            }
-
-            bestCluster.Buildables.Add(buildable);
-        }
-
-        private void BarricadeTransformed(uint instanceId)
-        {
-            var config = Configuration.Instance;
-            var cluster = Clusters.FirstOrDefault(k => k.Buildables.Any(l => l.InstanceId == instanceId));
-            if (cluster == null)
-            {
-                Logging.Verbose(this, $"Missed a barricade being added with instance ID {instanceId}");
-                return;
-            }
-
-            var buildable = cluster.Buildables.First(k => k.InstanceId == instanceId);
-            cluster.Buildables.Remove(buildable);
-
-            if (cluster.Buildables.Count == 0)
-                DestroyCluster(cluster);
 
             var bestCluster = config.ClusteringStyle switch
             {
