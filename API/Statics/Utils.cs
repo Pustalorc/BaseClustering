@@ -122,7 +122,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 var centerIndex = elementsOfCluster.GetCenterIndex();
                 var centerBuild = elementsOfCluster[centerIndex];
                 output.Add(new BaseCluster(elementsOfCluster, centerBuild.Position,
-                    elementsOfCluster.GetDistances(k => k.Position, centerBuild.Position).Max() + options.ExtraRadius, false));
+                    elementsOfCluster.GetDistances(k => k.Position, centerBuild.Position).Max() + options.ExtraRadius,
+                    false));
             }
 
             if (!remainingIntoOmegaCluster) return output;

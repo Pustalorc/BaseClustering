@@ -283,6 +283,7 @@ namespace Pustalorc.Plugins.BaseClustering
         /// </summary>
         /// <param name="model">The model of the buildable to remove</param>
         /// <returns>The list of clusters modified.</returns>
+        [NotNull]
         public List<BaseCluster> RemoveBuildableWithAffected(Transform model)
         {
             var result = new List<BaseCluster>();
@@ -358,7 +359,8 @@ namespace Pustalorc.Plugins.BaseClustering
 
             foreach (var cluster in affected)
             {
-                var clusterRegened = Utils.HybridClustering(cluster.Buildables.ToList(), Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions);
+                var clusterRegened = Utils.HybridClustering(cluster.Buildables.ToList(),
+                    Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions);
 
                 if (clusterRegened.Count > 1)
                 {
@@ -426,14 +428,15 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             var config = Configuration.Instance;
 
-            var bestCluster = config.ClusteringStyle switch
+            var bestClusters = config.ClusteringStyle switch
             {
-                EClusteringStyle.Bruteforce => Clusters.FindBestClusterWithMaxDistance(buildable,
+                EClusteringStyle.Bruteforce => Clusters.FindBestClustersWithMaxDistance(buildable,
                     config.BruteforceOptions.MaxRadius),
-                _ => Clusters.FindBestCluster(buildable, config.RustOptions.ExtraRadius)
+                _ => Clusters.FindBestClusters(buildable, config.RustOptions.ExtraRadius)
             };
 
-            if (bestCluster == null)
+            var clusterCount = bestClusters.Count();
+            if (clusterCount == 0)
             {
                 switch (config.ClusteringStyle)
                 {
@@ -459,7 +462,23 @@ namespace Pustalorc.Plugins.BaseClustering
                 return;
             }
 
-            bestCluster.Buildables.Add(buildable);
+            if (clusterCount > 1)
+            {
+                var allBuilds = bestClusters.SelectMany(k => k.Buildables).ToList();
+
+                var newClusters = Utils.HybridClustering(allBuilds, Configuration.Instance.BruteforceOptions,
+                    Configuration.Instance.RustOptions);
+
+                foreach (var cluster in bestClusters)
+                    Clusters.Remove(cluster);
+
+                foreach (var cluster in newClusters)
+                    Clusters.Add(cluster);
+
+                return;
+            }
+
+            bestClusters.First().Buildables.Add(buildable);
         }
 
         private void _changeOwnerAndGroup([NotNull] BaseCluster cluster, ulong newOwner, ulong newGroup)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using HarmonyLib;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Classes;
 using Rocket.API;
@@ -13,8 +14,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
     public static class Extensions
     {
         [CanBeNull]
-        public static BaseCluster FindBestCluster([NotNull] this IEnumerable<BaseCluster> source, [NotNull] Buildable target,
-            float extraDist)
+        public static BaseCluster FindBestCluster([NotNull] this IEnumerable<BaseCluster> source,
+            [NotNull] Buildable target, float extraDist)
         {
             return source.FindBestCluster(target.Position, extraDist);
         }
@@ -23,6 +24,20 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
         [CanBeNull]
         public static BaseCluster FindBestCluster([NotNull] this IEnumerable<BaseCluster> source, Vector3 target,
             float extraDist)
+        {
+            return source.FindBestClusters(target, extraDist).FirstOrDefault();
+        }
+
+        [NotNull]
+        public static IEnumerable<BaseCluster> FindBestClusters([NotNull] this IEnumerable<BaseCluster> source,
+            [NotNull] Buildable target, float extraDist)
+        {
+            return source.FindBestClusters(target.Position, extraDist);
+        }
+
+        [NotNull]
+        public static IEnumerable<BaseCluster> FindBestClusters([NotNull] this IEnumerable<BaseCluster> source,
+            Vector3 target, float extraDist)
         {
             var allClusters = source.ToList();
 
@@ -36,11 +51,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             {
                 var distance = Vector3.Distance(k.CenterBuildable, target);
                 return distance <= k.Radius || distance <= k.Radius + extraDist;
-            }).ToList();
+            });
 
-            return validClusters.Count == 0
-                ? globalCluster
-                : validClusters.OrderBy(k => Vector3.Distance(k.CenterBuildable, target)).FirstOrDefault();
+            if (!validClusters.Any())
+                validClusters.AddItem(globalCluster);
+
+            return validClusters.OrderBy(k => Vector3.Distance(k.CenterBuildable, target));
         }
 
         [CanBeNull]
@@ -54,6 +70,20 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
         public static BaseCluster FindBestClusterWithMaxDistance([NotNull] this IEnumerable<BaseCluster> source,
             Vector3 target, float maxDist)
         {
+            return source.FindBestClustersWithMaxDistance(target, maxDist).FirstOrDefault();
+        }
+
+        [NotNull]
+        public static IEnumerable<BaseCluster> FindBestClustersWithMaxDistance(
+            [NotNull] this IEnumerable<BaseCluster> source, [NotNull] Buildable target, float maxDist)
+        {
+            return source.FindBestClustersWithMaxDistance(target.Position, maxDist);
+        }
+
+        [NotNull]
+        public static IEnumerable<BaseCluster> FindBestClustersWithMaxDistance(
+            [NotNull] this IEnumerable<BaseCluster> source, Vector3 target, float maxDist)
+        {
             var allClusters = source.ToList();
 
             // Get global cluster (rust only)
@@ -66,11 +96,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             {
                 var distance = Vector3.Distance(k.CenterBuildable, target);
                 return distance <= k.Radius || distance <= maxDist;
-            }).ToList();
+            });
 
-            return validClusters.Count == 0
-                ? globalCluster
-                : validClusters.OrderBy(k => Vector3.Distance(k.CenterBuildable, target)).FirstOrDefault();
+            if (!validClusters.Any())
+                validClusters.AddItem(globalCluster);
+
+            return validClusters.OrderBy(k => Vector3.Distance(k.CenterBuildable, target));
         }
 
         public static int GetLocalCenterIndex([NotNull] this Dictionary<int, Vector3> source)

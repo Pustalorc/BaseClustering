@@ -79,7 +79,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
 
             IsGlobalCluster = isGlobalCluster;
 
-            Logging.Verbose("New cluster", $"A new cluster was created at {AverageCenterPosition} with {CenterBuildable} as the center buildable. Radius of {radius}. Total buildables: {Buildables.Count}. Global cluster {IsGlobalCluster}");
+            Logging.Verbose("New cluster",
+                $"A new cluster was created at {AverageCenterPosition} with {CenterBuildable} as the center buildable. Radius of {radius}. Total buildables: {Buildables.Count}. Global cluster {IsGlobalCluster}");
         }
 
         private void BuildablesChanged(object sender, NotifyCollectionChangedEventArgs e)
@@ -121,7 +122,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
             Radius = config.ClusteringStyle switch
             {
                 EClusteringStyle.Bruteforce => Math.Min(radiiMax, config.BruteforceOptions.MaxRadius),
-                _ => radiiMax + config.RustOptions.ExtraRadius,
+                _ => radiiMax + config.RustOptions.ExtraRadius
             };
         }
     }

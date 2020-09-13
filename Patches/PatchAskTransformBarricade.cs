@@ -1,4 +1,6 @@
-﻿using HarmonyLib;
+﻿// ReSharper disable InconsistentNaming
+
+using HarmonyLib;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using SDG.Unturned;
 using Steamworks;
@@ -12,7 +14,8 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
         public static event BuildableTransformed OnBarricadeTransformed;
 
         [HarmonyPrefix]
-        public static bool AskTransformBarricade(CSteamID steamID, byte x, byte y, ushort plant, uint instanceID, Vector3 point, byte angle_x, byte angle_y, byte angle_z)
+        public static bool AskTransformBarricade(CSteamID steamID, byte x, byte y, ushort plant, uint instanceID,
+            Vector3 point, byte angle_x, byte angle_y, byte angle_z)
         {
             ThreadUtil.assertIsGameThread();
 
