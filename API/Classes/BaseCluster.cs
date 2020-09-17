@@ -14,6 +14,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
     {
         private ObservableCollection<Buildable> m_Buildables;
 
+        public ulong InstanceId { get; }
+
         public ulong TotalHealth => m_Buildables.SumUlong(k => k.Health);
 
         public ulong CommonOwner => m_Buildables.GroupBy(k => k.Owner)
@@ -50,15 +52,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
             }
         }
 
-        public BaseCluster()
-        {
-            Buildables = new ObservableCollection<Buildable>();
-            CenterBuildable = Vector3.zero;
-            Radius = 0;
-            AngleX = AngleY = AngleZ = 0;
-        }
-
-        public BaseCluster([NotNull] List<Buildable> buildables, Vector3 center, double radius, bool isGlobalCluster)
+        public BaseCluster([NotNull] List<Buildable> buildables, Vector3 center, double radius, bool isGlobalCluster, ulong instanceId)
         {
             Buildables = new ObservableCollection<Buildable>(buildables);
             CenterBuildable = center;
@@ -79,8 +73,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
 
             IsGlobalCluster = isGlobalCluster;
 
+            InstanceId = instanceId;
+
             Logging.Verbose("New cluster",
-                $"A new cluster was created at {AverageCenterPosition} with {CenterBuildable} as the center buildable. Radius of {radius}. Total buildables: {Buildables.Count}. Global cluster {IsGlobalCluster}");
+                $"A new cluster (ID: {InstanceId}) was created at {AverageCenterPosition} with {CenterBuildable} as the center buildable. Radius of {radius}. Total buildables: {Buildables.Count}. Global cluster {IsGlobalCluster}");
         }
 
         private void BuildablesChanged(object sender, NotifyCollectionChangedEventArgs e)

@@ -31,6 +31,13 @@ namespace Pustalorc.Plugins.BaseClustering
         public static event OnClustersChanged OnClusterRemoved;
         public static event OnVoidDelegate OnClustersCleared;
 
+        private ulong m_InstanceCount;
+        public ulong InstanceCount
+        {
+            get => m_InstanceCount;
+            set => m_InstanceCount = value;
+        }
+
         private Harmony m_Harmony;
 
         [NotNull]
@@ -326,12 +333,9 @@ namespace Pustalorc.Plugins.BaseClustering
 
             Clusters = Configuration.Instance.ClusteringStyle switch
             {
-                EClusteringStyle.Bruteforce => new ObservableCollection<BaseCluster>(
-                    Utils.BruteforceClustering(allBuildables, Configuration.Instance.BruteforceOptions)),
-                EClusteringStyle.Rust => new ObservableCollection<BaseCluster>(
-                    Utils.RustClustering(allBuildables, Configuration.Instance.RustOptions, true)),
-                EClusteringStyle.Hybrid => new ObservableCollection<BaseCluster>(Utils.HybridClustering(allBuildables,
-                    Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions)),
+                EClusteringStyle.Bruteforce => new ObservableCollection<BaseCluster>(Utils.BruteforceClustering(allBuildables, Configuration.Instance.BruteforceOptions, ref m_InstanceCount)),
+                EClusteringStyle.Rust => new ObservableCollection<BaseCluster>(Utils.RustClustering(allBuildables, Configuration.Instance.RustOptions, true, ref m_InstanceCount)),
+                EClusteringStyle.Hybrid => new ObservableCollection<BaseCluster>(Utils.HybridClustering(allBuildables,Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount)),
                 _ => Clusters
             };
 
@@ -359,8 +363,7 @@ namespace Pustalorc.Plugins.BaseClustering
 
             foreach (var cluster in affected)
             {
-                var clusterRegened = Utils.HybridClustering(cluster.Buildables.ToList(),
-                    Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions);
+                var clusterRegened = Utils.HybridClustering(cluster.Buildables.ToList(),Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount);
 
                 if (clusterRegened.Count > 1)
                 {
@@ -401,20 +404,20 @@ namespace Pustalorc.Plugins.BaseClustering
                 {
                     case EClusteringStyle.Bruteforce:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.BruteforceOptions.InitialRadius, false));
+                            config.BruteforceOptions.InitialRadius, false, InstanceCount++));
                         break;
                     case EClusteringStyle.Rust:
                         var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
                         if (globalCluster != null) globalCluster.Buildables.Add(buildable);
                         else
                             Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                6.1f + config.RustOptions.ExtraRadius, true));
+                                6.1f + config.RustOptions.ExtraRadius, true, InstanceCount++));
                         break;
                     case EClusteringStyle.Hybrid:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
                             config.RustOptions.FloorIds.Contains(buildable.AssetId)
                                 ? 6.1f + config.RustOptions.ExtraRadius
-                                : config.BruteforceOptions.InitialRadius, false));
+                                : config.BruteforceOptions.InitialRadius, false, InstanceCount++));
                         break;
                 }
 
@@ -442,20 +445,20 @@ namespace Pustalorc.Plugins.BaseClustering
                 {
                     case EClusteringStyle.Bruteforce:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.BruteforceOptions.InitialRadius, false));
+                            config.BruteforceOptions.InitialRadius, false, InstanceCount++));
                         break;
                     case EClusteringStyle.Rust:
                         var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
                         if (globalCluster != null) globalCluster.Buildables.Add(buildable);
                         else
                             Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                6.1f + config.RustOptions.ExtraRadius, true));
+                                6.1f + config.RustOptions.ExtraRadius, true, InstanceCount++));
                         break;
                     case EClusteringStyle.Hybrid:
                         Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
                             config.RustOptions.FloorIds.Contains(buildable.AssetId)
                                 ? 6.1f + config.RustOptions.ExtraRadius
-                                : config.BruteforceOptions.InitialRadius, false));
+                                : config.BruteforceOptions.InitialRadius, false, InstanceCount++));
                         break;
                 }
 
@@ -466,8 +469,7 @@ namespace Pustalorc.Plugins.BaseClustering
             {
                 var allBuilds = bestClusters.SelectMany(k => k.Buildables).ToList();
 
-                var newClusters = Utils.HybridClustering(allBuilds, Configuration.Instance.BruteforceOptions,
-                    Configuration.Instance.RustOptions);
+                var newClusters = Utils.HybridClustering(allBuilds, Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount);
 
                 foreach (var cluster in bestClusters)
                     Clusters.Remove(cluster);
