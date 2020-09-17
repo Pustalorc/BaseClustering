@@ -32,6 +32,7 @@ namespace Pustalorc.Plugins.BaseClustering
         public static event OnVoidDelegate OnClustersCleared;
 
         private ulong m_InstanceCount;
+
         public ulong InstanceCount
         {
             get => m_InstanceCount;
@@ -125,13 +126,9 @@ namespace Pustalorc.Plugins.BaseClustering
 
         protected override void Unload()
         {
-            PatchAskTransformBarricade.OnBarricadeTransformed -= BuildableTransformed;
-            PatchBarricadeSpawnInternal.OnNewBarricadeSpawned -= BuildableSpawned;
-            PatchBarricadeDestroy.OnBarricadeDestroyed -= BuildableDestroyed;
-
-            PatchAskTransformStructure.OnStructureTransformed -= BuildableTransformed;
-            PatchStructureSpawnInternal.OnNewStructureSpawned -= BuildableSpawned;
-            PatchStructureDestroy.OnStructureDestroyed -= BuildableDestroyed;
+            PatchBuildableTransforms.OnBuildableTransformed -= BuildableTransformed;
+            PatchBuildableSpawns.OnBuildableSpawned -= BuildableSpawned;
+            PatchBuildablesDestroy.OnBuildableDestroyed -= BuildableDestroyed;
 
             m_Harmony.UnpatchAll();
             m_Harmony = null;
@@ -333,9 +330,13 @@ namespace Pustalorc.Plugins.BaseClustering
 
             Clusters = Configuration.Instance.ClusteringStyle switch
             {
-                EClusteringStyle.Bruteforce => new ObservableCollection<BaseCluster>(Utils.BruteforceClustering(allBuildables, Configuration.Instance.BruteforceOptions, ref m_InstanceCount)),
-                EClusteringStyle.Rust => new ObservableCollection<BaseCluster>(Utils.RustClustering(allBuildables, Configuration.Instance.RustOptions, true, ref m_InstanceCount)),
-                EClusteringStyle.Hybrid => new ObservableCollection<BaseCluster>(Utils.HybridClustering(allBuildables,Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount)),
+                EClusteringStyle.Bruteforce => new ObservableCollection<BaseCluster>(
+                    Utils.BruteforceClustering(allBuildables, Configuration.Instance.BruteforceOptions,
+                        ref m_InstanceCount)),
+                EClusteringStyle.Rust => new ObservableCollection<BaseCluster>(Utils.RustClustering(allBuildables,
+                    Configuration.Instance.RustOptions, true, ref m_InstanceCount)),
+                EClusteringStyle.Hybrid => new ObservableCollection<BaseCluster>(Utils.HybridClustering(allBuildables,
+                    Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount)),
                 _ => Clusters
             };
 
@@ -345,13 +346,9 @@ namespace Pustalorc.Plugins.BaseClustering
 
         private void OnLevelLoaded(int level)
         {
-            PatchAskTransformBarricade.OnBarricadeTransformed += BuildableTransformed;
-            PatchBarricadeSpawnInternal.OnNewBarricadeSpawned += BuildableSpawned;
-            PatchBarricadeDestroy.OnBarricadeDestroyed += BuildableDestroyed;
-
-            PatchAskTransformStructure.OnStructureTransformed += BuildableTransformed;
-            PatchStructureSpawnInternal.OnNewStructureSpawned += BuildableSpawned;
-            PatchStructureDestroy.OnStructureDestroyed += BuildableDestroyed;
+            PatchBuildableTransforms.OnBuildableTransformed += BuildableTransformed;
+            PatchBuildableSpawns.OnBuildableSpawned += BuildableSpawned;
+            PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
 
             GenerateAndLoadAllClusters();
             OnDataProcessed?.Invoke();
@@ -363,15 +360,15 @@ namespace Pustalorc.Plugins.BaseClustering
 
             foreach (var cluster in affected)
             {
-                var clusterRegened = Utils.HybridClustering(cluster.Buildables.ToList(),Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount);
+                var clusterRegened = Utils.HybridClustering(cluster.Buildables.ToList(),
+                    Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount);
 
-                if (clusterRegened.Count > 1)
-                {
-                    Clusters.Remove(cluster);
+                if (clusterRegened.Count <= 1) continue;
 
-                    foreach (var c in clusterRegened)
-                        Clusters.Add(c);
-                }
+                Clusters.Remove(cluster);
+
+                foreach (var c in clusterRegened)
+                    Clusters.Add(c);
             }
         }
 
@@ -469,7 +466,8 @@ namespace Pustalorc.Plugins.BaseClustering
             {
                 var allBuilds = bestClusters.SelectMany(k => k.Buildables).ToList();
 
-                var newClusters = Utils.HybridClustering(allBuilds, Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount);
+                var newClusters = Utils.HybridClustering(allBuilds, Configuration.Instance.BruteforceOptions,
+                    Configuration.Instance.RustOptions, ref m_InstanceCount);
 
                 foreach (var cluster in bestClusters)
                     Clusters.Remove(cluster);

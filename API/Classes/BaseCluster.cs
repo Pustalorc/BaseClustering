@@ -52,7 +52,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
             }
         }
 
-        public BaseCluster([NotNull] List<Buildable> buildables, Vector3 center, double radius, bool isGlobalCluster, ulong instanceId)
+        public BaseCluster([NotNull] List<Buildable> buildables, Vector3 center, double radius, bool isGlobalCluster,
+            ulong instanceId)
         {
             Buildables = new ObservableCollection<Buildable>(buildables);
             CenterBuildable = center;

@@ -11,7 +11,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
     public static class Utils
     {
         [NotNull]
-        public static List<BaseCluster> BruteforceClustering([NotNull] List<Buildable> allBuildables, BruteforceOptions options, ref ulong instanceCount)
+        public static List<BaseCluster> BruteforceClustering([NotNull] List<Buildable> allBuildables,
+            BruteforceOptions options, ref ulong instanceCount)
         {
             var output = new List<BaseCluster>();
 
@@ -73,7 +74,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
         }
 
         [NotNull]
-        public static List<BaseCluster> RustClustering([NotNull] List<Buildable> allBuildables, RustOptions options, bool remainingIntoOmegaCluster, ref ulong instanceCount)
+        public static List<BaseCluster> RustClustering([NotNull] List<Buildable> allBuildables, RustOptions options,
+            bool remainingIntoOmegaCluster, ref ulong instanceCount)
         {
             var output = new List<BaseCluster>();
 
@@ -119,20 +121,25 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
 
                 var centerIndex = elementsOfCluster.GetCenterIndex();
                 var centerBuild = elementsOfCluster[centerIndex];
-                output.Add(new BaseCluster(elementsOfCluster, centerBuild.Position, elementsOfCluster.GetDistances(k => k.Position, centerBuild.Position).Max() + options.ExtraRadius, false, instanceCount++));
+                output.Add(new BaseCluster(elementsOfCluster, centerBuild.Position,
+                    elementsOfCluster.GetDistances(k => k.Position, centerBuild.Position).Max() + options.ExtraRadius,
+                    false, instanceCount++));
             }
 
             if (!remainingIntoOmegaCluster) return output;
 
             var center = allBuildables.AverageCenter(k => k.Position);
-            output.Add(new BaseCluster(allBuildables, center, allBuildables.GetDistances(k => k.Position, center).Max() + options.ExtraRadius, true, instanceCount++));
+            output.Add(new BaseCluster(allBuildables, center,
+                allBuildables.GetDistances(k => k.Position, center).Max() + options.ExtraRadius, true,
+                instanceCount++));
             allBuildables.Clear();
 
             return output;
         }
 
         [NotNull]
-        public static List<BaseCluster> HybridClustering([NotNull] List<Buildable> allBuildables, BruteforceOptions bruteforceOptions, RustOptions rustOptions, ref ulong instanceCount)
+        public static List<BaseCluster> HybridClustering([NotNull] List<Buildable> allBuildables,
+            BruteforceOptions bruteforceOptions, RustOptions rustOptions, ref ulong instanceCount)
         {
             var output = RustClustering(allBuildables, rustOptions, false, ref instanceCount);
 

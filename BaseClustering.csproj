@@ -111,12 +111,9 @@
     <Compile Include="Config\BruteforceOptions.cs" />
     <Compile Include="Config\EClusteringStyle.cs" />
     <Compile Include="Config\RustOptions.cs" />
-    <Compile Include="Patches\PatchAskTransformBarricade.cs" />
-    <Compile Include="Patches\PatchAskTransformStructure.cs" />
-    <Compile Include="Patches\PatchBarricadeDestroy.cs" />
-    <Compile Include="Patches\PatchBarricadeSpawnInternal.cs" />
-    <Compile Include="Patches\PatchStructureDestroy.cs" />
-    <Compile Include="Patches\PatchStructureSpawnInternal.cs" />
+    <Compile Include="Patches\PatchBuildableTransforms.cs" />
+    <Compile Include="Patches\PatchBuildableDestructions.cs" />
+    <Compile Include="Patches\PatchBuildableSpawns.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
