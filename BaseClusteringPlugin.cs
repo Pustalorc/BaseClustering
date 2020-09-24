@@ -129,6 +129,7 @@ namespace Pustalorc.Plugins.BaseClustering
             PatchBuildableTransforms.OnBuildableTransformed -= BuildableTransformed;
             PatchBuildableSpawns.OnBuildableSpawned -= BuildableSpawned;
             PatchBuildablesDestroy.OnBuildableDestroyed -= BuildableDestroyed;
+            SaveManager.onPreSave -= Save;
 
             m_Harmony.UnpatchAll();
             m_Harmony = null;
@@ -167,13 +168,12 @@ namespace Pustalorc.Plugins.BaseClustering
         ///     Retrieves all clusters within the specified radius.
         /// </summary>
         /// <param name="center">The position to search from.</param>
-        /// <param name="sqrRadius">The maximum distance to detect a cluster in.</param>
+        /// <param name="sqrRadius">The maximum distance (raised to the power of 2) to detect a cluster in.</param>
         /// <returns></returns>
         [NotNull]
         public IEnumerable<BaseCluster> GetClustersInRadius(Vector3 center, float sqrRadius)
         {
-            return Clusters?.Where(k => Vector3.Distance(k.CenterBuildable, center) < sqrRadius) ??
-                   new List<BaseCluster>();
+            return Clusters?.Where(k => (k.CenterBuildable - center).sqrMagnitude < sqrRadius) ?? new List<BaseCluster>();
         }
 
         /// <summary>
@@ -320,6 +320,17 @@ namespace Pustalorc.Plugins.BaseClustering
             return result;
         }
 
+        private void OnLevelLoaded(int level)
+        {
+            PatchBuildableTransforms.OnBuildableTransformed += BuildableTransformed;
+            PatchBuildableSpawns.OnBuildableSpawned += BuildableSpawned;
+            PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
+            SaveManager.onPreSave += Save;
+
+            GenerateAndLoadAllClusters();
+            OnDataProcessed?.Invoke();
+        }
+
         internal void GenerateAndLoadAllClusters()
         {
             var start = DateTime.Now;
@@ -328,30 +339,116 @@ namespace Pustalorc.Plugins.BaseClustering
             Logging.Write(this,
                 $"Total buildables: {allBuildables.Count}. Took {(int) DateTime.Now.Subtract(start).TotalMilliseconds}ms");
 
-            Clusters = Configuration.Instance.ClusteringStyle switch
+            if (!LevelSavedata.fileExists("/Bases.dat") || !Load(allBuildables))
             {
-                EClusteringStyle.Bruteforce => new ObservableCollection<BaseCluster>(
-                    Utils.BruteforceClustering(allBuildables, Configuration.Instance.BruteforceOptions,
-                        ref m_InstanceCount)),
-                EClusteringStyle.Rust => new ObservableCollection<BaseCluster>(Utils.RustClustering(allBuildables,
-                    Configuration.Instance.RustOptions, true, ref m_InstanceCount)),
-                EClusteringStyle.Hybrid => new ObservableCollection<BaseCluster>(Utils.HybridClustering(allBuildables,
-                    Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount)),
-                _ => Clusters
-            };
+                Clusters = Configuration.Instance.ClusteringStyle switch
+                {
+                    EClusteringStyle.Bruteforce => new ObservableCollection<BaseCluster>(
+                        Utils.BruteforceClustering(allBuildables, Configuration.Instance.BruteforceOptions,
+                            ref m_InstanceCount)),
+                    EClusteringStyle.Rust => new ObservableCollection<BaseCluster>(Utils.RustClustering(allBuildables,
+                        Configuration.Instance.RustOptions, true, ref m_InstanceCount)),
+                    EClusteringStyle.Hybrid => new ObservableCollection<BaseCluster>(Utils.HybridClustering(allBuildables,
+                        Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount)),
+                    _ => Clusters
+                };
+            }
 
             Logging.Write(this,
                 $"Clusters Loaded: {Clusters.Count}. Took {(int) DateTime.Now.Subtract(start).TotalMilliseconds}ms.");
         }
 
-        private void OnLevelLoaded(int level)
+        private bool Load(IEnumerable<Buildable> allBuildables)
         {
-            PatchBuildableTransforms.OnBuildableTransformed += BuildableTransformed;
-            PatchBuildableSpawns.OnBuildableSpawned += BuildableSpawned;
-            PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
+            Logging.Verbose(this, "Loading save data from Bases.dat for this map.");
 
-            GenerateAndLoadAllClusters();
-            OnDataProcessed?.Invoke();
+            var bases = new List<BaseCluster>();
+            var river = LevelSavedata.openRiver("/Bases.dat", true);
+         
+            var style = (EClusteringStyle)river.readByte();
+            Logging.Verbose(this, $"Loaded clustering style of {style}.");
+
+            if (style != Configuration.Instance.ClusteringStyle)
+            {
+                Logging.Write(this, "WARNING! CLUSTERING STYLE WAS CHANGED DURING SERVER DOWNTIME! CLUSTER REGEN IS REQUIRED. WILL NOT KEEP LOADING SAVE DATA.", ConsoleColor.Yellow);
+                river.closeRiver();
+                return false;
+            }
+
+            var defaultRadius = river.readSingle();
+            Logging.Verbose(this, $"Loaded default radius of {defaultRadius}.");
+            InstanceCount = river.readUInt64();
+            Logging.Verbose(this, $"Loaded instance count of {InstanceCount}.");
+            var clusterCount = river.readInt32();
+            Logging.Verbose(this, $"Loaded number of saved clusters {clusterCount}.");
+
+            for (var i = 0; i < clusterCount; i++)
+            {
+                Logging.Verbose(this, $"Loading cluster {i}.");
+                var builds = new List<Buildable>();
+                var instanceId = river.readUInt64();
+                Logging.Verbose(this, $"Loaded Cluster InstanceID: {instanceId}");
+                var global = river.readBoolean();
+                Logging.Verbose(this, $"Loaded Cluster global status: {global}");
+                var radius = double.TryParse(river.readString(), out var rad) ? rad : defaultRadius;
+                Logging.Verbose(this, $"Loaded Cluster radius: {radius}");
+
+                var buildCount = river.readInt32();
+                Logging.Verbose(this, $"Loaded number of saved buildable instanceIds {buildCount}.");
+                for (var o = 0; o < buildCount; o++)
+                {
+                    var buildInstanceId = river.readUInt32();
+                    Logging.Verbose(this, $"Searching for buildable with instance Id of {buildInstanceId}");
+                    var build = allBuildables.FirstOrDefault(k => k.InstanceId == buildInstanceId);
+
+                    if (build == null)
+                    {
+                        Logging.Write(this, $"WARNING! BUILDABLE SAVE DATA WAS MODIFIED DURING SERVER DOWNTIME! MISSING BUILDABLE WITH INSTANCE ID {instanceId}. CLUSTER REGEN IS REQUIRED. WILL NOT KEEP LOADING SAVE DATA.", ConsoleColor.Yellow);
+                        river.closeRiver();
+                        return false;
+                    }
+
+                    Logging.Verbose(this, $"Found buildable with Instance Id {buildInstanceId}");
+                    builds.Add(build);
+                }
+
+                Logging.Verbose(this, $"Finishing load of cluster {i}. Adding to list of bases.");
+                var centerBuild = builds.ElementAt(builds.GetCenterIndex()).Position;
+                bases.Add(new BaseCluster(builds, builds.ElementAt(builds.GetCenterIndex()).Position, radius, global, instanceId));
+            }
+
+            Clusters = new ObservableCollection<BaseCluster>(bases);
+            return true;
+        }
+
+        public void Save()
+        {
+            var river = LevelSavedata.openRiver("/Bases.dat", false);
+            river.writeByte((byte)Configuration.Instance.ClusteringStyle);
+            switch (Configuration.Instance.ClusteringStyle)
+            {
+                case EClusteringStyle.Bruteforce:
+                    river.writeSingle(Configuration.Instance.BruteforceOptions.InitialRadius);
+                    break;
+                case EClusteringStyle.Rust:
+                    river.writeSingle(6.1f + Configuration.Instance.RustOptions.ExtraRadius);
+                    break;
+                case EClusteringStyle.Hybrid:
+                    river.writeSingle(0);
+                    break;
+            }
+            river.writeUInt64(InstanceCount);
+            river.writeInt32(Clusters.Count);
+            foreach (var cluster in Clusters)
+            {
+                river.writeUInt64(cluster.InstanceId);
+                river.writeBoolean(cluster.IsGlobalCluster);
+                river.writeString(cluster.Radius.ToString());
+                river.writeInt32(cluster.Buildables.Count);
+                foreach (var build in cluster.Buildables)
+                    river.writeUInt32(build.InstanceId);
+            }
+            river.closeRiver();
         }
 
         private void BuildableDestroyed(Transform model)
