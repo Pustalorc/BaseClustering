@@ -358,15 +358,12 @@ namespace Pustalorc.Plugins.BaseClustering
                 $"Clusters Loaded: {Clusters.Count}. Took {(int) DateTime.Now.Subtract(start).TotalMilliseconds}ms.");
         }
 
-        private bool Load(IEnumerable<Buildable> allBuildables)
+        private bool Load(List<Buildable> allBuildables)
         {
-            Logging.Verbose(this, "Loading save data from Bases.dat for this map.");
-
             var bases = new List<BaseCluster>();
             var river = LevelSavedata.openRiver("/Bases.dat", true);
          
             var style = (EClusteringStyle)river.readByte();
-            Logging.Verbose(this, $"Loaded clustering style of {style}.");
 
             if (style != Configuration.Instance.ClusteringStyle)
             {
@@ -376,30 +373,21 @@ namespace Pustalorc.Plugins.BaseClustering
             }
 
             var defaultRadius = river.readSingle();
-            Logging.Verbose(this, $"Loaded default radius of {defaultRadius}.");
             InstanceCount = river.readUInt64();
-            Logging.Verbose(this, $"Loaded instance count of {InstanceCount}.");
             var clusterCount = river.readInt32();
-            Logging.Verbose(this, $"Loaded number of saved clusters {clusterCount}.");
 
             for (var i = 0; i < clusterCount; i++)
             {
-                Logging.Verbose(this, $"Loading cluster {i}.");
                 var builds = new List<Buildable>();
                 var instanceId = river.readUInt64();
-                Logging.Verbose(this, $"Loaded Cluster InstanceID: {instanceId}");
                 var global = river.readBoolean();
-                Logging.Verbose(this, $"Loaded Cluster global status: {global}");
                 var radius = double.TryParse(river.readString(), out var rad) ? rad : defaultRadius;
-                Logging.Verbose(this, $"Loaded Cluster radius: {radius}");
 
                 var buildCount = river.readInt32();
-                Logging.Verbose(this, $"Loaded number of saved buildable instanceIds {buildCount}.");
                 for (var o = 0; o < buildCount; o++)
                 {
                     var buildInstanceId = river.readUInt32();
-                    Logging.Verbose(this, $"Searching for buildable with instance Id of {buildInstanceId}");
-                    var build = allBuildables.FirstOrDefault(k => k.InstanceId == buildInstanceId);
+                    var build = allBuildables.Find(k => k.InstanceId == buildInstanceId);
 
                     if (build == null)
                     {
@@ -408,11 +396,9 @@ namespace Pustalorc.Plugins.BaseClustering
                         return false;
                     }
 
-                    Logging.Verbose(this, $"Found buildable with Instance Id {buildInstanceId}");
                     builds.Add(build);
                 }
 
-                Logging.Verbose(this, $"Finishing load of cluster {i}. Adding to list of bases.");
                 var centerBuild = builds.ElementAt(builds.GetCenterIndex()).Position;
                 bases.Add(new BaseCluster(builds, builds.ElementAt(builds.GetCenterIndex()).Position, radius, global, instanceId));
             }
