@@ -3,7 +3,6 @@ using System.Linq;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Classes;
 using SDG.Unturned;
-using Steamworks;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Statics
@@ -11,7 +10,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
     public static class ReadOnlyGame
     {
         [NotNull]
-        public static IEnumerable<Buildable> GetBuilds(ulong owner = 0, ulong group = 0, bool includePlants = false, bool usePreProcessedData = true)
+        public static IEnumerable<Buildable> GetBuilds(ulong owner = 0, ulong group = 0, bool includePlants = false,
+            bool usePreProcessedData = true)
         {
             if (usePreProcessedData && BaseClusteringPlugin.Instance != null)
             {
@@ -23,10 +23,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 if (owner == 0)
                     return processedBuildables.Where(k => k.Group == group);
 
-                if (group == 0)
-                    return processedBuildables.Where(k => k.Owner == owner);
-
-                return processedBuildables.Where(k => k.Owner == owner || k.Group == group);
+                return group == 0
+                    ? processedBuildables.Where(k => k.Owner == owner)
+                    : processedBuildables.Where(k => k.Owner == owner || k.Group == group);
             }
 
             var barricadeRegions = BarricadeManager.regions.Cast<BarricadeRegion>();
@@ -62,10 +61,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             if (owner == 0)
                 return buildables.Where(k => k.Group == group);
 
-            if (group == 0)
-                return buildables.Where(k => k.Owner == owner);
-
-            return buildables.Where(k => k.Owner == owner || k.Group == group);
+            return group == 0
+                ? buildables.Where(k => k.Owner == owner)
+                : buildables.Where(k => k.Owner == owner || k.Group == group);
         }
 
         [NotNull]

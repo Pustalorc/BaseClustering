@@ -175,7 +175,8 @@ namespace Pustalorc.Plugins.BaseClustering
         [NotNull]
         public IEnumerable<BaseCluster> GetClustersInRadius(Vector3 center, float sqrRadius)
         {
-            return Clusters?.Where(k => (k.CenterBuildable - center).sqrMagnitude < sqrRadius) ?? new List<BaseCluster>();
+            return Clusters?.Where(k => (k.CenterBuildable - center).sqrMagnitude < sqrRadius) ??
+                   new List<BaseCluster>();
         }
 
         /// <summary>
@@ -344,7 +345,6 @@ namespace Pustalorc.Plugins.BaseClustering
                 $"Total buildables: {allBuildables.Count}. Took {stopwatch.ElapsedMilliseconds}ms");
 
             if (!LevelSavedata.fileExists("/Bases.dat") || !Load(allBuildables))
-            {
                 Clusters = Configuration.Instance.ClusteringStyle switch
                 {
                     EClusteringStyle.Bruteforce => new ObservableCollection<BaseCluster>(
@@ -352,11 +352,12 @@ namespace Pustalorc.Plugins.BaseClustering
                             ref m_InstanceCount)),
                     EClusteringStyle.Rust => new ObservableCollection<BaseCluster>(Utils.RustClustering(allBuildables,
                         Configuration.Instance.RustOptions, true, ref m_InstanceCount)),
-                    EClusteringStyle.Hybrid => new ObservableCollection<BaseCluster>(Utils.HybridClustering(allBuildables,
-                        Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount)),
+                    EClusteringStyle.Hybrid => new ObservableCollection<BaseCluster>(Utils.HybridClustering(
+                        allBuildables,
+                        Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions,
+                        ref m_InstanceCount)),
                     _ => Clusters
                 };
-            }
 
             stopwatch.Stop();
             Logging.Write(this,
@@ -365,81 +366,84 @@ namespace Pustalorc.Plugins.BaseClustering
 
         private bool Load(List<Buildable> allBuildables)
         {
-            var bases = new List<BaseCluster>();
-            var river = LevelSavedata.openRiver("/Bases.dat", true);
-         
-            var style = (EClusteringStyle)river.readByte();
-
-            if (style != Configuration.Instance.ClusteringStyle)
+            try
             {
-                Logging.Write(this, "WARNING! CLUSTERING STYLE WAS CHANGED DURING SERVER DOWNTIME! CLUSTER REGEN IS REQUIRED. WILL NOT KEEP LOADING SAVE DATA.", ConsoleColor.Yellow);
-                river.closeRiver();
-                return false;
-            }
+                var bases = new List<BaseCluster>();
+                var river = new ExpandedRiver(
+                    ServerSavedata.directory + "/" + Provider.serverID + "/Level/" + Level.info.name + "/Bases.dat");
 
-            var defaultRadius = river.readSingle();
-            InstanceCount = river.readUInt64();
-            var clusterCount = river.readInt32();
+                var style = (EClusteringStyle) river.ReadByte();
 
-            for (var i = 0; i < clusterCount; i++)
-            {
-                var builds = new List<Buildable>();
-                var instanceId = river.readUInt64();
-                var global = river.readBoolean();
-                var radius = double.TryParse(river.readString(), out var rad) ? rad : defaultRadius;
-
-                var buildCount = river.readInt32();
-                for (var o = 0; o < buildCount; o++)
+                if (style != Configuration.Instance.ClusteringStyle)
                 {
-                    var buildInstanceId = river.readUInt32();
-                    var build = allBuildables.Find(k => k.InstanceId == buildInstanceId);
-
-                    if (build == null)
-                    {
-                        Logging.Write(this, $"WARNING! BUILDABLE SAVE DATA WAS MODIFIED DURING SERVER DOWNTIME! MISSING BUILDABLE WITH INSTANCE ID {instanceId}. CLUSTER REGEN IS REQUIRED. WILL NOT KEEP LOADING SAVE DATA.", ConsoleColor.Yellow);
-                        river.closeRiver();
-                        return false;
-                    }
-
-                    builds.Add(build);
+                    Logging.Write(this,
+                        "WARNING! CLUSTERING STYLE WAS CHANGED DURING SERVER DOWNTIME! CLUSTER REGEN IS REQUIRED. WILL NOT KEEP LOADING SAVE DATA.",
+                        ConsoleColor.Yellow);
+                    river.CloseRiver();
+                    return false;
                 }
 
-                var centerBuild = builds.ElementAt(builds.GetCenterIndex()).Position;
-                bases.Add(new BaseCluster(builds, builds.ElementAt(builds.GetCenterIndex()).Position, radius, global, instanceId));
-            }
+                InstanceCount = river.ReadUInt64();
+                var clusterCount = river.ReadInt32();
 
-            Clusters = new ObservableCollection<BaseCluster>(bases);
-            return true;
+                for (var i = 0; i < clusterCount; i++)
+                {
+                    var builds = new List<Buildable>();
+                    var instanceId = river.ReadUInt64();
+                    var global = river.ReadBoolean();
+                    var radius = river.ReadDouble();
+
+                    var buildCount = river.ReadInt32();
+                    for (var o = 0; o < buildCount; o++)
+                    {
+                        var buildInstanceId = river.ReadUInt32();
+                        var build = allBuildables.Find(k => k.InstanceId == buildInstanceId);
+
+                        if (build == null)
+                        {
+                            Logging.Write(this,
+                                $"WARNING! BUILDABLE SAVE DATA WAS MODIFIED DURING SERVER DOWNTIME! MISSING BUILDABLE WITH INSTANCE ID {instanceId}. CLUSTER REGEN IS REQUIRED. WILL NOT KEEP LOADING SAVE DATA.",
+                                ConsoleColor.Yellow);
+                            river.CloseRiver();
+                            return false;
+                        }
+
+                        builds.Add(build);
+                    }
+
+                    var centerBuild = builds.ElementAt(builds.GetCenterIndex()).Position;
+                    bases.Add(new BaseCluster(builds, centerBuild, radius, global, instanceId));
+                }
+
+                Clusters = new ObservableCollection<BaseCluster>(bases);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logging.Write(this,
+                    $"WARNING AN EXCEPTION WAS THROWN. ASSUMING DATA IS CORRUPTED. FORCING CLUSTER REGEN. EXCEPTION: {ex}");
+                return false;
+            }
         }
 
         public void Save()
         {
-            var river = LevelSavedata.openRiver("/Bases.dat", false);
-            river.writeByte((byte)Configuration.Instance.ClusteringStyle);
-            switch (Configuration.Instance.ClusteringStyle)
-            {
-                case EClusteringStyle.Bruteforce:
-                    river.writeSingle(Configuration.Instance.BruteforceOptions.InitialRadius);
-                    break;
-                case EClusteringStyle.Rust:
-                    river.writeSingle(6.1f + Configuration.Instance.RustOptions.ExtraRadius);
-                    break;
-                case EClusteringStyle.Hybrid:
-                    river.writeSingle(0);
-                    break;
-            }
-            river.writeUInt64(InstanceCount);
-            river.writeInt32(Clusters.Count);
+            var river = new ExpandedRiver(
+                ServerSavedata.directory + "/" + Provider.serverID + "/Level/" + Level.info.name + "/Bases.dat");
+            river.WriteByte((byte) Configuration.Instance.ClusteringStyle);
+            river.WriteUInt64(InstanceCount);
+            river.WriteInt32(Clusters.Count);
             foreach (var cluster in Clusters)
             {
-                river.writeUInt64(cluster.InstanceId);
-                river.writeBoolean(cluster.IsGlobalCluster);
-                river.writeString(cluster.Radius.ToString());
-                river.writeInt32(cluster.Buildables.Count);
+                river.WriteUInt64(cluster.InstanceId);
+                river.WriteBoolean(cluster.IsGlobalCluster);
+                river.WriteDouble(cluster.Radius);
+                river.WriteInt32(cluster.Buildables.Count);
                 foreach (var build in cluster.Buildables)
-                    river.writeUInt32(build.InstanceId);
+                    river.WriteUInt32(build.InstanceId);
             }
-            river.closeRiver();
+
+            river.CloseRiver();
         }
 
         private void BuildableDestroyed(Transform model)

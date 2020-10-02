@@ -18,16 +18,14 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
         [HarmonyPatch(typeof(BarricadeManager), "dropBarricadeIntoRegionInternal")]
         [HarmonyPostfix]
         [UsedImplicitly]
-        private static void DropBarricade(BarricadeRegion region, BarricadeData data, ref Transform result, ref uint instanceID)
+        private static void DropBarricade(BarricadeRegion region, BarricadeData data, ref Transform result,
+            ref uint instanceID)
         {
             if (result == null) return;
 
             var drop = region.drops.LastOrDefault();
 
-            if (drop?.instanceID == instanceID)
-            {
-                OnBuildableSpawned?.Invoke(new Buildable(data, drop));
-            }
+            if (drop?.instanceID == instanceID) OnBuildableSpawned?.Invoke(new Buildable(data, drop));
         }
 
         [HarmonyPatch(typeof(StructureManager), "dropReplicatedStructure")]
@@ -45,9 +43,7 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
             var drop = region.drops.LastOrDefault();
 
             if (data?.instanceID == ___instanceCount && drop?.instanceID == ___instanceCount)
-            {
                 OnBuildableSpawned?.Invoke(new Buildable(data, drop));
-            }
         }
     }
 }

@@ -84,6 +84,7 @@
   <ItemGroup>
     <Compile Include="API\Classes\BaseCluster.cs" />
     <Compile Include="API\Classes\Buildable.cs" />
+    <Compile Include="API\Classes\ExpandedRiver.cs" />
     <Compile Include="API\Classes\WreckAction.cs" />
     <Compile Include="API\Classes\WreckClustersAction.cs" />
     <Compile Include="API\Delegates\BuildableSpawned.cs" />
@@ -112,7 +113,7 @@
     <Compile Include="Config\EClusteringStyle.cs" />
     <Compile Include="Config\RustOptions.cs" />
     <Compile Include="Patches\PatchBuildableTransforms.cs" />
-    <Compile Include="Patches\PatchBuildableDestructions.cs" />
+    <Compile Include="Patches\PatchBuildablesDestroy.cs" />
     <Compile Include="Patches\PatchBuildableSpawns.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

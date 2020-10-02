@@ -8,7 +8,6 @@ using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
-using Steamworks;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
