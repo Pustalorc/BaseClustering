@@ -111,6 +111,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
             return new Color(ReadByte() / 255f, ReadByte() / 255f, ReadByte() / 255f);
         }
 
+        public DateTime ReadDateTime()
+        {
+            return DateTime.FromBinary(ReadInt64());
+        }
+
         public void WriteString([NotNull] string value)
         {
             var bytes = Encoding.UTF8.GetBytes(value);
@@ -214,6 +219,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
             WriteByte((byte) (value.r * 255f));
             WriteByte((byte) (value.g * 255f));
             WriteByte((byte) (value.b * 255f));
+        }
+
+        public void WriteDateTime(DateTime value)
+        {
+            WriteInt64(value.ToBinary());
         }
 
         public void CloseRiver()
