@@ -53,7 +53,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var builds = ReadOnlyGame.GetBuilds(CSteamID.Nil, true, plants);
+            var builds = ReadOnlyGame.GetBuilds(includePlants: plants);
 
             if (target != null) builds = builds.Where(k => k.Owner.ToString().Equals(target.Id));
 
