@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using System.Linq;
 using HarmonyLib;
 using JetBrains.Annotations;
@@ -333,11 +334,12 @@ namespace Pustalorc.Plugins.BaseClustering
 
         internal void GenerateAndLoadAllClusters()
         {
-            var start = DateTime.Now;
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
 
-            var allBuildables = ReadOnlyGame.GetBuilds(CSteamID.Nil, false, false).ToList();
+            var allBuildables = ReadOnlyGame.GetBuilds(usePreProcessedData: false).ToList();
             Logging.Write(this,
-                $"Total buildables: {allBuildables.Count}. Took {(int) DateTime.Now.Subtract(start).TotalMilliseconds}ms");
+                $"Total buildables: {allBuildables.Count}. Took {stopwatch.ElapsedMilliseconds}ms");
 
             if (!LevelSavedata.fileExists("/Bases.dat") || !Load(allBuildables))
             {
@@ -354,8 +356,9 @@ namespace Pustalorc.Plugins.BaseClustering
                 };
             }
 
+            stopwatch.Stop();
             Logging.Write(this,
-                $"Clusters Loaded: {Clusters.Count}. Took {(int) DateTime.Now.Subtract(start).TotalMilliseconds}ms.");
+                $"Clusters Loaded: {Clusters.Count}. Took {stopwatch.ElapsedMilliseconds}ms.");
         }
 
         private bool Load(List<Buildable> allBuildables)
