@@ -11,11 +11,23 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
     public static class ReadOnlyGame
     {
         [NotNull]
-        public static IEnumerable<Buildable> GetBuilds(CSteamID id, bool includePlants, bool usePreProcessedData)
+        public static IEnumerable<Buildable> GetBuilds(ulong owner = 0, ulong group = 0, bool includePlants = false, bool usePreProcessedData = true)
         {
             if (usePreProcessedData && BaseClusteringPlugin.Instance != null)
-                return BaseClusteringPlugin.Instance.Buildables.Where(
-                    k => id == CSteamID.Nil || k.Owner == id.m_SteamID);
+            {
+                var processedBuildables = BaseClusteringPlugin.Instance.Buildables;
+
+                if (owner == 0 && group == 0)
+                    return processedBuildables;
+
+                if (owner == 0)
+                    return processedBuildables.Where(k => k.Group == group);
+
+                if (group == 0)
+                    return processedBuildables.Where(k => k.Owner == owner);
+
+                return processedBuildables.Where(k => k.Owner == owner || k.Group == group);
+            }
 
             var barricadeRegions = BarricadeManager.regions.Cast<BarricadeRegion>();
 
@@ -31,7 +43,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
             var structureDrops = structureRegions.SelectMany(str => str.drops);
             // ReSharper restore PossibleMultipleEnumeration
 
-            return barricadeDatas
+            var buildables = barricadeDatas
                 .Select((k, i) =>
                 {
                     var drop = barricadeDrops.ElementAt(i);
@@ -42,8 +54,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                     var drop = structureDrops.ElementAt(i);
                     return drop == null ? null : new Buildable(k, drop);
                 }))
-                .Where(d => d != null)
-                .ToList();
+                .Where(d => d != null);
+
+            if (owner == 0 && group == 0)
+                return buildables;
+
+            if (owner == 0)
+                return buildables.Where(k => k.Group == group);
+
+            if (group == 0)
+                return buildables.Where(k => k.Owner == owner);
+
+            return buildables.Where(k => k.Owner == owner || k.Group == group);
         }
 
         [NotNull]
@@ -60,22 +82,20 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
         }
 
         [NotNull]
-        public static IEnumerable<BarricadeData> GetBarricades(CSteamID id, bool includePlants)
+        public static IEnumerable<BarricadeData> GetBarricades(bool includePlants)
         {
             var result = BarricadeManager.regions.Cast<BarricadeRegion>().SelectMany(k => k.barricades);
 
             if (includePlants)
                 result = result.Concat(BarricadeManager.vehicleRegions.SelectMany(k => k.barricades));
 
-            return id == CSteamID.Nil ? result : result.Where(k => k.owner == (ulong) id);
+            return result;
         }
 
         [NotNull]
-        public static IEnumerable<StructureData> GetStructures(CSteamID id)
+        public static IEnumerable<StructureData> GetStructures()
         {
-            var result = StructureManager.regions.Cast<StructureRegion>().SelectMany(brd => brd.structures);
-
-            return id == CSteamID.Nil ? result : result.Where(k => k.owner == (ulong) id);
+            return StructureManager.regions.Cast<StructureRegion>().SelectMany(brd => brd.structures);
         }
 
         public static bool TryGetStructureRegion(Vector3 position, out byte x, out byte y, out ushort index,
