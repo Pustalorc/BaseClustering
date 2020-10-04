@@ -7,25 +7,28 @@ using SDG.Unturned;
 
 namespace Pustalorc.Plugins.BaseClustering.Patches
 {
-    [HarmonyPatch]
     public static class PatchBuildableTransforms
     {
         public static event BuildableTransformed OnBuildableTransformed;
 
-        [HarmonyPatch(typeof(BarricadeManager), "askTransformBarricade")]
-        [HarmonyPostfix]
-        [UsedImplicitly]
-        public static void AskTransformBarricade(uint instanceID)
+        [HarmonyPatch]
+        public static class InternalPatches
         {
-            OnBuildableTransformed?.Invoke(instanceID);
-        }
+            [HarmonyPatch(typeof(BarricadeManager), "askTransformBarricade")]
+            [HarmonyPostfix]
+            [UsedImplicitly]
+            public static void AskTransformBarricade(uint instanceID)
+            {
+                OnBuildableTransformed?.Invoke(instanceID);
+            }
 
-        [HarmonyPatch(typeof(StructureManager), "askTransformStructure")]
-        [HarmonyPostfix]
-        [UsedImplicitly]
-        public static void AskTransformStructure(uint instanceID)
-        {
-            OnBuildableTransformed?.Invoke(instanceID);
+            [HarmonyPatch(typeof(StructureManager), "askTransformStructure")]
+            [HarmonyPostfix]
+            [UsedImplicitly]
+            public static void AskTransformStructure(uint instanceID)
+            {
+                OnBuildableTransformed?.Invoke(instanceID);
+            }
         }
     }
 }
