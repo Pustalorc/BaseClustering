@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using PlayerInfoLibrary;
 using Pustalorc.Plugins.BaseClustering.API.Statics;
 using Rocket.API;
 using Rocket.Unturned.Chat;
@@ -23,7 +22,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         [NotNull] public List<string> Permissions => new List<string> {"topbuilders"};
 
-        public async void Execute(IRocketPlayer caller, [NotNull] string[] command)
+        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
         {
             var args = command.ToList();
 
@@ -39,13 +38,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             {
                 var builder = topBuilders.ElementAt(i);
 
-                PlayerData pInfo = null;
-                if (PlayerInfoLib.Instance != null)
-                    pInfo = await PlayerInfoLib.Instance.database.QueryById(new CSteamID(builder.Key));
-
                 UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("top_builder_format", i + 1,
-                        pInfo?.CharacterName ?? builder.Key.ToString(), builder.Key, builder.Count()));
+                    BaseClusteringPlugin.Instance.Translate("top_builder_format", i + 1, builder.Key, builder.Count()));
             }
         }
     }

@@ -68,8 +68,8 @@ namespace Pustalorc.Plugins.BaseClustering
                 "cannot_teleport_no_clusters",
                 "Cannot teleport anywhere, no clusters found with the following filters. Player: {0}"
             },
-            {"top_builder_format", "At number {0}, {1} [{2}] with {3} buildables!"},
-            {"top_cluster_format", "At number {0}, {1} [{2}] with {3} clusters!"},
+            {"top_builder_format", "At number {0}, {1} with {2} buildables!"},
+            {"top_cluster_format", "At number {0}, {1} with {2} clusters!"},
             {"action_cancelled", "The wreck action was cancelled."},
             {"no_action_queued", "There is no wreck action queued."},
             {"cannot_wreck_no_clusters", "There are no clusters selected, so nothing can be wrecked."},
