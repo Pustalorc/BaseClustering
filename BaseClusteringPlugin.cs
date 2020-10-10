@@ -131,7 +131,7 @@ namespace Pustalorc.Plugins.BaseClustering
             PatchBuildableSpawns.OnBuildableSpawned -= BuildableSpawned;
             PatchBuildablesDestroy.OnBuildableDestroyed -= BuildableDestroyed;
             Provider.onCommenceShutdown -= Save;
-            SaveManager.onPreSave -= Save;
+            SaveManager.onPostSave -= Save;
 
             m_Harmony.UnpatchAll();
             m_Harmony = null;
@@ -329,7 +329,7 @@ namespace Pustalorc.Plugins.BaseClustering
             PatchBuildableSpawns.OnBuildableSpawned += BuildableSpawned;
             PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
             Provider.onCommenceShutdown += Save;
-            SaveManager.onPreSave += Save;
+            SaveManager.onPostSave += Save;
 
             GenerateAndLoadAllClusters();
             OnDataProcessed?.Invoke();
