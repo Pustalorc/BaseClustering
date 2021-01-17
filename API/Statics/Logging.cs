@@ -5,7 +5,7 @@ using Rocket.Core.Logging;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Statics
 {
-    public static class Logging
+    internal static class Logging
     {
         public static void Verbose(object source, object message, ConsoleColor consoleColor = ConsoleColor.Green,
             bool logInRocket = true, [CanBeNull] object rocketMessage = null, ConsoleColor? rocketColor = null)

@@ -4,7 +4,6 @@ using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
-using Steamworks;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
@@ -19,9 +18,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         [NotNull] public string Syntax => "";
 
-        [NotNull] public List<string> Aliases => new List<string> {"wv"};
+        [NotNull] public List<string> Aliases => new() {"wv"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"wreckvehicle"};
+        [NotNull] public List<string> Permissions => new() {"wreckvehicle"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -55,7 +54,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             UnturnedChat.Say(caller,
                 BaseClusteringPlugin.Instance.Translate("vehicle_wreck",
                     raycastInfo.vehicle.asset.vehicleName ?? raycastInfo.vehicle.asset.name,
-                    raycastInfo.vehicle.id, raycastInfo.vehicle.instanceID, raycastInfo.vehicle.lockedOwner.ToString()));
+                    raycastInfo.vehicle.id, raycastInfo.vehicle.instanceID,
+                    raycastInfo.vehicle.lockedOwner.ToString()));
         }
     }
 }

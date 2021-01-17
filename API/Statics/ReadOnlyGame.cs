@@ -66,6 +66,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.Statics
                 : buildables.Where(k => k.Owner == owner || k.Group == group);
         }
 
+        [CanBeNull]
+        public static Buildable GetBuild(Transform buildable)
+        {
+            return GetBuilds(includePlants: true).FirstOrDefault(k => k.Model == buildable);
+        }
+
+        [CanBeNull]
+        public static Buildable GetBuild(uint instanceId)
+        {
+            return GetBuilds(includePlants: true).FirstOrDefault(k => k.InstanceId == instanceId);
+        }
+
         [NotNull]
         public static IEnumerable<BarricadeDrop> GetBarricadeDrops()
         {

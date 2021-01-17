@@ -19,9 +19,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         [NotNull] public string Syntax => "[player]";
 
-        [NotNull] public List<string> Aliases => new List<string> {"tpc"};
+        [NotNull] public List<string> Aliases => new() {"tpc"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"teleporttocluster"};
+        [NotNull] public List<string> Permissions => new() {"teleporttocluster"};
 
         public void Execute(IRocketPlayer caller, [NotNull] string[] command)
         {

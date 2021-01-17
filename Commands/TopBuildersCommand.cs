@@ -4,7 +4,6 @@ using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Statics;
 using Rocket.API;
 using Rocket.Unturned.Chat;
-using Steamworks;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
@@ -18,9 +17,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         [NotNull] public string Syntax => "v";
 
-        [NotNull] public List<string> Aliases => new List<string> {"topb"};
+        [NotNull] public List<string> Aliases => new() {"topb"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"topbuilders"};
+        [NotNull] public List<string> Permissions => new() {"topbuilders"};
 
         public void Execute(IRocketPlayer caller, [NotNull] string[] command)
         {

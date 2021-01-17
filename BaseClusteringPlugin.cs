@@ -43,7 +43,7 @@ namespace Pustalorc.Plugins.BaseClustering
         private Harmony m_Harmony;
 
         [NotNull]
-        public override TranslationList DefaultTranslations => new TranslationList
+        public override TranslationList DefaultTranslations => new()
         {
             {
                 "clusters_regen_warning",
@@ -130,7 +130,7 @@ namespace Pustalorc.Plugins.BaseClustering
             PatchBuildableTransforms.OnBuildableTransformed -= BuildableTransformed;
             PatchBuildableSpawns.OnBuildableSpawned -= BuildableSpawned;
             PatchBuildablesDestroy.OnBuildableDestroyed -= BuildableDestroyed;
-            Provider.onCommenceShutdown -= Save;
+            Provider.onCommenceShutdown -= ForceDataSave;
             SaveManager.onPostSave -= Save;
 
             m_Harmony.UnpatchAll();
@@ -139,6 +139,11 @@ namespace Pustalorc.Plugins.BaseClustering
             Instance = null;
 
             Logging.PluginUnloaded(this);
+        }
+
+        private void ForceDataSave()
+        {
+            SaveManager.save();
         }
 
         private ObservableCollection<BaseCluster> m_Clusters;
@@ -210,6 +215,39 @@ namespace Pustalorc.Plugins.BaseClustering
         public BaseCluster GetClusterWithElement(Vector3 position)
         {
             return Clusters?.FirstOrDefault(k => k.Buildables.Any(l => l.Position == position));
+        }
+
+        /// <summary>
+        ///     Gets the cluster that contains the element with the provided position.
+        /// </summary>
+        /// <param name="model">The model of the buildable within a cluster.</param>
+        /// <returns></returns>
+        [CanBeNull]
+        public BaseCluster GetClusterWithElement(Transform model)
+        {
+            return Clusters?.FirstOrDefault(k => k.Buildables.Any(l => l.Model == model));
+        }
+
+        /// <summary>
+        ///     Gets the cluster that contains the element with the provided position.
+        /// </summary>
+        /// <param name="instanceId">The instanceId of the buildable within a cluster.</param>
+        /// <returns></returns>
+        [CanBeNull]
+        public BaseCluster GetClusterWithElement(uint instanceId)
+        {
+            return Clusters?.FirstOrDefault(k => k.Buildables.Any(l => l.InstanceId == instanceId));
+        }
+
+        /// <summary>
+        ///     Gets the cluster that contains the element with the provided position.
+        /// </summary>
+        /// <param name="buildable">The buildable within a cluster.</param>
+        /// <returns></returns>
+        [CanBeNull]
+        public BaseCluster GetClusterWithElement(Buildable buildable)
+        {
+            return Clusters?.FirstOrDefault(k => k.Buildables.Contains(buildable));
         }
 
         /// <summary>
@@ -328,7 +366,7 @@ namespace Pustalorc.Plugins.BaseClustering
             PatchBuildableTransforms.OnBuildableTransformed += BuildableTransformed;
             PatchBuildableSpawns.OnBuildableSpawned += BuildableSpawned;
             PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
-            Provider.onCommenceShutdown += Save;
+            Provider.onCommenceShutdown += ForceDataSave;
             SaveManager.onPostSave += Save;
 
             GenerateAndLoadAllClusters();
@@ -528,49 +566,50 @@ namespace Pustalorc.Plugins.BaseClustering
             };
 
             var clusterCount = bestClusters.Count();
-            if (clusterCount == 0)
+            switch (clusterCount)
             {
-                switch (config.ClusteringStyle)
-                {
-                    case EClusteringStyle.Bruteforce:
-                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.BruteforceOptions.InitialRadius, false, InstanceCount++));
-                        break;
-                    case EClusteringStyle.Rust:
-                        var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
-                        if (globalCluster != null) globalCluster.Buildables.Add(buildable);
-                        else
+                case 0:
+                    switch (config.ClusteringStyle)
+                    {
+                        case EClusteringStyle.Bruteforce:
                             Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                6.1f + config.RustOptions.ExtraRadius, true, InstanceCount++));
-                        break;
-                    case EClusteringStyle.Hybrid:
-                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 6.1f + config.RustOptions.ExtraRadius
-                                : config.BruteforceOptions.InitialRadius, false, InstanceCount++));
-                        break;
+                                config.BruteforceOptions.InitialRadius, false, InstanceCount++));
+                            break;
+                        case EClusteringStyle.Rust:
+                            var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
+                            if (globalCluster != null) globalCluster.Buildables.Add(buildable);
+                            else
+                                Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                                    6.1f + config.RustOptions.ExtraRadius, true, InstanceCount++));
+                            break;
+                        case EClusteringStyle.Hybrid:
+                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                                config.RustOptions.FloorIds.Contains(buildable.AssetId)
+                                    ? 6.1f + config.RustOptions.ExtraRadius
+                                    : config.BruteforceOptions.InitialRadius, false, InstanceCount++));
+                            break;
+                    }
+
+                    return;
+                case > 1:
+                {
+                    var allBuilds = bestClusters.SelectMany(k => k.Buildables).ToList();
+
+                    var newClusters = Utils.HybridClustering(allBuilds, Configuration.Instance.BruteforceOptions,
+                        Configuration.Instance.RustOptions, ref m_InstanceCount);
+
+                    foreach (var cluster in bestClusters)
+                        Clusters.Remove(cluster);
+
+                    foreach (var cluster in newClusters)
+                        Clusters.Add(cluster);
+
+                    return;
                 }
-
-                return;
+                default:
+                    bestClusters.First().Buildables.Add(buildable);
+                    break;
             }
-
-            if (clusterCount > 1)
-            {
-                var allBuilds = bestClusters.SelectMany(k => k.Buildables).ToList();
-
-                var newClusters = Utils.HybridClustering(allBuilds, Configuration.Instance.BruteforceOptions,
-                    Configuration.Instance.RustOptions, ref m_InstanceCount);
-
-                foreach (var cluster in bestClusters)
-                    Clusters.Remove(cluster);
-
-                foreach (var cluster in newClusters)
-                    Clusters.Add(cluster);
-
-                return;
-            }
-
-            bestClusters.First().Buildables.Add(buildable);
         }
 
         private void _changeOwnerAndGroup([NotNull] BaseCluster cluster, ulong newOwner, ulong newGroup)

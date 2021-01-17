@@ -3,7 +3,6 @@ using System.Linq;
 using JetBrains.Annotations;
 using Rocket.API;
 using Rocket.Unturned.Chat;
-using Steamworks;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
@@ -17,9 +16,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         [NotNull] public string Syntax => "";
 
-        [NotNull] public List<string> Aliases => new List<string> {"topc"};
+        [NotNull] public List<string> Aliases => new() {"topc"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"topclusters"};
+        [NotNull] public List<string> Permissions => new() {"topclusters"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -30,7 +29,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             for (var i = 0; i < topClusters.Count; i++)
             {
                 var builder = topClusters.ElementAt(i);
-                
+
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("top_cluster_format", i + 1, builder.Key, builder.Count()));
             }

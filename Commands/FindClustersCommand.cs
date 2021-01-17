@@ -16,8 +16,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
         [NotNull] public string Name => "findclusters";
         [NotNull] public string Help => "Finds clusters around the map";
         [NotNull] public string Syntax => "<player> [id] [radius] | [id] [radius]";
-        [NotNull] public List<string> Aliases => new List<string> {"fc"};
-        [NotNull] public List<string> Permissions => new List<string> {"findclusters"};
+        [NotNull] public List<string> Aliases => new() {"fc"};
+        [NotNull] public List<string> Permissions => new() {"findclusters"};
 
         public void Execute(IRocketPlayer caller, [NotNull] string[] command)
         {
