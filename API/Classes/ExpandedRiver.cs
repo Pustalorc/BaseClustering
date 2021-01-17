@@ -93,12 +93,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
 
         public CSteamID ReadSteamID()
         {
-            return new(ReadUInt64());
+            return new CSteamID(ReadUInt64());
         }
 
         public Vector3 ReadSingleVector3()
         {
-            return new(ReadSingle(), ReadSingle(), ReadSingle());
+            return new Vector3(ReadSingle(), ReadSingle(), ReadSingle());
         }
 
         public Quaternion ReadSingleQuaternion()
@@ -108,7 +108,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
 
         public Color ReadColor()
         {
-            return new(ReadByte() / 255f, ReadByte() / 255f, ReadByte() / 255f);
+            return new Color(ReadByte() / 255f, ReadByte() / 255f, ReadByte() / 255f);
         }
 
         public DateTime ReadDateTime()
@@ -127,7 +127,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
 
         public void WriteBoolean(bool value)
         {
-            Stream.WriteByte(value ? 1 : 0);
+            Stream.WriteByte((byte) (value ? 1 : 0));
             Water++;
         }
 

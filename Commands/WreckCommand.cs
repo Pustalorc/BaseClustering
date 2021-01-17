@@ -14,7 +14,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class WreckCommand : IRocketCommand
     {
-        private Dictionary<string, WreckAction> m_WreckActions = new();
+        private Dictionary<string, WreckAction> m_WreckActions = new Dictionary<string, WreckAction>();
 
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
@@ -26,9 +26,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
         public string Syntax =>
             "confirm | abort | b [radius] | s [radius] | <item> [radius] | v [item] [radius] | <player> [item] [radius]";
 
-        [NotNull] public List<string> Aliases => new() {"w"};
+        [NotNull] public List<string> Aliases => new List<string> {"w"};
 
-        [NotNull] public List<string> Permissions => new() {"wreck"};
+        [NotNull] public List<string> Permissions => new List<string> {"wreck"};
 
         public void Execute([NotNull] IRocketPlayer caller, [NotNull] string[] command)
         {

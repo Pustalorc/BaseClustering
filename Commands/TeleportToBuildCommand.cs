@@ -20,9 +20,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         [NotNull] public string Syntax => "b [player] | s [player] | v [player] | [player] [id]";
 
-        [NotNull] public List<string> Aliases => new() {"tpb"};
+        [NotNull] public List<string> Aliases => new List<string> {"tpb"};
 
-        [NotNull] public List<string> Permissions => new() {"teleporttobuild"};
+        [NotNull] public List<string> Permissions => new List<string> {"teleporttobuild"};
 
         public void Execute(IRocketPlayer caller, [NotNull] string[] command)
         {

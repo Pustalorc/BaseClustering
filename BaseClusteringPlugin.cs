@@ -43,7 +43,7 @@ namespace Pustalorc.Plugins.BaseClustering
         private Harmony m_Harmony;
 
         [NotNull]
-        public override TranslationList DefaultTranslations => new()
+        public override TranslationList DefaultTranslations => new TranslationList()
         {
             {
                 "clusters_regen_warning",
@@ -566,50 +566,49 @@ namespace Pustalorc.Plugins.BaseClustering
             };
 
             var clusterCount = bestClusters.Count();
-            switch (clusterCount)
+            if (clusterCount == 0)
             {
-                case 0:
-                    switch (config.ClusteringStyle)
-                    {
-                        case EClusteringStyle.Bruteforce:
-                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                config.BruteforceOptions.InitialRadius, false, InstanceCount++));
-                            break;
-                        case EClusteringStyle.Rust:
-                            var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
-                            if (globalCluster != null) globalCluster.Buildables.Add(buildable);
-                            else
-                                Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                    6.1f + config.RustOptions.ExtraRadius, true, InstanceCount++));
-                            break;
-                        case EClusteringStyle.Hybrid:
-                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                    ? 6.1f + config.RustOptions.ExtraRadius
-                                    : config.BruteforceOptions.InitialRadius, false, InstanceCount++));
-                            break;
-                    }
-
-                    return;
-                case > 1:
+                switch (config.ClusteringStyle)
                 {
-                    var allBuilds = bestClusters.SelectMany(k => k.Buildables).ToList();
-
-                    var newClusters = Utils.HybridClustering(allBuilds, Configuration.Instance.BruteforceOptions,
-                        Configuration.Instance.RustOptions, ref m_InstanceCount);
-
-                    foreach (var cluster in bestClusters)
-                        Clusters.Remove(cluster);
-
-                    foreach (var cluster in newClusters)
-                        Clusters.Add(cluster);
-
-                    return;
+                    case EClusteringStyle.Bruteforce:
+                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                            config.BruteforceOptions.InitialRadius, false, InstanceCount++));
+                        break;
+                    case EClusteringStyle.Rust:
+                        var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
+                        if (globalCluster != null) globalCluster.Buildables.Add(buildable);
+                        else
+                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                                6.1f + config.RustOptions.ExtraRadius, true, InstanceCount++));
+                        break;
+                    case EClusteringStyle.Hybrid:
+                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
+                            config.RustOptions.FloorIds.Contains(buildable.AssetId)
+                                ? 6.1f + config.RustOptions.ExtraRadius
+                                : config.BruteforceOptions.InitialRadius, false, InstanceCount++));
+                        break;
                 }
-                default:
-                    bestClusters.First().Buildables.Add(buildable);
-                    break;
+
+                return;
             }
+
+            if (clusterCount > 1)
+            {
+                var allBuilds = bestClusters.SelectMany(k => k.Buildables).ToList();
+
+                var newClusters = Utils.HybridClustering(allBuilds, Configuration.Instance.BruteforceOptions,
+                    Configuration.Instance.RustOptions, ref m_InstanceCount);
+
+                foreach (var cluster in bestClusters)
+                    Clusters.Remove(cluster);
+
+                foreach (var cluster in newClusters)
+                    Clusters.Add(cluster);
+
+                return;
+            }
+
+            bestClusters.First().Buildables.Add(buildable);
         }
 
         private void _changeOwnerAndGroup([NotNull] BaseCluster cluster, ulong newOwner, ulong newGroup)
