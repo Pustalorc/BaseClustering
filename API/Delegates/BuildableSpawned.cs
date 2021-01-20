@@ -1,4 +1,4 @@
-﻿using Pustalorc.Plugins.BaseClustering.API.Classes;
+﻿using Pustalorc.Plugins.BaseClustering.API.Buildables;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Delegates
 {

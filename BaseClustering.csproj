@@ -70,21 +70,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="API\Classes\BaseCluster.cs" />
-    <Compile Include="API\Classes\Buildable.cs" />
-    <Compile Include="API\Classes\ExpandedRiver.cs" />
-    <Compile Include="API\Classes\WreckAction.cs" />
-    <Compile Include="API\Classes\WreckClustersAction.cs" />
+    <Compile Include="API\BaseCluster.cs" />
+    <Compile Include="API\Buildables\BarricadeBuildable.cs" />
+    <Compile Include="API\Buildables\Buildable.cs" />
+    <Compile Include="API\Buildables\StructureBuildable.cs" />
+    <Compile Include="API\Delegates\OnClustersChanged.cs" />
+    <Compile Include="API\Utils\Extensions.cs" />
+    <Compile Include="API\Utils\RiverExpanded.cs" />
+    <Compile Include="API\WreckingActions\WreckAction.cs" />
+    <Compile Include="API\WreckingActions\WreckClustersAction.cs" />
     <Compile Include="API\Delegates\BuildableSpawned.cs" />
     <Compile Include="API\Delegates\BuildableDestroyed.cs" />
     <Compile Include="API\Delegates\BuildableTransformed.cs" />
-    <Compile Include="API\Statics\ExtendedMath.cs" />
-    <Compile Include="API\Statics\Extensions.cs" />
-    <Compile Include="API\Statics\ReadOnlyGame.cs" />
-    <Compile Include="API\Statics\Logging.cs" />
-    <Compile Include="API\Statics\ThreadUtil2.cs" />
-    <Compile Include="API\Statics\Utils.cs" />
-    <Compile Include="API\Statics\WriteOnlyGame.cs" />
+    <Compile Include="API\Buildables\BuildableCollection.cs" />
+    <Compile Include="API\Utils\Logging.cs" />
+    <Compile Include="API\Utils\ClusteringTool.cs" />
     <Compile Include="BaseClusteringPlugin.cs" />
     <Compile Include="Commands\ClustersRegenCommand.cs" />
     <Compile Include="Commands\FindBuildsCommand.cs" />
@@ -97,12 +97,9 @@
     <Compile Include="Commands\WreckCommand.cs" />
     <Compile Include="Commands\WreckVehicleCommand.cs" />
     <Compile Include="Config\BaseClusteringPluginConfiguration.cs" />
-    <Compile Include="Config\BruteforceOptions.cs" />
-    <Compile Include="Config\EClusteringStyle.cs" />
-    <Compile Include="Config\RustOptions.cs" />
-    <Compile Include="Patches\PatchBuildableTransforms.cs" />
-    <Compile Include="Patches\PatchBuildablesDestroy.cs" />
-    <Compile Include="Patches\PatchBuildableSpawns.cs" />
+    <Compile Include="API\Patches\PatchBuildableTransforms.cs" />
+    <Compile Include="API\Patches\PatchBuildablesDestroy.cs" />
+    <Compile Include="API\Patches\PatchBuildableSpawns.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Pustalorc.Plugins.BaseClustering.API.Utils;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
@@ -42,7 +42,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (itemAsset != null) clusters = clusters.Where(k => k.Buildables.Any(l => l.AssetId == itemAsset.id));
 
-            if (radius != float.NegativeInfinity)
+            if (!float.IsNegativeInfinity(radius))
             {
                 if (!(caller is UnturnedPlayer cPlayer))
                 {
@@ -58,7 +58,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             UnturnedChat.Say(caller,
                 BaseClusteringPlugin.Instance.Translate("cluster_count", clusters.Count(),
                     itemAsset != null ? itemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"),
-                    radius != float.NegativeInfinity
+                    !float.IsNegativeInfinity(radius)
                         ? radius.ToString(CultureInfo.CurrentCulture)
                         : BaseClusteringPlugin.Instance.Translate("not_available"),
                     target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available")));

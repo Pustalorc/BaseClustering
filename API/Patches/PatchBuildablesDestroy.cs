@@ -3,19 +3,19 @@ using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using SDG.Unturned;
 
-namespace Pustalorc.Plugins.BaseClustering.Patches
+namespace Pustalorc.Plugins.BaseClustering.API.Patches
 {
     public static class PatchBuildablesDestroy
     {
         public static event BuildableDestroyed OnBuildableDestroyed;
 
         [HarmonyPatch]
-        public static class InternalPatches
+        internal static class InternalPatches
         {
             [HarmonyPatch(typeof(BarricadeManager), "destroyBarricade")]
             [HarmonyPrefix]
             [UsedImplicitly]
-            private static void DestroyBarricade([NotNull] BarricadeRegion region, ushort index)
+            internal static void DestroyBarricade([NotNull] BarricadeRegion region, ushort index)
             {
                 ThreadUtil.assertIsGameThread();
 
@@ -25,7 +25,7 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
             [HarmonyPatch(typeof(StructureManager), "destroyStructure")]
             [HarmonyPrefix]
             [UsedImplicitly]
-            private static void DestroyStructure([NotNull] StructureRegion region, ushort index)
+            internal static void DestroyStructure([NotNull] StructureRegion region, ushort index)
             {
                 ThreadUtil.assertIsGameThread();
 

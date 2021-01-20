@@ -6,9 +6,9 @@ using SDG.Unturned;
 using Steamworks;
 using UnityEngine;
 
-namespace Pustalorc.Plugins.BaseClustering.API.Classes
+namespace Pustalorc.Plugins.BaseClustering.API.Utils
 {
-    public class ExpandedRiver
+    public class RiverExpanded
     {
         public double ReadDouble()
         {
@@ -236,14 +236,14 @@ namespace Pustalorc.Plugins.BaseClustering.API.Classes
             Stream.Dispose();
         }
 
-        public ExpandedRiver(string newPath, bool usePath = true)
+        public RiverExpanded(string newPath, bool usePath = true)
         {
             Path = newPath;
             if (usePath)
                 Path = ReadWrite.PATH + Path;
 
             var dir = System.IO.Path.GetDirectoryName(Path);
-            if (!Directory.Exists(dir))
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
             Stream = new FileStream(Path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);

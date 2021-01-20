@@ -1,39 +1,39 @@
 ﻿using System.Linq;
 using HarmonyLib;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Classes;
+using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using SDG.Unturned;
 using UnityEngine;
 
 // ReSharper disable InconsistentNaming
 
-namespace Pustalorc.Plugins.BaseClustering.Patches
+namespace Pustalorc.Plugins.BaseClustering.API.Patches
 {
     public static class PatchBuildableSpawns
     {
         public static event BuildableSpawned OnBuildableSpawned;
 
         [HarmonyPatch]
-        public static class InternalPatches
+        internal static class InternalPatches
         {
             [HarmonyPatch(typeof(BarricadeManager), "dropBarricadeIntoRegionInternal")]
             [HarmonyPostfix]
             [UsedImplicitly]
-            private static void DropBarricade(BarricadeRegion region, BarricadeData data, ref Transform result,
+            internal static void DropBarricade(BarricadeRegion region, BarricadeData data, ref Transform result,
                 ref uint instanceID)
             {
                 if (result == null) return;
 
                 var drop = region.drops.LastOrDefault();
 
-                if (drop?.instanceID == instanceID) OnBuildableSpawned?.Invoke(new Buildable(data, drop));
+                if (drop?.instanceID == instanceID) OnBuildableSpawned?.Invoke(new BarricadeBuildable(data, drop));
             }
 
             [HarmonyPatch(typeof(StructureManager), "dropReplicatedStructure")]
             [HarmonyPostfix]
             [UsedImplicitly]
-            private static void DropStructure(Vector3 point, bool __result, uint ___instanceCount)
+            internal static void DropStructure(Vector3 point, bool __result, uint ___instanceCount)
             {
                 if (!__result) return;
 
@@ -45,7 +45,7 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
                 var drop = region.drops.LastOrDefault();
 
                 if (data?.instanceID == ___instanceCount && drop?.instanceID == ___instanceCount)
-                    OnBuildableSpawned?.Invoke(new Buildable(data, drop));
+                    OnBuildableSpawned?.Invoke(new StructureBuildable(data, drop));
             }
         }
     }

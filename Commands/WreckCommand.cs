@@ -2,8 +2,9 @@
 using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Classes;
-using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Pustalorc.Plugins.BaseClustering.API.Buildables;
+using Pustalorc.Plugins.BaseClustering.API.Utils;
+using Pustalorc.Plugins.BaseClustering.API.WreckingActions;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
@@ -97,7 +98,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
                 m_WreckActions.Remove(cId);
 
-                var remove = ReadOnlyGame.GetBuilds(includePlants: action.IncludeVehicles);
+                var remove = BuildableCollection.GetBuildables(includePlants: action.IncludeVehicles);
 
                 if (action.TargetPlayer != null)
                     remove = remove.Where(k => k.Owner.ToString().Equals(action.TargetPlayer.Id));
@@ -118,14 +119,14 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 }
 
                 foreach (var build in buildables)
-                    WriteOnlyGame.RemoveBarricadeStructure(build.Model);
+                    build.SafeDestroy();
 
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("wrecked", buildables.Count,
                         action.ItemAsset != null
                             ? action.ItemAsset.itemName
                             : BaseClusteringPlugin.Instance.Translate("not_available"),
-                        action.Radius != float.NegativeInfinity
+                        !float.IsNegativeInfinity(action.Radius)
                             ? action.Radius.ToString(CultureInfo.CurrentCulture)
                             : BaseClusteringPlugin.Instance.Translate("not_available"),
                         action.TargetPlayer != null
@@ -135,7 +136,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            var builds = ReadOnlyGame.GetBuilds(includePlants: plants);
+            var builds = BuildableCollection.GetBuildables(includePlants: plants);
 
             if (target != null) builds = builds.Where(k => k.Owner.ToString().Equals(target.Id));
 
@@ -146,7 +147,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             var center = Vector3.negativeInfinity;
 
-            if (radius != float.NegativeInfinity)
+            if (!float.IsNegativeInfinity(radius))
             {
                 if (!(caller is UnturnedPlayer cPlayer))
                 {
@@ -173,7 +174,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                         itemAsset != null
                             ? itemAsset.itemName
                             : BaseClusteringPlugin.Instance.Translate("not_available"),
-                        radius != float.NegativeInfinity
+                        !float.IsNegativeInfinity(radius)
                             ? radius.ToString(CultureInfo.CurrentCulture)
                             : BaseClusteringPlugin.Instance.Translate("not_available"),
                         target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
@@ -188,7 +189,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                         itemAsset != null
                             ? itemAsset.itemName
                             : BaseClusteringPlugin.Instance.Translate("not_available"),
-                        radius != float.NegativeInfinity
+                        !float.IsNegativeInfinity(radius)
                             ? radius.ToString(CultureInfo.CurrentCulture)
                             : BaseClusteringPlugin.Instance.Translate("not_available"),
                         target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),

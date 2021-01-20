@@ -2,8 +2,8 @@
 using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Classes;
-using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Pustalorc.Plugins.BaseClustering.API.Utils;
+using Pustalorc.Plugins.BaseClustering.API.WreckingActions;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
@@ -102,14 +102,14 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 }
 
                 foreach (var cluster in baseClusters)
-                    BaseClusteringPlugin.Instance.DestroyCluster(cluster);
+                    cluster.Destroy();
 
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("wrecked_clusters", baseClusters.Count,
                         action.ItemAsset != null
                             ? action.ItemAsset.itemName
                             : BaseClusteringPlugin.Instance.Translate("not_available"),
-                        action.Radius != float.NegativeInfinity
+                        !float.IsNegativeInfinity(action.Radius)
                             ? action.Radius.ToString(CultureInfo.CurrentCulture)
                             : BaseClusteringPlugin.Instance.Translate("not_available"),
                         action.TargetPlayer != null
@@ -126,7 +126,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             var center = Vector3.negativeInfinity;
 
-            if (radius != float.NegativeInfinity)
+            if (!float.IsNegativeInfinity(radius))
             {
                 if (!(caller is UnturnedPlayer cPlayer))
                 {
@@ -152,7 +152,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     BaseClusteringPlugin.Instance.Translate("wreck_clusters_action_queued_new",
                         target?.DisplayName ?? BaseClusteringPlugin.Instance.Translate("not_available"),
                         itemAsset?.itemName ?? BaseClusteringPlugin.Instance.Translate("not_available"),
-                        radius != float.NegativeInfinity
+                        !float.IsNegativeInfinity(radius)
                             ? radius.ToString(CultureInfo.CurrentCulture)
                             : BaseClusteringPlugin.Instance.Translate("not_available")));
             }
@@ -163,7 +163,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     BaseClusteringPlugin.Instance.Translate("wreck_clusters_action_queued",
                         target?.DisplayName ?? BaseClusteringPlugin.Instance.Translate("not_available"),
                         itemAsset?.itemName ?? BaseClusteringPlugin.Instance.Translate("not_available"),
-                        radius != float.NegativeInfinity
+                        !float.IsNegativeInfinity(radius)
                             ? radius.ToString(CultureInfo.CurrentCulture)
                             : BaseClusteringPlugin.Instance.Translate("not_available")));
             }

@@ -1,7 +1,8 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Pustalorc.Plugins.BaseClustering.API.Buildables;
+using Pustalorc.Plugins.BaseClustering.API.Utils;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 
@@ -29,7 +30,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var builds = ReadOnlyGame.GetBuilds(includePlants: plants);
+            var builds = BuildableCollection.GetBuildables(includePlants: plants);
 
             var topBuilders = builds.GroupBy(k => k.Owner).OrderByDescending(k => k.Count()).Take(5).ToList();
 

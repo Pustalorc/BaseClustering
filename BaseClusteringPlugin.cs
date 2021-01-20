@@ -6,13 +6,14 @@ using System.Diagnostics;
 using System.Linq;
 using HarmonyLib;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Classes;
-using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Pustalorc.Plugins.BaseClustering.API;
+using Pustalorc.Plugins.BaseClustering.API.Buildables;
+using Pustalorc.Plugins.BaseClustering.API.Delegates;
+using Pustalorc.Plugins.BaseClustering.API.Patches;
+using Pustalorc.Plugins.BaseClustering.API.Utils;
 using Pustalorc.Plugins.BaseClustering.Config;
-using Pustalorc.Plugins.BaseClustering.Patches;
 using Rocket.API.Collections;
 using Rocket.Core.Plugins;
-using Rocket.Core.Utils;
 using SDG.Unturned;
 using Steamworks;
 using UnityEngine;
@@ -24,15 +25,16 @@ namespace Pustalorc.Plugins.BaseClustering
     public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConfiguration>
     {
         public static BaseClusteringPlugin Instance { get; private set; }
-        public static event OnVoidDelegate OnDataProcessed;
+        public static event OnVoidDelegate OnBuildablesProcessed;
+        public event OnVoidDelegate OnClustersCleared;
+        public event OnClustersChanged OnClusterAdded;
+        public event OnClustersChanged OnClusterRemoved;
 
-        public delegate void OnClustersChanged(BaseCluster cluster);
-
-        public static event OnClustersChanged OnClusterAdded;
-        public static event OnClustersChanged OnClusterRemoved;
-        public static event OnVoidDelegate OnClustersCleared;
-
+        private ObservableCollection<BaseCluster> m_Clusters;
         private ulong m_InstanceCount;
+        private Harmony m_Harmony;
+
+        public ClusteringTool ClusteringTool { get; private set; }
 
         public ulong InstanceCount
         {
@@ -40,10 +42,26 @@ namespace Pustalorc.Plugins.BaseClustering
             set => m_InstanceCount = value;
         }
 
-        private Harmony m_Harmony;
+        public ObservableCollection<BaseCluster> Clusters
+        {
+            get => m_Clusters;
+            private set
+            {
+                if (m_Clusters == null)
+                {
+                    m_Clusters = value;
+                    m_Clusters.CollectionChanged += ClustersChanged;
+                    return;
+                }
+
+                m_Clusters.Clear();
+                foreach (var cluster in value)
+                    m_Clusters.Add(cluster);
+            }
+        }
 
         [NotNull]
-        public override TranslationList DefaultTranslations => new TranslationList()
+        public override TranslationList DefaultTranslations => new TranslationList
         {
             {
                 "clusters_regen_warning",
@@ -114,6 +132,7 @@ namespace Pustalorc.Plugins.BaseClustering
         protected override void Load()
         {
             Instance = this;
+            ClusteringTool = new ClusteringTool(Configuration.Instance);
             m_Harmony = new Harmony("xyz.pustalorc.baseClustering");
             m_Harmony.PatchAll();
 
@@ -141,34 +160,118 @@ namespace Pustalorc.Plugins.BaseClustering
             Logging.PluginUnloaded(this);
         }
 
+        private void OnLevelLoaded(int level)
+        {
+            PatchBuildableTransforms.OnBuildableTransformed += BuildableTransformed;
+            PatchBuildableSpawns.OnBuildableSpawned += BuildableSpawned;
+            PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
+            Provider.onCommenceShutdown += ForceDataSave;
+            SaveManager.onPostSave += Save;
+
+            GenerateAndLoadAllClusters();
+            OnBuildablesProcessed?.Invoke();
+        }
+
+        internal void GenerateAndLoadAllClusters()
+        {
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            var allBuildables = BuildableCollection.GetBuildables(usePreProcessedData: false);
+            Logging.Write(this,
+                $"Loaded {allBuildables.Count()} buildables in map from scratch. Took {stopwatch.ElapsedMilliseconds}ms");
+
+            if (!LevelSavedata.fileExists("/Bases.dat") || !Load(allBuildables))
+                Clusters = new ObservableCollection<BaseCluster>(
+                    ClusteringTool.ClusterElements(allBuildables, ref m_InstanceCount));
+
+            stopwatch.Stop();
+            Logging.Write(this,
+                $"Clusters Loaded: {Clusters.Count}. Took {stopwatch.ElapsedMilliseconds}ms.");
+        }
+
+        private bool Load(IEnumerable<Buildable> allBuildables)
+        {
+            try
+            {
+                var bases = new List<BaseCluster>();
+                var river = new RiverExpanded(ServerSavedata.directory + "/" + Provider.serverID + "/Level/" +
+                                              Level.info.name + "/Bases.dat");
+
+                InstanceCount = river.ReadUInt64();
+                var clusterCount = river.ReadInt32();
+
+                for (var i = 0; i < clusterCount; i++)
+                {
+                    var builds = new List<Buildable>();
+                    var instanceId = river.ReadUInt64();
+                    var global = river.ReadBoolean();
+                    var radius = river.ReadDouble();
+
+                    var buildCount = river.ReadInt32();
+                    for (var o = 0; o < buildCount; o++)
+                    {
+                        var buildInstanceId = river.ReadUInt32();
+                        var isStructure = river.ReadBoolean();
+                        var build = allBuildables.FirstOrDefault(k =>
+                            k.InstanceId == buildInstanceId && k is StructureBuildable == isStructure);
+
+                        if (build == null)
+                        {
+                            Logging.Write(this,
+                                $"Warning! Buildable with InstanceId {buildInstanceId} not found! Save data was most likely modified or lost during server downtime. Clusters will be now rebuilt.",
+                                ConsoleColor.Yellow);
+                            river.CloseRiver();
+                            return false;
+                        }
+
+                        builds.Add(build);
+                    }
+
+                    bases.Add(new BaseCluster(builds, radius, global, instanceId));
+                }
+
+                Clusters = new ObservableCollection<BaseCluster>(bases);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Logging.Write(this,
+                    $"Warining! An exception was thrown when attempting to load the file. Assuming the data is corrupted. Clusters will be now rebuilt. Exception: {ex}",
+                    ConsoleColor.Yellow);
+                return false;
+            }
+        }
+
         private void ForceDataSave()
         {
             SaveManager.save();
         }
 
-        private ObservableCollection<BaseCluster> m_Clusters;
-
-        public ObservableCollection<BaseCluster> Clusters
+        public void Save()
         {
-            get => m_Clusters;
-            private set
+            var river = new RiverExpanded(ServerSavedata.directory + "/" + Provider.serverID + "/Level/" +
+                                          Level.info.name + "/Bases.dat");
+            river.WriteUInt64(InstanceCount);
+            river.WriteInt32(Clusters.Count);
+            foreach (var cluster in Clusters)
             {
-                if (m_Clusters == null)
+                river.WriteUInt64(cluster.InstanceId);
+                river.WriteBoolean(cluster.IsGlobalCluster);
+                river.WriteDouble(cluster.Radius);
+                river.WriteInt32(cluster.Buildables.Count);
+                foreach (var build in cluster.Buildables)
                 {
-                    m_Clusters = value;
-                    m_Clusters.CollectionChanged += ClustersChanged;
-                    return;
+                    river.WriteBoolean(build is StructureBuildable);
+                    river.WriteUInt32(build.InstanceId);
                 }
-
-                m_Clusters.Clear();
-                foreach (var cluster in value)
-                    m_Clusters.Add(cluster);
             }
+
+            river.CloseRiver();
         }
 
         [NotNull]
-        // ReSharper disable once ReturnTypeCanBeEnumerable.Global
-        public IReadOnlyList<Buildable> Buildables =>
+        public IReadOnlyCollection<Buildable> PostProcessedBuildables =>
             Clusters?.SelectMany(k => k.Buildables).ToList() ?? new List<Buildable>();
 
         /// <summary>
@@ -180,7 +283,7 @@ namespace Pustalorc.Plugins.BaseClustering
         [NotNull]
         public IEnumerable<BaseCluster> GetClustersInRadius(Vector3 center, float sqrRadius)
         {
-            return Clusters?.Where(k => (k.CenterBuildable - center).sqrMagnitude < sqrRadius) ??
+            return Clusters?.Where(k => (k.AverageCenterPosition - center).sqrMagnitude < sqrRadius) ??
                    new List<BaseCluster>();
         }
 
@@ -229,14 +332,28 @@ namespace Pustalorc.Plugins.BaseClustering
         }
 
         /// <summary>
-        ///     Gets the cluster that contains the element with the provided position.
+        /// Gets the cluster that contains the element with the provided position.
         /// </summary>
         /// <param name="instanceId">The instanceId of the buildable within a cluster.</param>
-        /// <returns></returns>
+        /// <param name="isStructure">If the instanceId belongs to a structure or a barricade.</param>
+        /// <returns>The cluster containing the element provided.</returns>
         [CanBeNull]
-        public BaseCluster GetClusterWithElement(uint instanceId)
+        public BaseCluster GetClusterWithElement(uint instanceId, bool isStructure)
         {
-            return Clusters?.FirstOrDefault(k => k.Buildables.Any(l => l.InstanceId == instanceId));
+            return Clusters?.FirstOrDefault(k =>
+            {
+                var builds = k.Buildables.AsEnumerable();
+
+                if (builds == null)
+                    return false;
+
+                if (isStructure)
+                    builds = builds.OfType<StructureBuildable>();
+                else
+                    builds = builds.OfType<BarricadeBuildable>();
+
+                return builds.Any(l => l.InstanceId == instanceId);
+            });
         }
 
         /// <summary>
@@ -251,85 +368,12 @@ namespace Pustalorc.Plugins.BaseClustering
         }
 
         /// <summary>
-        ///     Changes all owners and groups of a cluster to match a specific one.
-        /// </summary>
-        /// <param name="cluster">The specific cluster to change the groups in.</param>
-        /// <param name="newOwner">The new owner of all the buildables.</param>
-        /// <param name="newGroup">The new group of all the buildables.</param>
-        public void ChangeOwnerAndGroup(BaseCluster cluster, ulong newOwner, ulong newGroup)
-        {
-            if (ThreadUtil2.IsGameThread)
-                _changeOwnerAndGroup(cluster, newOwner, newGroup);
-            else
-                TaskDispatcher.QueueOnMainThread(() => _changeOwnerAndGroup(cluster, newOwner, newGroup));
-        }
-
-        /// <summary>
-        ///     Damages all buildables from within a cluster.
-        /// </summary>
-        /// <param name="cluster">The specific cluster to damage the buildables in.</param>
-        /// <param name="damage">The amount of damage to deal to the buildables.</param>
-        public void Damage(BaseCluster cluster, ushort damage)
-        {
-            if (ThreadUtil2.IsGameThread)
-                _damage(cluster, damage);
-            else
-                TaskDispatcher.QueueOnMainThread(() => _damage(cluster, damage));
-        }
-
-        /// <summary>
-        ///     Destroys a specific cluster from the map, including all its buildables.
-        /// </summary>
-        /// <param name="cluster">The specific cluster to destroy.</param>
-        public void DestroyCluster(BaseCluster cluster)
-        {
-            if (ThreadUtil2.IsGameThread)
-                _destroyCluster(cluster);
-            else
-                TaskDispatcher.QueueOnMainThread(() => _destroyCluster(cluster));
-        }
-
-        /// <summary>
-        ///     Repairs all buildables that are inside a specific cluster.
-        /// </summary>
-        /// <param name="cluster">The specific cluster of which to repair buildables from.</param>
-        /// <param name="amount">The amount of health to repair it by.</param>
-        /// <param name="times">The multiplier for the amount of health to be repaired.</param>
-        public void Repair(BaseCluster cluster, float amount, float times)
-        {
-            if (ThreadUtil2.IsGameThread)
-                _repair(cluster, amount, times);
-            else
-                TaskDispatcher.QueueOnMainThread(() => _repair(cluster, amount, times));
-        }
-
-        /// <summary>
-        ///     Deletes all clusters, including all buildables, from the map.
-        /// </summary>
-        public void RemoveAllClusters()
-        {
-            if (ThreadUtil2.IsGameThread)
-                _removeAllClusters();
-            else
-                TaskDispatcher.QueueOnMainThread(_removeAllClusters);
-        }
-
-        /// <summary>
-        ///     Removes a specific buildable from all the clusters where it is found at.
-        /// </summary>
-        /// <param name="model">The model of the buildable to remove</param>
-        public void RemoveBuildable(Transform model)
-        {
-            RemoveBuildableWithAffected(model);
-        }
-
-        /// <summary>
         ///     Removes a specific buildable from all the clusters where it is found at.
         /// </summary>
         /// <param name="model">The model of the buildable to remove</param>
         /// <returns>The list of clusters modified.</returns>
         [NotNull]
-        public List<BaseCluster> RemoveBuildableWithAffected(Transform model)
+        public IEnumerable<BaseCluster> RemoveBuildableWithAffected(Transform model)
         {
             var result = new List<BaseCluster>();
             var clusters = Clusters.Where(k =>
@@ -347,141 +391,11 @@ namespace Pustalorc.Plugins.BaseClustering
                     continue;
                 }
 
-                if (cluster.Buildables.Count == 1)
-                {
-                    cluster.Buildables.Clear();
-                    DestroyCluster(cluster);
-                    continue;
-                }
-
                 cluster.Buildables.Remove(buildable);
                 result.Add(cluster);
             }
 
             return result;
-        }
-
-        private void OnLevelLoaded(int level)
-        {
-            PatchBuildableTransforms.OnBuildableTransformed += BuildableTransformed;
-            PatchBuildableSpawns.OnBuildableSpawned += BuildableSpawned;
-            PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
-            Provider.onCommenceShutdown += ForceDataSave;
-            SaveManager.onPostSave += Save;
-
-            GenerateAndLoadAllClusters();
-            OnDataProcessed?.Invoke();
-        }
-
-        internal void GenerateAndLoadAllClusters()
-        {
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-
-            var allBuildables = ReadOnlyGame.GetBuilds(usePreProcessedData: false).ToList();
-            Logging.Write(this,
-                $"Total buildables: {allBuildables.Count}. Took {stopwatch.ElapsedMilliseconds}ms");
-
-            if (!LevelSavedata.fileExists("/Bases.dat") || !Load(allBuildables))
-                Clusters = Configuration.Instance.ClusteringStyle switch
-                {
-                    EClusteringStyle.Bruteforce => new ObservableCollection<BaseCluster>(
-                        Utils.BruteforceClustering(allBuildables, Configuration.Instance.BruteforceOptions,
-                            ref m_InstanceCount)),
-                    EClusteringStyle.Rust => new ObservableCollection<BaseCluster>(Utils.RustClustering(allBuildables,
-                        Configuration.Instance.RustOptions, true, ref m_InstanceCount)),
-                    EClusteringStyle.Hybrid => new ObservableCollection<BaseCluster>(Utils.HybridClustering(
-                        allBuildables,
-                        Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions,
-                        ref m_InstanceCount)),
-                    _ => Clusters
-                };
-
-            stopwatch.Stop();
-            Logging.Write(this,
-                $"Clusters Loaded: {Clusters.Count}. Took {stopwatch.ElapsedMilliseconds}ms.");
-        }
-
-        private bool Load(List<Buildable> allBuildables)
-        {
-            try
-            {
-                var bases = new List<BaseCluster>();
-                var river = new ExpandedRiver(
-                    ServerSavedata.directory + "/" + Provider.serverID + "/Level/" + Level.info.name + "/Bases.dat");
-
-                var style = (EClusteringStyle) river.ReadByte();
-
-                if (style != Configuration.Instance.ClusteringStyle)
-                {
-                    Logging.Write(this,
-                        "WARNING! CLUSTERING STYLE WAS CHANGED DURING SERVER DOWNTIME! CLUSTER REGEN IS REQUIRED. WILL NOT KEEP LOADING SAVE DATA.",
-                        ConsoleColor.Yellow);
-                    river.CloseRiver();
-                    return false;
-                }
-
-                InstanceCount = river.ReadUInt64();
-                var clusterCount = river.ReadInt32();
-
-                for (var i = 0; i < clusterCount; i++)
-                {
-                    var builds = new List<Buildable>();
-                    var instanceId = river.ReadUInt64();
-                    var global = river.ReadBoolean();
-                    var radius = river.ReadDouble();
-
-                    var buildCount = river.ReadInt32();
-                    for (var o = 0; o < buildCount; o++)
-                    {
-                        var buildInstanceId = river.ReadUInt32();
-                        var build = allBuildables.Find(k => k.InstanceId == buildInstanceId);
-
-                        if (build == null)
-                        {
-                            Logging.Write(this,
-                                $"WARNING! BUILDABLE SAVE DATA WAS MODIFIED DURING SERVER DOWNTIME! MISSING BUILDABLE WITH INSTANCE ID {instanceId}. CLUSTER REGEN IS REQUIRED. WILL NOT KEEP LOADING SAVE DATA.",
-                                ConsoleColor.Yellow);
-                            river.CloseRiver();
-                            return false;
-                        }
-
-                        builds.Add(build);
-                    }
-
-                    var centerBuild = builds.ElementAt(builds.GetCenterIndex()).Position;
-                    bases.Add(new BaseCluster(builds, centerBuild, radius, global, instanceId));
-                }
-
-                Clusters = new ObservableCollection<BaseCluster>(bases);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                Logging.Write(this,
-                    $"WARNING AN EXCEPTION WAS THROWN. ASSUMING DATA IS CORRUPTED. FORCING CLUSTER REGEN. EXCEPTION: {ex}");
-                return false;
-            }
-        }
-
-        public void Save()
-        {
-            var river = new ExpandedRiver(
-                ServerSavedata.directory + "/" + Provider.serverID + "/Level/" + Level.info.name + "/Bases.dat");
-            river.WriteByte((byte) Configuration.Instance.ClusteringStyle);
-            river.WriteUInt64(InstanceCount);
-            river.WriteInt32(Clusters.Count);
-            foreach (var cluster in Clusters)
-            {
-                river.WriteUInt64(cluster.InstanceId);
-                river.WriteBoolean(cluster.IsGlobalCluster);
-                river.WriteDouble(cluster.Radius);
-                river.WriteInt32(cluster.Buildables.Count);
-                foreach (var build in cluster.Buildables)
-                    river.WriteUInt32(build.InstanceId);
-            }
-
-            river.CloseRiver();
         }
 
         private void BuildableDestroyed(Transform model)
@@ -490,10 +404,9 @@ namespace Pustalorc.Plugins.BaseClustering
 
             foreach (var cluster in affected)
             {
-                var clusterRegened = Utils.HybridClustering(cluster.Buildables.ToList(),
-                    Configuration.Instance.BruteforceOptions, Configuration.Instance.RustOptions, ref m_InstanceCount);
+                var clusterRegened = ClusteringTool.ClusterElements(cluster.Buildables.ToList(), ref m_InstanceCount);
 
-                if (clusterRegened.Count <= 1) continue;
+                if (clusterRegened.Count() <= 1) continue;
 
                 Clusters.Remove(cluster);
 
@@ -514,80 +427,38 @@ namespace Pustalorc.Plugins.BaseClustering
 
             var buildable = cluster.Buildables.First(k => k.InstanceId == instanceId);
             cluster.Buildables.Remove(buildable);
+            var bestCluster = ClusteringTool.FindBestCluster(Clusters, buildable);
 
-            if (cluster.Buildables.Count == 0)
-                DestroyCluster(cluster);
-
-            var bestCluster = config.ClusteringStyle switch
+            if (bestCluster != null)
             {
-                EClusteringStyle.Bruteforce => Clusters.FindBestClusterWithMaxDistance(buildable,
-                    config.BruteforceOptions.MaxRadius),
-                _ => Clusters.FindBestCluster(buildable, config.RustOptions.ExtraRadius)
-            };
-
-            if (bestCluster == null)
-            {
-                switch (config.ClusteringStyle)
-                {
-                    case EClusteringStyle.Bruteforce:
-                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.BruteforceOptions.InitialRadius, false, InstanceCount++));
-                        break;
-                    case EClusteringStyle.Rust:
-                        var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
-                        if (globalCluster != null) globalCluster.Buildables.Add(buildable);
-                        else
-                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                6.1f + config.RustOptions.ExtraRadius, true, InstanceCount++));
-                        break;
-                    case EClusteringStyle.Hybrid:
-                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 6.1f + config.RustOptions.ExtraRadius
-                                : config.BruteforceOptions.InitialRadius, false, InstanceCount++));
-                        break;
-                }
-
+                bestCluster.Buildables.Add(buildable);
                 return;
             }
 
-            bestCluster.Buildables.Add(buildable);
+            var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
+
+            if (globalCluster != null)
+                globalCluster.Buildables.Add(buildable);
+            else
+                Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, 6.1f + config.ExtraRadius, true,
+                    InstanceCount++));
         }
 
         private void BuildableSpawned([NotNull] Buildable buildable)
         {
             var config = Configuration.Instance;
 
-            var bestClusters = config.ClusteringStyle switch
-            {
-                EClusteringStyle.Bruteforce => Clusters.FindBestClustersWithMaxDistance(buildable,
-                    config.BruteforceOptions.MaxRadius),
-                _ => Clusters.FindBestClusters(buildable, config.RustOptions.ExtraRadius)
-            };
+            var bestClusters = ClusteringTool.FindBestClusters(Clusters, buildable);
 
             var clusterCount = bestClusters.Count();
             if (clusterCount == 0)
             {
-                switch (config.ClusteringStyle)
-                {
-                    case EClusteringStyle.Bruteforce:
-                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.BruteforceOptions.InitialRadius, false, InstanceCount++));
-                        break;
-                    case EClusteringStyle.Rust:
-                        var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
-                        if (globalCluster != null) globalCluster.Buildables.Add(buildable);
-                        else
-                            Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                                6.1f + config.RustOptions.ExtraRadius, true, InstanceCount++));
-                        break;
-                    case EClusteringStyle.Hybrid:
-                        Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, buildable.Position,
-                            config.RustOptions.FloorIds.Contains(buildable.AssetId)
-                                ? 6.1f + config.RustOptions.ExtraRadius
-                                : config.BruteforceOptions.InitialRadius, false, InstanceCount++));
-                        break;
-                }
+                var globalCluster = Clusters.FirstOrDefault(k => k.IsGlobalCluster);
+                if (globalCluster != null)
+                    globalCluster.Buildables.Add(buildable);
+                else
+                    Clusters.Add(new BaseCluster(new List<Buildable> {buildable}, 6.1f + config.ExtraRadius, true,
+                        InstanceCount++));
 
                 return;
             }
@@ -596,8 +467,7 @@ namespace Pustalorc.Plugins.BaseClustering
             {
                 var allBuilds = bestClusters.SelectMany(k => k.Buildables).ToList();
 
-                var newClusters = Utils.HybridClustering(allBuilds, Configuration.Instance.BruteforceOptions,
-                    Configuration.Instance.RustOptions, ref m_InstanceCount);
+                var newClusters = ClusteringTool.ClusterElements(allBuilds, ref m_InstanceCount);
 
                 foreach (var cluster in bestClusters)
                     Clusters.Remove(cluster);
@@ -611,47 +481,9 @@ namespace Pustalorc.Plugins.BaseClustering
             bestClusters.First().Buildables.Add(buildable);
         }
 
-        private void _changeOwnerAndGroup([NotNull] BaseCluster cluster, ulong newOwner, ulong newGroup)
+        internal void UntrackCluster([NotNull] BaseCluster cluster)
         {
-            foreach (var buildable in cluster.Buildables.ToList())
-                WriteOnlyGame.ChangeOwnerAndGroup(buildable.Position, newOwner, newGroup);
-        }
-
-        private void _damage([NotNull] BaseCluster cluster, ushort damage)
-        {
-            foreach (var buildable in cluster.Buildables.ToList())
-                WriteOnlyGame.DamageBarricadeStructure(buildable.Position, damage);
-        }
-
-        private void _destroyCluster([NotNull] BaseCluster cluster)
-        {
-            foreach (var buildable in cluster.Buildables.ToList())
-            {
-                WriteOnlyGame.RemoveBarricadeStructure(buildable.Position);
-                cluster.Buildables.Remove(buildable);
-            }
-
             Clusters.Remove(cluster);
-        }
-
-        private void _repair([NotNull] BaseCluster cluster, float amount, float times)
-        {
-            foreach (var buildable in cluster.Buildables.ToList())
-                WriteOnlyGame.RepairBarricadeStructure(buildable.Position, amount, times);
-        }
-
-        private void _removeAllClusters()
-        {
-            foreach (var cluster in Clusters.ToList())
-            {
-                foreach (var buildable in cluster.Buildables.ToList())
-                {
-                    WriteOnlyGame.RemoveBarricadeStructure(buildable.Position);
-                    cluster.Buildables.Remove(buildable);
-                }
-
-                Clusters.Remove(cluster);
-            }
         }
 
         private void ClustersChanged(object sender, [NotNull] NotifyCollectionChangedEventArgs e)
@@ -664,7 +496,7 @@ namespace Pustalorc.Plugins.BaseClustering
                     foreach (var cluster in e.NewItems.Cast<BaseCluster>())
                     {
                         Logging.Verbose(this,
-                            $"New cluster created at: {cluster.CenterBuildable}\nRadius: {cluster.Radius}\nAverage Center: {cluster.AverageCenterPosition}\nMost common group: {cluster.CommonGroup}\nMost common owner: {cluster.CommonOwner}\nAll buildables: {string.Join(", ", cluster.Buildables.Select(k => k.Position))}");
+                            $"New cluster created at: {cluster.AverageCenterPosition}\nRadius: {cluster.Radius}\nMost common group: {cluster.CommonGroup}\nMost common owner: {cluster.CommonOwner}\nAll buildables: {string.Join(", ", cluster.Buildables.Select(k => k.Position))}");
                         OnClusterAdded?.Invoke(cluster);
                     }
 

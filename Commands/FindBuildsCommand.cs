@@ -2,7 +2,8 @@
 using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Pustalorc.Plugins.BaseClustering.API.Buildables;
+using Pustalorc.Plugins.BaseClustering.API.Utils;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
@@ -52,7 +53,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var builds = ReadOnlyGame.GetBuilds(includePlants: plants);
+            var builds = BuildableCollection.GetBuildables(includePlants: plants);
 
             if (target != null) builds = builds.Where(k => k.Owner.ToString().Equals(target.Id));
 
@@ -61,7 +62,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (itemAsset != null) builds = builds.Where(k => k.AssetId == itemAsset.id);
 
-            if (radius != float.NegativeInfinity)
+            if (!float.IsNegativeInfinity(radius))
             {
                 if (!(caller is UnturnedPlayer cPlayer))
                 {
@@ -76,7 +77,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             UnturnedChat.Say(caller,
                 BaseClusteringPlugin.Instance.Translate("build_count", builds.Count(),
                     itemAsset != null ? itemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"),
-                    radius != float.NegativeInfinity
+                    !float.IsNegativeInfinity(radius)
                         ? radius.ToString(CultureInfo.CurrentCulture)
                         : BaseClusteringPlugin.Instance.Translate("not_available"),
                     target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),

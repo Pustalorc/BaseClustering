@@ -5,19 +5,19 @@ using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using SDG.Unturned;
 
-namespace Pustalorc.Plugins.BaseClustering.Patches
+namespace Pustalorc.Plugins.BaseClustering.API.Patches
 {
     public static class PatchBuildableTransforms
     {
         public static event BuildableTransformed OnBuildableTransformed;
 
         [HarmonyPatch]
-        public static class InternalPatches
+        internal static class InternalPatches
         {
             [HarmonyPatch(typeof(BarricadeManager), "askTransformBarricade")]
             [HarmonyPostfix]
             [UsedImplicitly]
-            public static void AskTransformBarricade(uint instanceID)
+            internal static void AskTransformBarricade(uint instanceID)
             {
                 OnBuildableTransformed?.Invoke(instanceID);
             }
@@ -25,7 +25,7 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
             [HarmonyPatch(typeof(StructureManager), "askTransformStructure")]
             [HarmonyPostfix]
             [UsedImplicitly]
-            public static void AskTransformStructure(uint instanceID)
+            internal static void AskTransformStructure(uint instanceID)
             {
                 OnBuildableTransformed?.Invoke(instanceID);
             }

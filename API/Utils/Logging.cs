@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 using Rocket.API;
 using Rocket.Core.Logging;
 
-namespace Pustalorc.Plugins.BaseClustering.API.Statics
+namespace Pustalorc.Plugins.BaseClustering.API.Utils
 {
     internal static class Logging
     {

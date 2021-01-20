@@ -2,7 +2,7 @@
 using SDG.Unturned;
 using UnityEngine;
 
-namespace Pustalorc.Plugins.BaseClustering.API.Classes
+namespace Pustalorc.Plugins.BaseClustering.API.WreckingActions
 {
     public sealed class WreckClustersAction
     {
