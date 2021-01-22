@@ -52,7 +52,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 }
 
                 clusters = clusters.Where(k =>
-                    k.Buildables.Any(l => Vector3.Distance(l.Position, cPlayer.Position) <= radius));
+                    k.Buildables.Any(l => (l.Position - cPlayer.Position).sqrMagnitude <= Mathf.Pow(radius, 2)));
             }
 
             UnturnedChat.Say(caller,

@@ -19,7 +19,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
             [UsedImplicitly]
             internal static void AskTransformBarricade(uint instanceID)
             {
-                OnBuildableTransformed?.Invoke(instanceID);
+                OnBuildableTransformed?.Invoke(instanceID, false);
             }
 
             [HarmonyPatch(typeof(StructureManager), "askTransformStructure")]
@@ -27,7 +27,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
             [UsedImplicitly]
             internal static void AskTransformStructure(uint instanceID)
             {
-                OnBuildableTransformed?.Invoke(instanceID);
+                OnBuildableTransformed?.Invoke(instanceID, true);
             }
         }
     }

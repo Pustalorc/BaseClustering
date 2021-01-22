@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Pustalorc")]
 [assembly: AssemblyProduct("BaseClustering")]
-[assembly: AssemblyCopyright("Copyright © Pustalorc 2020")]
+[assembly: AssemblyCopyright("Copyright © Pustalorc 2020-2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 [assembly: ComVisible(false)]

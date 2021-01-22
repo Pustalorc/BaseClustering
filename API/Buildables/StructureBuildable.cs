@@ -1,4 +1,5 @@
 ﻿using System;
+using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Utils;
 using SDG.Unturned;
 using UnityEngine;
@@ -20,7 +21,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         public override ushort Health => m_StructureData.structure.health;
 
-        public override byte[] State => null;
+        [CanBeNull] public override byte[] State => null;
 
         public override ulong Owner => m_StructureData.owner;
 
@@ -36,7 +37,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         public override Transform Model => m_StructureDrop.model;
 
-        public override Interactable Interactable => null;
+        [CanBeNull] public override Interactable Interactable => null;
 
         public override uint InstanceId => m_StructureDrop.instanceID;
 

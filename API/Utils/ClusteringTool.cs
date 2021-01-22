@@ -2,7 +2,6 @@
 using System.Linq;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
-using Pustalorc.Plugins.BaseClustering.Config;
 using SDG.Unturned;
 using UnityEngine;
 
@@ -10,70 +9,72 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utils
 {
     public sealed class ClusteringTool
     {
-        private List<ushort> m_FloorIds;
-        private float m_ExtraRadius;
+        private readonly BaseClusteringPlugin m_PluginInstance;
 
-        public ClusteringTool([NotNull] BaseClusteringPluginConfiguration config)
+        public ClusteringTool([NotNull] BaseClusteringPlugin pluginInstance)
         {
-            m_FloorIds = config.FloorItemIds;
-            m_ExtraRadius = config.ExtraRadius;
+            m_PluginInstance = pluginInstance;
         }
 
         [NotNull]
-        public IEnumerable<BaseCluster> ClusterElements([NotNull] IEnumerable<Buildable> allBuildables,
-            ref ulong clusterInstanceCount)
+        public IEnumerable<BaseCluster> ClusterElements([NotNull] IEnumerable<Buildable> buildables)
         {
             var output = new List<BaseCluster>();
-            var builds = allBuildables.ToList();
-            var allFloors = builds.Where(k => k.Asset is ItemStructureAsset && m_FloorIds.Contains(k.AssetId)).ToList();
+            var allStructures = buildables.Where(k => k.Asset is ItemStructureAsset).ToList();
+            var allBuildables = buildables.Except(allStructures).ToList();
 
-            while (allFloors.Count > 0)
+            while (allStructures.Count > 0)
             {
                 var elementsOfCluster = new List<Buildable>();
 
-                var floor = allFloors[0];
-                elementsOfCluster.Add(floor);
-                builds.Remove(floor);
-                allFloors.Remove(floor);
+                // Pick a random structure (floor, pillar, wall, etc.)
+                var targetStructure = allStructures[Random.Range(0, allStructures.Count)];
 
-                var sortedFloors = allFloors.OrderBy(k => Vector3.Distance(floor.Position, k.Position));
-                var sortedBuildables = builds.OrderBy(k => Vector3.Distance(floor.Position, k.Position));
+                // Add said structure to the current cluster's elements, and remove it from the global sets.
+                elementsOfCluster.Add(targetStructure);
+                allBuildables.Remove(targetStructure);
+                allStructures.Remove(targetStructure);
+
+                // Step 1:
+                // Sort all structures by distance to this target structure.
+                var sortedFoundations = allStructures.OrderBy(k => (targetStructure.Position - k.Position).sqrMagnitude);
+
+                // Loop through all the sorted structures, adding them to the cluster's elements as we go.
 
                 // ReSharper disable once LoopCanBePartlyConvertedToQuery
-                // This is since we need to loop through the entire list of sortedFloors as elementsOfCluster changes
+                // This disable is since we need to loop through the entire list of sortedFloors as elementsOfCluster changes
                 // depending on if its true or false, causing future checks to become true when they were originally false
-                foreach (var next in sortedFloors)
+                foreach (var next in sortedFoundations)
                 {
-                    if (!elementsOfCluster.Exists(k => Vector3.Distance(next.Position, k.Position) <= 6.1f))
+                    // See if 37f is accurate, if not put it in config so it can be changed instead of hardcoded.
+                    // Use Mathf.Pow if using config option.
+                    if (!elementsOfCluster.Exists(k => (next.Position - k.Position).sqrMagnitude <= 37f))
                         continue;
 
                     elementsOfCluster.Add(next);
-                    allFloors.Remove(next);
-                    builds.Remove(next);
+                    allStructures.Remove(next);
+                    allBuildables.Remove(next);
                 }
 
-                // ReSharper disable once LoopCanBePartlyConvertedToQuery
-                // This is since we need to loop through the entire list of sortedFloors as elementsOfCluster changes
-                // depending on if its true or false, causing future checks to become true when they were originally false
-                foreach (var element in sortedBuildables)
+                // Step 2:
+                // Sort all buildables by distance to the original target structure.
+                var sortedBuildables = allBuildables.OrderBy(k => (targetStructure.Position - k.Position).sqrMagnitude);
+
+                // Loop through all the sorted buildables, adding them to the cluster's elemtns as we go.
+                // Note that the cluster's distance check doesn't change anymore, as it should only check directly
+                // against STRUCTURE types, not all types.
+                foreach (var element in sortedBuildables.Where(l => elementsOfCluster.Exists(k => (l.Position - k.Position).sqrMagnitude <= Mathf.Pow(m_PluginInstance.Configuration.Instance.MaxBaseDistanceCheck, 2))))
                 {
-                    if (!elementsOfCluster.Exists(k =>
-                        Vector3.Distance(element.Position, k.Position) <= m_ExtraRadius)) continue;
-
                     elementsOfCluster.Add(element);
-                    builds.Remove(element);
+                    allBuildables.Remove(element);
                 }
 
-                var clusterCenter = elementsOfCluster.AverageCenter(k => k.Position);
-                output.Add(new BaseCluster(elementsOfCluster,
-                    elementsOfCluster.GetDistances(k => k.Position, clusterCenter).Max() + m_ExtraRadius, false,
-                    clusterInstanceCount++));
+                output.Add(new BaseCluster(m_PluginInstance, false, elementsOfCluster));
             }
 
-            var center = builds.AverageCenter(k => k.Position);
-            output.Add(new BaseCluster(builds, builds.GetDistances(k => k.Position, center).Max() + m_ExtraRadius, true,
-                clusterInstanceCount++));
-            builds.Clear();
+            // All other buildables are most likely random barricades that can be groupped up for garbage collection later.
+            output.Add(new BaseCluster(m_PluginInstance, true, allBuildables));
+            allBuildables.Clear();
 
             return output;
         }
@@ -92,8 +93,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utils
         }
 
         [NotNull]
-        public IEnumerable<BaseCluster> FindBestClusters([NotNull] IEnumerable<BaseCluster> source,
-            [NotNull] Buildable target)
+        public IEnumerable<BaseCluster> FindBestClusters([NotNull] IEnumerable<BaseCluster> source, [NotNull] Buildable target)
         {
             return FindBestClusters(source, target.Position);
         }
@@ -103,66 +103,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utils
         {
             var allClusters = source.ToList();
 
-            // Get global cluster (rust only)
+            // Remove global cluster. If there's no close enough clusters, this cluster is re-added.
             var globalCluster = allClusters.FirstOrDefault(k => k.IsGlobalCluster);
             if (globalCluster != null)
                 allClusters.Remove(globalCluster);
 
             // Get all clusters that we are close enough to
-            var validClusters = allClusters.Where(k =>
-            {
-                var distance = Vector3.Distance(k.AverageCenterPosition, target);
-                return distance <= k.Radius || distance <= k.Radius + m_ExtraRadius;
-            }).ToList();
+            var validClusters = allClusters.Where(k => k.IsWithinRange(target)).ToList();
 
             if (!validClusters.Any())
                 validClusters.Add(globalCluster);
 
-            return validClusters.OrderBy(k => Vector3.Distance(k.AverageCenterPosition, target));
-        }
-
-        [CanBeNull]
-        public BaseCluster FindBestClusterWithMaxDistance([NotNull] IEnumerable<BaseCluster> source,
-            [NotNull] Buildable target)
-        {
-            return FindBestCluster(source, target.Position);
-        }
-
-        [CanBeNull]
-        public BaseCluster FindBestClusterWithMaxDistance([NotNull] IEnumerable<BaseCluster> source, Vector3 target)
-        {
-            return FindBestClustersWithMaxDistance(source, target).FirstOrDefault();
-        }
-
-        [NotNull]
-        public IEnumerable<BaseCluster> FindBestClustersWithMaxDistance([NotNull] IEnumerable<BaseCluster> source,
-            [NotNull] Buildable target)
-        {
-            return FindBestClustersWithMaxDistance(source, target.Position);
-        }
-
-        [NotNull]
-        public IEnumerable<BaseCluster> FindBestClustersWithMaxDistance([NotNull] IEnumerable<BaseCluster> source,
-            Vector3 target)
-        {
-            var allClusters = source.ToList();
-
-            // Get global cluster (rust only)
-            var globalCluster = allClusters.FirstOrDefault(k => k.IsGlobalCluster);
-            if (globalCluster != null)
-                allClusters.Remove(globalCluster);
-
-            // Get all clusters that we are close enough to
-            var validClusters = allClusters.Where(k =>
-            {
-                var distance = Vector3.Distance(k.AverageCenterPosition, target);
-                return distance <= k.Radius || distance <= m_ExtraRadius;
-            }).ToList();
-
-            if (!validClusters.Any())
-                validClusters.Add(globalCluster);
-
-            return validClusters.OrderBy(k => Vector3.Distance(k.AverageCenterPosition, target));
+            return validClusters.OrderBy(k => (k.AverageCenterPosition - target).sqrMagnitude);
         }
     }
 }

@@ -39,7 +39,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utils
         public static IEnumerable<float> GetDistances<T>([NotNull] this IEnumerable<T> list,
             [NotNull] Func<T, Vector3> selector, Vector3 value)
         {
-            return list.Select(selector).Select(l => Vector3.Distance(l, value)).ToList();
+            return list.Select(selector).Select(l => (l - value).sqrMagnitude).ToList();
         }
 
         public static bool CheckArgsIncludeString([NotNull] this IEnumerable<string> args, string include,

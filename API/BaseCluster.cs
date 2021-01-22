@@ -11,9 +11,8 @@ namespace Pustalorc.Plugins.BaseClustering.API
 {
     public class BaseCluster
     {
+        private readonly BaseClusteringPlugin m_PluginInstance;
         private ObservableCollection<Buildable> m_Buildables;
-
-        public ulong InstanceId { get; }
 
         public ulong CommonOwner => m_Buildables.GroupBy(k => k.Owner)
             .OrderByDescending(k => k.Count())
@@ -25,8 +24,9 @@ namespace Pustalorc.Plugins.BaseClustering.API
 
         public Vector3 AverageCenterPosition => m_Buildables.AverageCenter(k => k.Position);
 
-        public bool IsGlobalCluster;
-        public double Radius;
+        public int InstanceId { get; }
+
+        public bool IsGlobalCluster { get; }
 
         public ObservableCollection<Buildable> Buildables
         {
@@ -46,16 +46,22 @@ namespace Pustalorc.Plugins.BaseClustering.API
             }
         }
 
-        public BaseCluster([NotNull] List<Buildable> buildables, double radius, bool isGlobalCluster, ulong instanceId)
+        public BaseCluster([NotNull] BaseClusteringPlugin pluginInstance, int instanceId, bool isGlobalCluster, [NotNull] List<Buildable> buildables)
         {
-            Buildables = new ObservableCollection<Buildable>(buildables);
-            Radius = radius;
-
+            m_PluginInstance = pluginInstance;
             IsGlobalCluster = isGlobalCluster;
             InstanceId = instanceId;
+            Buildables = new ObservableCollection<Buildable>(buildables);
+            Logging.Verbose("New cluster", $"A new cluster (ID: {InstanceId}) was created at {AverageCenterPosition}. Total buildables: {Buildables.Count}.");
+        }
 
-            Logging.Verbose("New cluster",
-                $"A new cluster (ID: {InstanceId}) was created at {AverageCenterPosition}. Radius of {radius}. Total buildables: {Buildables.Count}. Global cluster {IsGlobalCluster}");
+        public BaseCluster([NotNull] BaseClusteringPlugin pluginInstance, bool isGlobalCluster, [NotNull] List<Buildable> buildables)
+        {
+            m_PluginInstance = pluginInstance;
+            IsGlobalCluster = isGlobalCluster;
+            InstanceId = pluginInstance.GetBestInstanceId();
+            Buildables = new ObservableCollection<Buildable>(buildables);
+            Logging.Verbose("New cluster", $"A new cluster (ID: {InstanceId}) was created at {AverageCenterPosition}. Total buildables: {Buildables.Count}.");
         }
 
         public void Destroy()
@@ -69,16 +75,19 @@ namespace Pustalorc.Plugins.BaseClustering.API
             BaseClusteringPlugin.Instance.UntrackCluster(this);
         }
 
+        public bool IsWithinRange(Vector3 position)
+        {
+            var distanceCheck = m_PluginInstance.Configuration.Instance.MaxBaseDistanceCheck;
+
+            return Buildables.Any(k => (k.Position - position).sqrMagnitude <= distanceCheck);
+        }
+
         private void BuildablesChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
-            if (m_Buildables.Count == 0)
-            {
-                BaseClusteringPlugin.Instance.UntrackCluster(this);
+            if (m_Buildables.Count != 0)
                 return;
-            }
 
-            var radiiDist = Buildables.GetDistances(k => k.Position, AverageCenterPosition).ToList();
-            Radius = radiiDist.Max() + BaseClusteringPlugin.Instance.Configuration.Instance.ExtraRadius;
+            BaseClusteringPlugin.Instance.UntrackCluster(this);
         }
     }
 }

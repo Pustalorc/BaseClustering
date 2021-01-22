@@ -109,7 +109,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 if (action.ItemAsset != null) remove = remove.Where(k => k.AssetId == action.ItemAsset.id);
 
                 if (!action.Center.IsNegativeInfinity())
-                    remove = remove.Where(k => Vector3.Distance(k.Position, action.Center) <= action.Radius);
+                    remove = remove.Where(k => (k.Position - action.Center).sqrMagnitude <= Mathf.Pow(action.Radius, 2));
 
                 var buildables = remove.ToList();
                 if (!buildables.Any())
@@ -157,7 +157,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 }
 
                 center = cPlayer.Position;
-                builds = builds.Where(k => Vector3.Distance(k.Position, center) <= radius);
+                builds = builds.Where(k => (k.Position - center).sqrMagnitude <= Mathf.Pow(radius, 2));
             }
 
             if (!builds.Any())

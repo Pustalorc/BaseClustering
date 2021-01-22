@@ -71,7 +71,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     return;
                 }
 
-                builds = builds.Where(k => Vector3.Distance(k.Position, cPlayer.Position) <= radius);
+                builds = builds.Where(k => (k.Position - cPlayer.Position).sqrMagnitude <= Mathf.Pow(radius, 2));
             }
 
             UnturnedChat.Say(caller,

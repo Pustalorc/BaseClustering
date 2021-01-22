@@ -55,7 +55,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             builds = target != null
                 ? builds.Where(k => k.Owner.ToString().Equals(target.Id))
-                : builds.Where(k => Vector3.Distance(k.Position, player.Position) > 20);
+                : builds.Where(k => (k.Position - player.Position).sqrMagnitude > 400);
 
             if (barricades) builds = builds.Where(k => k.Asset is ItemBarricadeAsset);
             else if (structs) builds = builds.Where(k => k.Asset is ItemStructureAsset);
