@@ -39,7 +39,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         [CanBeNull] public override Interactable Interactable => null;
 
-        public override uint InstanceId => m_StructureDrop.instanceID;
+        public override uint InstanceId => m_StructureData.instanceID;
 
         public override Asset Asset => m_StructureData.structure.asset;
 
@@ -55,9 +55,25 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                 return;
             }
 
-            Logging.Verbose(this,
+            Logging.Verbose("StructureBuildable.UnsafeDestroy",
                 "Destroying this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets destroyed incorrectly.");
             StructureManager.destroyStructure(sRegion, x, y, index, Vector3.zero);
+        }
+
+        public override void UnsafeDamage(ushort damage)
+        {
+            ThreadUtil.assertIsGameThread();
+            Logging.Verbose("StructureBuildable.UnsafeDamage",
+                "Damaging this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets damaged incorrectly.");
+            StructureManager.damage(Model, Vector3.zero, damage, 1, false, damageOrigin: EDamageOrigin.Unknown);
+        }
+
+        public override void UnsafeHeal(ushort amount)
+        {
+            ThreadUtil.assertIsGameThread();
+            Logging.Verbose("StructureBuildable.UnsafeHeal",
+                "Healing this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets healed incorrectly.");
+            StructureManager.repair(Model, amount, 1);
         }
     }
 }

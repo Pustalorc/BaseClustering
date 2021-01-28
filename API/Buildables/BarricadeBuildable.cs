@@ -37,12 +37,13 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         public override Interactable Interactable => m_BarricadeDrop.interactable;
 
-        public override uint InstanceId => m_BarricadeDrop.instanceID;
+        public override uint InstanceId => m_BarricadeData.instanceID;
 
         public override Asset Asset => m_BarricadeDrop.asset;
 
         public override void UnsafeDestroy()
         {
+            ThreadUtil.assertIsGameThread();
             if (!BarricadeManager.tryGetInfo(Model, out var x, out var y, out var plant, out var index,
                 out var bRegion))
             {
@@ -52,9 +53,25 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                 return;
             }
 
-            Logging.Verbose(this,
+            Logging.Verbose("BarricadeBuildable.UnsafeDestroy",
                 "Destroying this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets destroyed incorrectly.");
             BarricadeManager.destroyBarricade(bRegion, x, y, plant, index);
+        }
+
+        public override void UnsafeDamage(ushort damage)
+        {
+            ThreadUtil.assertIsGameThread();
+            Logging.Verbose("BarricadeBuildable.UnsafeDamage",
+                "Damaging this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets damaged incorrectly.");
+            BarricadeManager.damage(Model, damage, 1, false, damageOrigin: EDamageOrigin.Unknown);
+        }
+
+        public override void UnsafeHeal(ushort amount)
+        {
+            ThreadUtil.assertIsGameThread();
+            Logging.Verbose("BarricadeBuildable.UnsafeHeal",
+                "Healing this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets healed incorrectly.");
+            BarricadeManager.repair(Model, amount, 1);
         }
     }
 }

@@ -22,6 +22,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utils
             var output = new List<BaseCluster>();
             var allStructures = buildables.Where(k => k.Asset is ItemStructureAsset).ToList();
             var allBuildables = buildables.Except(allStructures).ToList();
+            var maxStructureDistance = m_PluginInstance.Configuration.Instance.MaxDistanceBetweenStructures;
+            var maxBuildableDistance = m_PluginInstance.Configuration.Instance.MaxDistanceToConsiderPartOfBase;
 
             while (allStructures.Count > 0)
             {
@@ -37,7 +39,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utils
 
                 // Step 1:
                 // Sort all structures by distance to this target structure.
-                var sortedFoundations = allStructures.OrderBy(k => (targetStructure.Position - k.Position).sqrMagnitude);
+                var sortedFoundations =
+                    allStructures.OrderBy(k => (targetStructure.Position - k.Position).sqrMagnitude);
 
                 // Loop through all the sorted structures, adding them to the cluster's elements as we go.
 
@@ -48,7 +51,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utils
                 {
                     // See if 37f is accurate, if not put it in config so it can be changed instead of hardcoded.
                     // Use Mathf.Pow if using config option.
-                    if (!elementsOfCluster.Exists(k => (next.Position - k.Position).sqrMagnitude <= 37f))
+                    if (!elementsOfCluster.Exists(k =>
+                        (next.Position - k.Position).sqrMagnitude <= Mathf.Pow(maxStructureDistance, 2)))
                         continue;
 
                     elementsOfCluster.Add(next);
@@ -63,7 +67,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utils
                 // Loop through all the sorted buildables, adding them to the cluster's elemtns as we go.
                 // Note that the cluster's distance check doesn't change anymore, as it should only check directly
                 // against STRUCTURE types, not all types.
-                foreach (var element in sortedBuildables.Where(l => elementsOfCluster.Exists(k => (l.Position - k.Position).sqrMagnitude <= Mathf.Pow(m_PluginInstance.Configuration.Instance.MaxBaseDistanceCheck, 2))))
+                foreach (var element in sortedBuildables.Where(l =>
+                    elementsOfCluster.Exists(k =>
+                        (l.Position - k.Position).sqrMagnitude <= Mathf.Pow(maxBuildableDistance, 2))))
                 {
                     elementsOfCluster.Add(element);
                     allBuildables.Remove(element);
@@ -93,7 +99,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utils
         }
 
         [NotNull]
-        public IEnumerable<BaseCluster> FindBestClusters([NotNull] IEnumerable<BaseCluster> source, [NotNull] Buildable target)
+        public IEnumerable<BaseCluster> FindBestClusters([NotNull] IEnumerable<BaseCluster> source,
+            [NotNull] Buildable target)
         {
             return FindBestClusters(source, target.Position);
         }

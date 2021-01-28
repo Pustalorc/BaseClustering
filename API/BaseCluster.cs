@@ -46,22 +46,26 @@ namespace Pustalorc.Plugins.BaseClustering.API
             }
         }
 
-        public BaseCluster([NotNull] BaseClusteringPlugin pluginInstance, int instanceId, bool isGlobalCluster, [NotNull] List<Buildable> buildables)
+        public BaseCluster([NotNull] BaseClusteringPlugin pluginInstance, int instanceId, bool isGlobalCluster,
+            [NotNull] List<Buildable> buildables)
         {
             m_PluginInstance = pluginInstance;
             IsGlobalCluster = isGlobalCluster;
             InstanceId = instanceId;
             Buildables = new ObservableCollection<Buildable>(buildables);
-            Logging.Verbose("New cluster", $"A new cluster (ID: {InstanceId}) was created at {AverageCenterPosition}. Total buildables: {Buildables.Count}.");
+            Logging.Verbose("New cluster",
+                $"A new cluster (ID: {InstanceId}) was created at {AverageCenterPosition}. Total buildables: {Buildables.Count}.");
         }
 
-        public BaseCluster([NotNull] BaseClusteringPlugin pluginInstance, bool isGlobalCluster, [NotNull] List<Buildable> buildables)
+        public BaseCluster([NotNull] BaseClusteringPlugin pluginInstance, bool isGlobalCluster,
+            [NotNull] List<Buildable> buildables)
         {
             m_PluginInstance = pluginInstance;
             IsGlobalCluster = isGlobalCluster;
             InstanceId = pluginInstance.GetBestInstanceId();
             Buildables = new ObservableCollection<Buildable>(buildables);
-            Logging.Verbose("New cluster", $"A new cluster (ID: {InstanceId}) was created at {AverageCenterPosition}. Total buildables: {Buildables.Count}.");
+            Logging.Verbose("New cluster",
+                $"A new cluster (ID: {InstanceId}) was created at {AverageCenterPosition}. Total buildables: {Buildables.Count}.");
         }
 
         public void Destroy()
@@ -77,7 +81,7 @@ namespace Pustalorc.Plugins.BaseClustering.API
 
         public bool IsWithinRange(Vector3 position)
         {
-            var distanceCheck = m_PluginInstance.Configuration.Instance.MaxBaseDistanceCheck;
+            var distanceCheck = m_PluginInstance.Configuration.Instance.MaxDistanceToConsiderPartOfBase;
 
             return Buildables.Any(k => (k.Position - position).sqrMagnitude <= distanceCheck);
         }
@@ -85,6 +89,10 @@ namespace Pustalorc.Plugins.BaseClustering.API
         private void BuildablesChanged(object sender, NotifyCollectionChangedEventArgs e)
         {
             if (m_Buildables.Count != 0)
+                return;
+
+            // Global clusters should not auto-delete, as there should only be one global cluster.
+            if (IsGlobalCluster)
                 return;
 
             BaseClusteringPlugin.Instance.UntrackCluster(this);

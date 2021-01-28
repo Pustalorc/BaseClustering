@@ -1,4 +1,5 @@
 using System.Threading;
+using Rocket.Core.Utils;
 using SDG.Unturned;
 using UnityEngine;
 
@@ -36,11 +37,41 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         {
             if (!Thread.CurrentThread.IsGameThread())
             {
-                Rocket.Core.Utils.TaskDispatcher.QueueOnMainThread(UnsafeDestroy);
+                TaskDispatcher.QueueOnMainThread(UnsafeDestroy);
                 return;
             }
 
             UnsafeDestroy();
+        }
+
+        // ReSharper disable once MemberCanBeProtected.Global
+        // Public availability of this method through Buildable type is wanted and expected.
+        public abstract void UnsafeDamage(ushort damage);
+
+        public void SafeDamage(ushort damage)
+        {
+            if (!Thread.CurrentThread.IsGameThread())
+            {
+                TaskDispatcher.QueueOnMainThread(() => UnsafeDamage(damage));
+                return;
+            }
+
+            UnsafeDamage(damage);
+        }
+
+        // ReSharper disable once MemberCanBeProtected.Global
+        // Public availability of this method through Buildable type is wanted and expected.
+        public abstract void UnsafeHeal(ushort amount);
+
+        public void SafeHeal(ushort amount)
+        {
+            if (!Thread.CurrentThread.IsGameThread())
+            {
+                TaskDispatcher.QueueOnMainThread(() => UnsafeHeal(amount));
+                return;
+            }
+
+            UnsafeHeal(amount);
         }
 
         public override string ToString()

@@ -109,7 +109,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 if (action.ItemAsset != null) remove = remove.Where(k => k.AssetId == action.ItemAsset.id);
 
                 if (!action.Center.IsNegativeInfinity())
-                    remove = remove.Where(k => (k.Position - action.Center).sqrMagnitude <= Mathf.Pow(action.Radius, 2));
+                    remove = remove.Where(k =>
+                        (k.Position - action.Center).sqrMagnitude <= Mathf.Pow(action.Radius, 2));
 
                 var buildables = remove.ToList();
                 if (!buildables.Any())

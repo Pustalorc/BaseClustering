@@ -10,9 +10,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
     {
         [NotNull]
         public static IEnumerable<Buildable> GetBuildables(ulong owner = 0, ulong group = 0,
-            bool includePlants = false, bool usePreProcessedData = true)
+            bool includePlants = false, bool useProcessedData = true)
         {
-            if (usePreProcessedData && BaseClusteringPlugin.Instance != null)
+            if (useProcessedData && BaseClusteringPlugin.Instance != null)
             {
                 var processedBuildables = BaseClusteringPlugin.Instance.PostProcessedBuildables;
 
@@ -34,10 +34,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             var structureRegions = StructureManager.regions.Cast<StructureRegion>();
 
             // ReSharper disable PossibleMultipleEnumeration
-            var barricadeDatas = barricadeRegions.SelectMany(brd => brd.barricades);
-            var barricadeDrops = barricadeRegions.SelectMany(brd => brd.drops);
-            var structureDatas = structureRegions.SelectMany(str => str.structures);
-            var structureDrops = structureRegions.SelectMany(str => str.drops);
+            var barricadeDatas = barricadeRegions.SelectMany(brd => brd.barricades).ToList();
+            var barricadeDrops = barricadeRegions.SelectMany(brd => brd.drops).ToList();
+            var structureDatas = structureRegions.SelectMany(str => str.structures).ToList();
+            var structureDrops = structureRegions.SelectMany(str => str.drops).ToList();
             // ReSharper restore PossibleMultipleEnumeration
 
             var buildables = barricadeDatas
@@ -53,14 +53,14 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                 }))
                 .Where(d => d != null);
 
-            return owner switch
+            return (owner switch
             {
                 0 when group == 0 => buildables,
                 0 => buildables.Where(k => k.Group == group),
                 _ => group == 0
                     ? buildables.Where(k => k.Owner == owner)
                     : buildables.Where(k => k.Owner == owner || k.Group == group)
-            };
+            }).ToList();
         }
 
         [CanBeNull]

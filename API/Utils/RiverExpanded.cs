@@ -250,6 +250,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utils
             Water = 0;
         }
 
+        public void Skip(int count)
+        {
+            Stream.Read(Buffer, 0, count);
+        }
+
         protected byte[] Buffer = new byte[Block.BUFFER_SIZE];
 
         protected int Water;

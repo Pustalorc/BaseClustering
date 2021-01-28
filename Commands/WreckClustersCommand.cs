@@ -92,7 +92,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
                 if (!action.Center.IsNegativeInfinity())
                     remove = remove.Where(k =>
-                        k.Buildables.Any(l => (l.Position - action.Center).sqrMagnitude <= Mathf.Pow(action.Radius, 2)));
+                        k.Buildables.Any(l =>
+                            (l.Position - action.Center).sqrMagnitude <= Mathf.Pow(action.Radius, 2)));
 
                 var baseClusters = remove.ToList();
                 if (!baseClusters.Any())
@@ -136,7 +137,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 }
 
                 center = cPlayer.Position;
-                clusters = clusters.Where(k => k.Buildables.Any(l => (l.Position - center).sqrMagnitude <= Mathf.Pow(radius, 2)));
+                clusters = clusters.Where(k =>
+                    k.Buildables.Any(l => (l.Position - center).sqrMagnitude <= Mathf.Pow(radius, 2)));
             }
 
             if (!clusters.Any())

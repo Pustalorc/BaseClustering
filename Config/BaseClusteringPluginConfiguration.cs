@@ -5,12 +5,14 @@ namespace Pustalorc.Plugins.BaseClustering.Config
     public sealed class BaseClusteringPluginConfiguration : IRocketPluginConfiguration
     {
         public bool VerboseLogging;
-        public float MaxBaseDistanceCheck;
+        public float MaxDistanceBetweenStructures;
+        public float MaxDistanceToConsiderPartOfBase;
 
         public void LoadDefaults()
         {
             VerboseLogging = false;
-            MaxBaseDistanceCheck = 10f;
+            MaxDistanceBetweenStructures = 6.1f;
+            MaxDistanceToConsiderPartOfBase = 10f;
         }
     }
 }
