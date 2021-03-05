@@ -2,7 +2,7 @@
 using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Utils;
+using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Pustalorc.Plugins.BaseClustering.API.WreckingActions;
 using Rocket.API;
 using Rocket.Unturned.Chat;
@@ -13,7 +13,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class WreckClustersCommand : IRocketCommand
     {
-        private Dictionary<string, WreckClustersAction>
+        private readonly Dictionary<string, WreckClustersAction>
             m_WreckActions = new Dictionary<string, WreckClustersAction>();
 
         public AllowedCaller AllowedCaller => AllowedCaller.Both;

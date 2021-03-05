@@ -7,7 +7,7 @@ using Rocket.Unturned.Player;
 using SDG.Unturned;
 using UnityEngine;
 
-namespace Pustalorc.Plugins.BaseClustering.API.Utils
+namespace Pustalorc.Plugins.BaseClustering.API.Utilities
 {
     public static class Extensions
     {
@@ -26,7 +26,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utils
 
             if (list.Count > 0) return sum / list.Count;
 
-            throw new Exception("The collection had no elements. Cannot divide by 0.");
+            return Vector3.zero;
         }
 
         public static Vector3 AverageCenter<TSource>([NotNull] this IEnumerable<TSource> source,

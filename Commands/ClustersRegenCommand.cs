@@ -22,7 +22,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
         public void Execute(IRocketPlayer caller, string[] command)
         {
             UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("clusters_regen_warning"));
-            BaseClusteringPlugin.Instance.GenerateAndLoadAllClusters();
+            BaseClusteringPlugin.Instance.GenerateAndLoadAllClusters(false);
         }
     }
 }

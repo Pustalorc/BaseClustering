@@ -1,6 +1,6 @@
 ﻿using System;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Utils;
+using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using SDG.Unturned;
 using UnityEngine;
 
@@ -46,7 +46,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         public override void UnsafeDestroy()
         {
             ThreadUtil.assertIsGameThread();
-
             if (!StructureManager.tryGetInfo(Model, out var x, out var y, out var index, out var sRegion))
             {
                 Logging.Write(this,
@@ -55,24 +54,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                 return;
             }
 
-            Logging.Verbose("StructureBuildable.UnsafeDestroy",
-                "Destroying this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets destroyed incorrectly.");
             StructureManager.destroyStructure(sRegion, x, y, index, Vector3.zero);
         }
 
         public override void UnsafeDamage(ushort damage)
         {
             ThreadUtil.assertIsGameThread();
-            Logging.Verbose("StructureBuildable.UnsafeDamage",
-                "Damaging this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets damaged incorrectly.");
             StructureManager.damage(Model, Vector3.zero, damage, 1, false, damageOrigin: EDamageOrigin.Unknown);
         }
 
         public override void UnsafeHeal(ushort amount)
         {
             ThreadUtil.assertIsGameThread();
-            Logging.Verbose("StructureBuildable.UnsafeHeal",
-                "Healing this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets healed incorrectly.");
             StructureManager.repair(Model, amount, 1);
         }
     }

@@ -14,16 +14,30 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         {
             if (useProcessedData && BaseClusteringPlugin.Instance != null)
             {
-                var processedBuildables = BaseClusteringPlugin.Instance.PostProcessedBuildables;
+                var processedBuildables = BaseClusteringPlugin.Instance.PostProcessedBuildables.AsEnumerable();
 
-                return owner switch
+                // ReSharper disable once InvertIf
+                // This is a stupid invert if.
+                if (includePlants)
+                {
+                    var regions = BarricadeManager.vehicleRegions;
+                    var bDatas = regions.SelectMany(brd => brd.barricades).ToList();
+                    var bDrops = regions.SelectMany(brd => brd.drops).ToList();
+                    processedBuildables = processedBuildables.Concat(bDatas.Select((k, i) =>
+                    {
+                        var drop = bDrops.ElementAt(i);
+                        return drop == null ? null : new BarricadeBuildable(k, drop);
+                    }).Cast<Buildable>().Where(k => k != null));
+                }
+
+                return (owner switch
                 {
                     0 when group == 0 => processedBuildables,
                     0 => processedBuildables.Where(k => k.Group == group),
                     _ => group == 0
                         ? processedBuildables.Where(k => k.Owner == owner)
                         : processedBuildables.Where(k => k.Owner == owner || k.Group == group)
-                };
+                }).ToList();
             }
 
             var barricadeRegions = BarricadeManager.regions.Cast<BarricadeRegion>();

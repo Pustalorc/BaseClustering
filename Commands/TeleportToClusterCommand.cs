@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Utils;
+using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;

@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
-using Pustalorc.Plugins.BaseClustering.API.Utils;
+using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Pustalorc.Plugins.BaseClustering.API.WreckingActions;
 using Rocket.API;
 using Rocket.Unturned.Chat;
@@ -15,7 +16,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class WreckCommand : IRocketCommand
     {
-        private Dictionary<string, WreckAction> m_WreckActions = new Dictionary<string, WreckAction>();
+        private readonly Dictionary<string, WreckAction> m_WreckActions = new Dictionary<string, WreckAction>();
 
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
@@ -31,8 +32,16 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         [NotNull] public List<string> Permissions => new List<string> {"wreck"};
 
+        private BuildableDamageQueue m_DamageQueue;
+
         public void Execute([NotNull] IRocketPlayer caller, [NotNull] string[] command)
         {
+            if (m_DamageQueue == null)
+            {
+                m_DamageQueue = new BuildableDamageQueue(BaseClusteringPlugin.Instance);
+                m_DamageQueue.Worker.RunWorkerCompleted += OnQueueCompleted;
+            }
+
             var cId = caller.Id;
             var args = command.ToList();
 
@@ -120,7 +129,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 }
 
                 foreach (var build in buildables)
-                    build.SafeDestroy();
+                    m_DamageQueue.Enqueue(new QueuedDamage(build, ushort.MaxValue, false, false));
 
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("wrecked", buildables.Count,
@@ -196,6 +205,11 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                         target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
                         plants, barricades, structs));
             }
+        }
+
+        private void OnQueueCompleted(object sender, RunWorkerCompletedEventArgs e)
+        {
+            Logging.Write("BaseClustering", BaseClusteringPlugin.Instance.Translate("wreck_completed"));
         }
     }
 }

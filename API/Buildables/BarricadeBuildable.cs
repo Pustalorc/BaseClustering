@@ -1,5 +1,5 @@
 ﻿using System;
-using Pustalorc.Plugins.BaseClustering.API.Utils;
+using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using SDG.Unturned;
 using UnityEngine;
 
@@ -53,24 +53,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                 return;
             }
 
-            Logging.Verbose("BarricadeBuildable.UnsafeDestroy",
-                "Destroying this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets destroyed incorrectly.");
             BarricadeManager.destroyBarricade(bRegion, x, y, plant, index);
         }
 
         public override void UnsafeDamage(ushort damage)
         {
             ThreadUtil.assertIsGameThread();
-            Logging.Verbose("BarricadeBuildable.UnsafeDamage",
-                "Damaging this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets damaged incorrectly.");
             BarricadeManager.damage(Model, damage, 1, false, damageOrigin: EDamageOrigin.Unknown);
         }
 
         public override void UnsafeHeal(ushort amount)
         {
             ThreadUtil.assertIsGameThread();
-            Logging.Verbose("BarricadeBuildable.UnsafeHeal",
-                "Healing this object. If any issues occur, someone most likely patched ThreadUtil.assertIsGameThread, and the object gets healed incorrectly.");
             BarricadeManager.repair(Model, amount, 1);
         }
     }

@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Pustalorc.Plugins.BaseClustering</RootNamespace>
-    <AssemblyName>BaseClustering</AssemblyName>
+    <AssemblyName>0BaseClustering</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <LangVersion>8</LangVersion>
@@ -45,15 +45,15 @@
       <HintPath>libs\Assembly-CSharp-firstpass.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Rocket.API, Version=2.6.4.0, Culture=neutral, PublicKeyToken=null">
+    <Reference Include="Rocket.API">
       <HintPath>libs\Rocket.API.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Rocket.Core, Version=2.4.8.0, Culture=neutral, PublicKeyToken=null">
+    <Reference Include="Rocket.Core">
       <HintPath>libs\Rocket.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Rocket.Unturned, Version=4.9.3.0, Culture=neutral, PublicKeyToken=null">
+    <Reference Include="Rocket.Unturned">
       <HintPath>libs\Rocket.Unturned.dll</HintPath>
       <Private>False</Private>
     </Reference>
@@ -73,17 +73,18 @@
     <Compile Include="API\Buildables\BarricadeBuildable.cs" />
     <Compile Include="API\Buildables\Buildable.cs" />
     <Compile Include="API\Buildables\StructureBuildable.cs" />
-    <Compile Include="API\Delegates\OnClustersChanged.cs" />
-    <Compile Include="API\Utils\Extensions.cs" />
-    <Compile Include="API\Utils\RiverExpanded.cs" />
+    <Compile Include="API\Delegates\ClusterChange.cs" />
+    <Compile Include="API\Delegates\VoidDelegate.cs" />
+    <Compile Include="API\Utilities\BuildableDamageQueue.cs" />
+    <Compile Include="API\Utilities\Extensions.cs" />
+    <Compile Include="API\Utilities\QueuedDamage.cs" />
+    <Compile Include="API\Utilities\RiverExpanded.cs" />
     <Compile Include="API\WreckingActions\WreckAction.cs" />
     <Compile Include="API\WreckingActions\WreckClustersAction.cs" />
-    <Compile Include="API\Delegates\BuildableSpawned.cs" />
-    <Compile Include="API\Delegates\BuildableDestroyed.cs" />
-    <Compile Include="API\Delegates\BuildableTransformed.cs" />
+    <Compile Include="API\Delegates\BuildableChange.cs" />
     <Compile Include="API\Buildables\BuildableCollection.cs" />
-    <Compile Include="API\Utils\Logging.cs" />
-    <Compile Include="API\Utils\ClusteringTool.cs" />
+    <Compile Include="API\Utilities\Logging.cs" />
+    <Compile Include="API\Utilities\ClusteringTool.cs" />
     <Compile Include="BaseClusteringPlugin.cs" />
     <Compile Include="Commands\ClustersRegenCommand.cs" />
     <Compile Include="Commands\FindBuildsCommand.cs" />

@@ -6,7 +6,7 @@ using SDG.Unturned;
 using Steamworks;
 using UnityEngine;
 
-namespace Pustalorc.Plugins.BaseClustering.API.Utils
+namespace Pustalorc.Plugins.BaseClustering.API.Utilities
 {
     public class RiverExpanded
     {
