@@ -7,6 +7,7 @@ using System.Linq;
 using HarmonyLib;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Classes;
+using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using Pustalorc.Plugins.BaseClustering.API.Statics;
 using Pustalorc.Plugins.BaseClustering.Config;
 using Pustalorc.Plugins.BaseClustering.Patches;
@@ -24,13 +25,13 @@ namespace Pustalorc.Plugins.BaseClustering
     public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConfiguration>
     {
         public static BaseClusteringPlugin Instance { get; private set; }
-        public static event OnVoidDelegate OnDataProcessed;
+        public static event VoidDelegate OnDataProcessed;
 
         public delegate void OnClustersChanged(BaseCluster cluster);
 
         public static event OnClustersChanged OnClusterAdded;
         public static event OnClustersChanged OnClusterRemoved;
-        public static event OnVoidDelegate OnClustersCleared;
+        public static event VoidDelegate OnClustersCleared;
 
         private ulong m_InstanceCount;
 
