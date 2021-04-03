@@ -18,10 +18,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
         [HarmonyPatch]
         internal static class InternalPatches
         {
-            [HarmonyPatch(typeof(BarricadeManager), "askTransformBarricade")]
+            [HarmonyPatch(typeof(BarricadeManager), "ReceiveTransformBarricade")]
             [HarmonyPostfix]
             [UsedImplicitly]
-            internal static void AskTransformBarricade(uint instanceID)
+            internal static void ReceiveTransformBarricade(uint instanceID)
             {
                 var timer = Stopwatch.StartNew();
                 OnBuildableTransformed?.Invoke(BuildableCollection.GetBuildable(instanceID, false));
@@ -29,15 +29,15 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
                 timer.Stop();
                 var elapsed = timer.ElapsedMilliseconds;
                 if (elapsed > 10)
-                    Logging.Write("AskTransformBarricade",
+                    Logging.Write("ReceiveTransformBarricade",
                         $"Warning! Event hooks took too long to finish! Total time spent on hooks: {timer.ElapsedMilliseconds}ms",
                         ConsoleColor.Yellow);
             }
 
-            [HarmonyPatch(typeof(StructureManager), "askTransformStructure")]
+            [HarmonyPatch(typeof(StructureManager), "ReceiveTransformStructure")]
             [HarmonyPostfix]
             [UsedImplicitly]
-            internal static void AskTransformStructure(uint instanceID)
+            internal static void ReceiveTransformStructure(uint instanceID)
             {
                 var timer = Stopwatch.StartNew();
                 OnBuildableTransformed?.Invoke(BuildableCollection.GetBuildable(instanceID, true));
@@ -45,7 +45,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
                 timer.Stop();
                 var elapsed = timer.ElapsedMilliseconds;
                 if (elapsed > 10)
-                    Logging.Write("AskTransformStructure",
+                    Logging.Write("ReceiveTransformStructure",
                         $"Warning! Event hooks took too long to finish! Total time spent on hooks: {timer.ElapsedMilliseconds}ms",
                         ConsoleColor.Yellow);
             }
