@@ -14,18 +14,18 @@ namespace Pustalorc.Plugins.BaseClustering.Patches
         [HarmonyPatch]
         public static class InternalPatches
         {
-            [HarmonyPatch(typeof(BarricadeManager), "askTransformBarricade")]
+            [HarmonyPatch(typeof(BarricadeManager), "ReceiveTransformBarricade")]
             [HarmonyPostfix]
             [UsedImplicitly]
-            public static void AskTransformBarricade(uint instanceID)
+            public static void ReceiveTransformBarricade(uint instanceID)
             {
                 OnBuildableTransformed?.Invoke(instanceID);
             }
 
-            [HarmonyPatch(typeof(StructureManager), "askTransformStructure")]
+            [HarmonyPatch(typeof(StructureManager), "ReceiveTransformStructure")]
             [HarmonyPostfix]
             [UsedImplicitly]
-            public static void AskTransformStructure(uint instanceID)
+            public static void ReceiveTransformStructure(uint instanceID)
             {
                 OnBuildableTransformed?.Invoke(instanceID);
             }
