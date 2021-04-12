@@ -2,5 +2,5 @@
 
 namespace Pustalorc.Plugins.BaseClustering.API.Delegates
 {
-    public delegate void BuildableChange(Buildable buildable);
+    public delegate void BuildableChange(Buildable buildables);
 }

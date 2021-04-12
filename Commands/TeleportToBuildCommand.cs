@@ -51,7 +51,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var builds = BuildableCollection.GetBuildables(includePlants: plants);
+            var builds = BuildableDirectory.GetBuildables(includePlants: plants);
 
             builds = target != null
                 ? builds.Where(k => k.Owner.ToString().Equals(target.Id))

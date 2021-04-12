@@ -83,9 +83,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 m_WreckActions.Remove(cId);
 
                 var remove = action.TargetPlayer != null
-                    ? BaseClusteringPlugin.Instance.Clusters.Where(
-                        k => k.CommonOwner.ToString().Equals(action.TargetPlayer.Id))
-                    : BaseClusteringPlugin.Instance.Clusters;
+                    ? BaseClusteringPlugin.Instance.BaseClusterDirectory.GetClustersWithFilter(k =>
+                        k.CommonOwner.ToString().Equals(action.TargetPlayer.Id))
+                    : BaseClusteringPlugin.Instance.BaseClusterDirectory.Clusters;
 
                 if (action.ItemAsset != null)
                     remove = remove.Where(k => k.Buildables.Any(l => l.AssetId == action.ItemAsset.id));
@@ -120,8 +120,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             }
 
             var clusters = target != null
-                ? BaseClusteringPlugin.Instance.Clusters.Where(k => k.CommonOwner.ToString().Equals(target.Id))
-                : BaseClusteringPlugin.Instance.Clusters;
+                ? BaseClusteringPlugin.Instance.BaseClusterDirectory.GetClustersWithFilter(k =>
+                    k.CommonOwner.ToString().Equals(target.Id))
+                : BaseClusteringPlugin.Instance.BaseClusterDirectory.Clusters;
 
             if (itemAsset != null) clusters = clusters.Where(k => k.Buildables.Any(l => l.AssetId == itemAsset.id));
 
@@ -141,7 +142,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     k.Buildables.Any(l => (l.Position - center).sqrMagnitude <= Mathf.Pow(radius, 2)));
             }
 
-            if (!clusters.Any())
+            var count = clusters.Count();
+
+            if (count <= 0)
             {
                 UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("cannot_wreck_no_clusters"));
                 return;
@@ -156,7 +159,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                         itemAsset?.itemName ?? BaseClusteringPlugin.Instance.Translate("not_available"),
                         !float.IsNegativeInfinity(radius)
                             ? radius.ToString(CultureInfo.CurrentCulture)
-                            : BaseClusteringPlugin.Instance.Translate("not_available")));
+                            : BaseClusteringPlugin.Instance.Translate("not_available"), count));
             }
             else
             {
@@ -167,7 +170,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                         itemAsset?.itemName ?? BaseClusteringPlugin.Instance.Translate("not_available"),
                         !float.IsNegativeInfinity(radius)
                             ? radius.ToString(CultureInfo.CurrentCulture)
-                            : BaseClusteringPlugin.Instance.Translate("not_available")));
+                            : BaseClusteringPlugin.Instance.Translate("not_available"), count));
             }
         }
     }

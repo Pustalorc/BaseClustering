@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
@@ -32,16 +31,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         [NotNull] public List<string> Permissions => new List<string> {"wreck"};
 
-        private BuildableDamageQueue m_DamageQueue;
-
         public void Execute([NotNull] IRocketPlayer caller, [NotNull] string[] command)
         {
-            if (m_DamageQueue == null)
-            {
-                m_DamageQueue = new BuildableDamageQueue(BaseClusteringPlugin.Instance);
-                m_DamageQueue.Worker.RunWorkerCompleted += OnQueueCompleted;
-            }
-
             var cId = caller.Id;
             var args = command.ToList();
 
@@ -107,7 +98,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
                 m_WreckActions.Remove(cId);
 
-                var remove = BuildableCollection.GetBuildables(includePlants: action.IncludeVehicles);
+                var remove = BuildableDirectory.GetBuildables(includePlants: action.IncludeVehicles);
 
                 if (action.TargetPlayer != null)
                     remove = remove.Where(k => k.Owner.ToString().Equals(action.TargetPlayer.Id));
@@ -128,8 +119,36 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     return;
                 }
 
+                var averageTime = 0L;
+                var averageTicks = 0L;
+                var averageCount = 0;
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 foreach (var build in buildables)
-                    m_DamageQueue.Enqueue(new QueuedDamage(build, ushort.MaxValue, false, false));
+                {
+                    var startMs = stopwatch.ElapsedMilliseconds;
+                    var startTick = stopwatch.ElapsedTicks;
+                    build.SafeDestroy();
+                    var endMs = stopwatch.ElapsedMilliseconds;
+                    var endTick = stopwatch.ElapsedTicks;
+
+                    var elapsedMs = endMs - startMs;
+                    var elapsedTick = endTick - startTick;
+
+                    if (averageCount == 0)
+                    {
+                        averageTime += elapsedMs;
+                        averageTicks += elapsedTick;
+                        averageCount++;
+                    }
+                    else
+                    {
+                        var oldCount = averageCount;
+                        averageCount++;
+                        averageTime = ((averageTime * oldCount) + elapsedMs) / averageCount;
+                        averageTicks = ((averageTicks * oldCount) + elapsedTick) / averageCount;
+                    }
+                }
+                System.Console.WriteLine($"Taken a total of {stopwatch.ElapsedMilliseconds}ms [{stopwatch.ElapsedTicks} Ticks]. Average time: {averageTime}ms [{averageTicks} Ticks]");
 
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("wrecked", buildables.Count,
@@ -146,7 +165,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            var builds = BuildableCollection.GetBuildables(includePlants: plants);
+            var builds = BuildableDirectory.GetBuildables(includePlants: plants);
 
             if (target != null) builds = builds.Where(k => k.Owner.ToString().Equals(target.Id));
 
@@ -170,7 +189,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 builds = builds.Where(k => (k.Position - center).sqrMagnitude <= Mathf.Pow(radius, 2));
             }
 
-            if (!builds.Any())
+            var count = builds.Count();
+            if (count <= 0)
             {
                 UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("cannot_wreck_no_builds"));
                 return;
@@ -188,7 +208,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                             ? radius.ToString(CultureInfo.CurrentCulture)
                             : BaseClusteringPlugin.Instance.Translate("not_available"),
                         target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
-                        plants, barricades, structs));
+                        plants, barricades, structs, count));
             }
             else
             {
@@ -203,13 +223,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                             ? radius.ToString(CultureInfo.CurrentCulture)
                             : BaseClusteringPlugin.Instance.Translate("not_available"),
                         target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
-                        plants, barricades, structs));
+                        plants, barricades, structs, count));
             }
-        }
-
-        private void OnQueueCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            Logging.Write("BaseClustering", BaseClusteringPlugin.Instance.Translate("wreck_completed"));
         }
     }
 }

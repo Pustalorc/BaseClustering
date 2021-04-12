@@ -30,7 +30,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var builds = BuildableCollection.GetBuildables(includePlants: plants);
+            var builds = BuildableDirectory.GetBuildables(includePlants: plants);
 
             var topBuilders = builds.GroupBy(k => k.Owner).OrderByDescending(k => k.Count()).Take(5).ToList();
 

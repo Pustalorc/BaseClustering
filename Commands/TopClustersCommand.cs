@@ -22,7 +22,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
-            var clusters = BaseClusteringPlugin.Instance.Clusters;
+            var clusters = BaseClusteringPlugin.Instance.BaseClusterDirectory.Clusters;
 
             var topClusters = clusters.GroupBy(k => k.CommonOwner).OrderByDescending(k => k.Count()).Take(5).ToList();
 

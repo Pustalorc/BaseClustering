@@ -41,6 +41,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         public override Asset Asset => m_BarricadeDrop.asset;
 
+        public override bool IsPlanted =>
+            m_BarricadeDrop.model.parent != null && m_BarricadeDrop.model.parent.CompareTag("Vehicle");
+
         public override void UnsafeDestroy()
         {
             ThreadUtil.assertIsGameThread();

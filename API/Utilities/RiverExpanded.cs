@@ -8,6 +8,7 @@ using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Utilities
 {
+    [UsedImplicitly]
     public class RiverExpanded
     {
         public double ReadDouble()

@@ -43,6 +43,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         public override Asset Asset => m_StructureData.structure.asset;
 
+        public override bool IsPlanted => false;
+
         public override void UnsafeDestroy()
         {
             ThreadUtil.assertIsGameThread();

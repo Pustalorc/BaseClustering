@@ -30,15 +30,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
 
                 var drop = region.drops.LastOrDefault();
 
-                var timer = Stopwatch.StartNew();
                 if (drop?.instanceID == instanceID) OnBuildableSpawned?.Invoke(new BarricadeBuildable(data, drop));
-
-                timer.Stop();
-                var elapsed = timer.ElapsedMilliseconds;
-                if (elapsed > 10)
-                    Logging.Write("DropBarricade",
-                        $"Warning! Event hooks took too long to finish! Total time spent on hooks: {timer.ElapsedMilliseconds}ms",
-                        ConsoleColor.Yellow);
             }
 
             [HarmonyPatch(typeof(StructureManager), "dropReplicatedStructure")]
@@ -55,16 +47,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
                 var data = region.structures.LastOrDefault();
                 var drop = region.drops.LastOrDefault();
 
-                var timer = Stopwatch.StartNew();
                 if (data?.instanceID == ___instanceCount && drop?.instanceID == ___instanceCount)
                     OnBuildableSpawned?.Invoke(new StructureBuildable(data, drop));
-
-                timer.Stop();
-                var elapsed = timer.ElapsedMilliseconds;
-                if (elapsed > 10)
-                    Logging.Write("DropStructure",
-                        $"Warning! Event hooks took too long to finish! Total time spent on hooks: {timer.ElapsedMilliseconds}ms",
-                        ConsoleColor.Yellow);
             }
         }
     }

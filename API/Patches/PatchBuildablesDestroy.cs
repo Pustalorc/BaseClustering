@@ -21,16 +21,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
             [UsedImplicitly]
             internal static void DestroyBarricade([NotNull] BarricadeRegion region, ushort index)
             {
-                var stopwatch = Stopwatch.StartNew();
                 ThreadUtil.assertIsGameThread();
-                OnBuildableDestroyed?.Invoke(BuildableCollection.GetBuildable(region.drops[index].model));
-
-                stopwatch.Stop();
-                var elapsed = stopwatch.ElapsedMilliseconds;
-                if (elapsed > 10)
-                    Logging.Write("DestroyBarricade",
-                        $"Warning! Event hooks took too long to finish! Total time spent on hooks: {elapsed}ms",
-                        ConsoleColor.Yellow);
+                OnBuildableDestroyed?.Invoke(BuildableDirectory.GetBuildable(region.drops[index].model));
             }
 
             [HarmonyPatch(typeof(StructureManager), "destroyStructure")]
@@ -38,16 +30,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
             [UsedImplicitly]
             internal static void DestroyStructure([NotNull] StructureRegion region, ushort index)
             {
-                var stopwatch = Stopwatch.StartNew();
                 ThreadUtil.assertIsGameThread();
-                OnBuildableDestroyed?.Invoke(BuildableCollection.GetBuildable(region.drops[index].model));
-
-                stopwatch.Stop();
-                var elapsed = stopwatch.ElapsedMilliseconds;
-                if (elapsed > 10)
-                    Logging.Write("DestroyStructure",
-                        $"Warning! Event hooks took too long to finish! Total time spent on hooks: {elapsed}ms",
-                        ConsoleColor.Yellow);
+                OnBuildableDestroyed?.Invoke(BuildableDirectory.GetBuildable(region.drops[index].model));
             }
         }
     }

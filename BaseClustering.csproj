@@ -70,22 +70,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="API\BaseCluster.cs" />
+    <Compile Include="API\BaseClusters\BaseCluster.cs" />
+    <Compile Include="API\BaseClusters\BaseClusterDirectory.cs" />
     <Compile Include="API\Buildables\BarricadeBuildable.cs" />
     <Compile Include="API\Buildables\Buildable.cs" />
+    <Compile Include="API\Buildables\BuildableDirectory.cs" />
     <Compile Include="API\Buildables\StructureBuildable.cs" />
+    <Compile Include="API\Delegates\BuildablesChanged.cs" />
     <Compile Include="API\Delegates\ClusterChange.cs" />
     <Compile Include="API\Delegates\VoidDelegate.cs" />
-    <Compile Include="API\Utilities\BuildableDamageQueue.cs" />
     <Compile Include="API\Utilities\Extensions.cs" />
-    <Compile Include="API\Utilities\QueuedDamage.cs" />
     <Compile Include="API\Utilities\RiverExpanded.cs" />
     <Compile Include="API\WreckingActions\WreckAction.cs" />
     <Compile Include="API\WreckingActions\WreckClustersAction.cs" />
     <Compile Include="API\Delegates\BuildableChange.cs" />
-    <Compile Include="API\Buildables\BuildableCollection.cs" />
     <Compile Include="API\Utilities\Logging.cs" />
-    <Compile Include="API\Utilities\ClusteringTool.cs" />
     <Compile Include="BaseClusteringPlugin.cs" />
     <Compile Include="Commands\ClustersRegenCommand.cs" />
     <Compile Include="Commands\FindBuildsCommand.cs" />

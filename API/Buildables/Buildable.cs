@@ -29,6 +29,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         public abstract uint InstanceId { get; }
         public abstract Asset Asset { get; }
 
+        // Custom
+        public abstract bool IsPlanted { get; }
+
         // ReSharper disable once MemberCanBeProtected.Global
         // Public availability of this method through Buildable type is wanted and expected.
         public abstract void UnsafeDestroy();

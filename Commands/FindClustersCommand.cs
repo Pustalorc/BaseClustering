@@ -36,8 +36,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 args.RemoveAt(index);
 
             var clusters = target == null
-                ? BaseClusteringPlugin.Instance.Clusters
-                : BaseClusteringPlugin.Instance.Clusters.Where(k =>
+                ? BaseClusteringPlugin.Instance.BaseClusterDirectory.Clusters
+                : BaseClusteringPlugin.Instance.BaseClusterDirectory.GetClustersWithFilter(k =>
                     k.Buildables.Any(l => l.Owner.ToString().Equals(target.Id)));
 
             if (itemAsset != null) clusters = clusters.Where(k => k.Buildables.Any(l => l.AssetId == itemAsset.id));
