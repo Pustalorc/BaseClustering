@@ -68,6 +68,9 @@
       <HintPath>libs\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>libs\UnityEngine.PhysicsModule.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="API\BaseClusters\BaseCluster.cs" />
@@ -89,6 +92,7 @@
     <Compile Include="Commands\ClustersRegenCommand.cs" />
     <Compile Include="Commands\FindBuildsCommand.cs" />
     <Compile Include="Commands\FindClustersCommand.cs" />
+    <Compile Include="Commands\RemoveBuildableCommand.cs" />
     <Compile Include="Commands\TeleportToBuildCommand.cs" />
     <Compile Include="Commands\TeleportToClusterCommand.cs" />
     <Compile Include="Commands\TopBuildersCommand.cs" />

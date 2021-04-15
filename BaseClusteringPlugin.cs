@@ -25,6 +25,9 @@ namespace Pustalorc.Plugins.BaseClustering
         public override TranslationList DefaultTranslations => new TranslationList
         {
             {
+                "not_looking_buildable", "You are not looking at a structure/barricade, so you cannot get any info."
+            },
+            {
                 "command_fail_clustering_disabled",
                 "This command is disabled as the base clustering feature is disabled."
             },
@@ -137,7 +140,7 @@ namespace Pustalorc.Plugins.BaseClustering
 
             if (Configuration.Instance.EnableClustering)
                 BaseClusterDirectory = new BaseClusterDirectory(Configuration.Instance, BuildableDirectory);
-            
+
             OnPluginFullyLoaded?.Invoke();
         }
 

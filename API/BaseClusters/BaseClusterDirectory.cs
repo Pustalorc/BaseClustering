@@ -297,8 +297,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             // Get all the buildables to cluster. Anything planted should NOT be clustered.
             var buildablesToCluster = buildables.Where(k => !k.IsPlanted).ToList();
             // Get the count of buildables to cluster. This will be used for logging.
-            var totalBuildablestoCluster = buildablesToCluster.Count;
-            var logRate = Math.Floor(totalBuildablestoCluster * 0.085);
+            var totalBuildablesToCluster = buildablesToCluster.Count;
+            var logRate = Math.Floor(totalBuildablesToCluster * 0.085);
 
             // Get all the structures to cluster from all the buildables that are being clustered.
             var structuresToCluster = buildablesToCluster.OfType<StructureBuildable>().ToList();
@@ -361,7 +361,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
                 currentMultiplier++;
                 Logging.Write("BaseClustering",
-                    $"Generating new clusters... {Math.Ceiling(currentCount / (double) totalBuildablestoCluster * 100)}% [{currentCount}/{totalBuildablestoCluster}] {stopwatch.ElapsedMilliseconds}ms",
+                    $"Generating new clusters... {Math.Ceiling(currentCount / (double) totalBuildablesToCluster * 100)}% [{currentCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
                     ConsoleColor.Cyan);
             }
 
@@ -383,7 +383,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             {
                 var finalBuildCount = output.Sum(k => k.Buildables.Count) + remainingBarricadeCount;
                 Logging.Write("BaseClustering",
-                    $"Generating new clusters... {Math.Ceiling(finalBuildCount / (double) totalBuildablestoCluster * 100)}% [{finalBuildCount}/{totalBuildablestoCluster}] {stopwatch.ElapsedMilliseconds}ms",
+                    $"Generating new clusters... {Math.Ceiling(finalBuildCount / (double) totalBuildablesToCluster * 100)}% [{finalBuildCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
                     ConsoleColor.Cyan);
             }
 
