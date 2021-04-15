@@ -254,8 +254,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// Returns and resets a BaseCluster to the pool.
         /// </summary>
         /// <param name="baseCluster">The BaseCluster to reset and return to the pool.</param>
-        public void Return([NotNull] BaseCluster baseCluster)
+        public void Return([CanBeNull] BaseCluster baseCluster)
         {
+            if (baseCluster == null)
+                return;
+
             baseCluster.Reset();
             m_Clusters.Remove(baseCluster);
             m_ClusterPool.Add(baseCluster);
@@ -282,7 +285,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         public IEnumerable<BaseCluster> ClusterElements([NotNull] IEnumerable<Buildable> buildables,
             bool needLogging = false)
         {
-            // TODO: Use background worker and have this wait until the background worker is done?
+            // TODO IDEA: Use background worker and have this wait until the background worker is done.
             // Start a new stopwatch. This will be used to log how long the program is taking with each step.
             var stopwatch = Stopwatch.StartNew();
             // Initialize an empty sample output for this method.
@@ -355,7 +358,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 output.Add(cluster);
 
                 // Finally, check if we need logging, and if we are ready to log it.
-                // TODO: Make this cleaner, this looks like ass.
+                // TODO: Just make this code look cleaner, this looks like I grabbed my keyboard and slammed my head against it.
                 currentCount += cluster.Buildables.Count;
                 if (!needLogging || !(currentCount / logRate > currentMultiplier)) continue;
 

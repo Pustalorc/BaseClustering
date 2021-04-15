@@ -49,7 +49,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             return index > -1;
         }
 
-        [CanBeNull]
+        [NotNull]
         public static List<ItemAsset> GetMultipleItemAssets([NotNull] this IEnumerable<string> args, out int index)
         {
             var argsL = args.ToList();
@@ -70,7 +70,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             }
 
             index = -1;
-            return null;
+            return new List<ItemAsset>();
         }
 
         public static float GetFloat([NotNull] this IEnumerable<string> args, out int index)

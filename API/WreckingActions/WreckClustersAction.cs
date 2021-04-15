@@ -13,7 +13,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.WreckingActions
         public float Radius;
         public string ItemAssetName;
 
-        public WreckClustersAction(IRocketPlayer target, Vector3 center, List<ItemAsset> assets, float radius, string assetName)
+        public WreckClustersAction(IRocketPlayer target, Vector3 center, List<ItemAsset> assets, float radius,
+            string assetName)
         {
             TargetPlayer = target;
             Center = center;

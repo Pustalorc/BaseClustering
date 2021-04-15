@@ -53,7 +53,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 : clusterDirectory.GetClustersWithFilter(k =>
                     k.Buildables.Any(l => l.Owner.ToString().Equals(target.Id)));
 
-            if (assetCount > 0) clusters = clusters.Where(k => k.Buildables.Any(l => itemAssets.Exists(z => l.AssetId == z.id)));
+            if (assetCount > 0)
+                clusters = clusters.Where(k => k.Buildables.Any(l => itemAssets.Exists(z => l.AssetId == z.id)));
 
             if (!float.IsNegativeInfinity(radius))
             {
@@ -74,7 +75,12 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             else if (assetCount > 1)
                 itemAssetName = itemAssetInput;
 
-            UnturnedChat.Say(caller,pluginInstance.Translate("cluster_count", clusters.Count(),itemAssetName,!float.IsNegativeInfinity(radius)? radius.ToString(CultureInfo.CurrentCulture): pluginInstance.Translate("not_available"),target != null ? target.DisplayName : pluginInstance.Translate("not_available")));
+            UnturnedChat.Say(caller,
+                pluginInstance.Translate("cluster_count", clusters.Count(), itemAssetName,
+                    !float.IsNegativeInfinity(radius)
+                        ? radius.ToString(CultureInfo.CurrentCulture)
+                        : pluginInstance.Translate("not_available"),
+                    target != null ? target.DisplayName : pluginInstance.Translate("not_available")));
         }
     }
 }

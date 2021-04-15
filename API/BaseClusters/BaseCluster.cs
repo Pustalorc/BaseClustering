@@ -143,10 +143,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         public void RemoveBuildable(Buildable build)
         {
             var builds = new[] {build};
-            if (m_Buildables.Remove(build))
+            var removedSomething = m_Buildables.Remove(build);
+            if (removedSomething)
                 OnBuildablesRemoved?.Invoke(builds);
 
-            if (!IsBeingDestroyed && !IsGlobalCluster)
+            if (removedSomething && !IsBeingDestroyed && !IsGlobalCluster)
                 VerifyAndCorrectIntegrity();
         }
 
@@ -160,11 +161,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
             var removed = m_Buildables.Where(buildables.Contains).ToList();
             m_Buildables.RemoveAll(removed.Contains);
+            buildables.RemoveAll(removed.Contains);
 
             if (removed.Count > 0)
                 OnBuildablesRemoved?.Invoke(removed);
 
-            if (!IsBeingDestroyed && !IsGlobalCluster)
+            if (removed.Count > 0 && !IsBeingDestroyed && !IsGlobalCluster)
                 VerifyAndCorrectIntegrity();
         }
 
@@ -258,7 +260,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             globalCluster.Reset();
 
             // Dispose correctly of the cluster we are not going to add here.
-            var discarded = clusterRegened.First();
+            var discarded = clusterRegened.FirstOrDefault();
             m_BaseClusterDirectory.Return(discarded);
 
             // Select all the clusters, except for the largest one.

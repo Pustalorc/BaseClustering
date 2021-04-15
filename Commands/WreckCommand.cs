@@ -111,7 +111,12 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 if (action.FilterForBarricades) remove = remove.Where(k => k.Asset is ItemBarricadeAsset);
                 else if (action.FilterForStructures) remove = remove.Where(k => k.Asset is ItemStructureAsset);
 
-                if (action.ItemAssets != null) remove = remove.Where(k => action.ItemAssets.Exists(l => k.AssetId == l.id));
+                if (action.ItemAssets.Count > 0)
+                    remove = remove.Where(k => action.ItemAssets.Exists(l => k.AssetId == l.id));
+
+                if (!action.Center.IsNegativeInfinity())
+                    remove = remove.Where(k =>
+                        (k.Position - action.Center).sqrMagnitude <= Mathf.Pow(action.Radius, 2));
 
                 var buildables = remove.ToList();
                 if (!buildables.Any())
@@ -123,7 +128,15 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 foreach (var build in buildables)
                     build.SafeDestroy();
 
-                UnturnedChat.Say(caller,BaseClusteringPlugin.Instance.Translate("wrecked", buildables.Count, action.ItemAssetName,!float.IsNegativeInfinity(action.Radius)? action.Radius.ToString(CultureInfo.CurrentCulture): BaseClusteringPlugin.Instance.Translate("not_available"),action.TargetPlayer != null? action.TargetPlayer.DisplayName: BaseClusteringPlugin.Instance.Translate("not_available"), action.IncludeVehicles,action.FilterForBarricades, action.FilterForStructures));
+                UnturnedChat.Say(caller,
+                    BaseClusteringPlugin.Instance.Translate("wrecked", buildables.Count, action.ItemAssetName,
+                        !float.IsNegativeInfinity(action.Radius)
+                            ? action.Radius.ToString(CultureInfo.CurrentCulture)
+                            : BaseClusteringPlugin.Instance.Translate("not_available"),
+                        action.TargetPlayer != null
+                            ? action.TargetPlayer.DisplayName
+                            : BaseClusteringPlugin.Instance.Translate("not_available"), action.IncludeVehicles,
+                        action.FilterForBarricades, action.FilterForStructures));
                 return;
             }
 
@@ -166,13 +179,28 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (m_WreckActions.TryGetValue(cId, out _))
             {
-                m_WreckActions[cId] = new WreckAction(plants, barricades, structs, target, center, itemAssets, radius, itemAssetName);
-                UnturnedChat.Say(caller,BaseClusteringPlugin.Instance.Translate("wreck_action_queued_new", itemAssetName, BaseClusteringPlugin.Instance.Translate("not_available"),!float.IsNegativeInfinity(radius)? radius.ToString(CultureInfo.CurrentCulture): BaseClusteringPlugin.Instance.Translate("not_available"),target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),plants, barricades, structs, count));
+                m_WreckActions[cId] = new WreckAction(plants, barricades, structs, target, center, itemAssets, radius,
+                    itemAssetName);
+                UnturnedChat.Say(caller,
+                    BaseClusteringPlugin.Instance.Translate("wreck_action_queued_new", itemAssetName,
+                        BaseClusteringPlugin.Instance.Translate("not_available"),
+                        !float.IsNegativeInfinity(radius)
+                            ? radius.ToString(CultureInfo.CurrentCulture)
+                            : BaseClusteringPlugin.Instance.Translate("not_available"),
+                        target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
+                        plants, barricades, structs, count));
             }
             else
             {
-                m_WreckActions.Add(cId,new WreckAction(plants, barricades, structs, target, center, itemAssets, radius, itemAssetName));
-                UnturnedChat.Say(caller,BaseClusteringPlugin.Instance.Translate("wreck_action_queued", itemAssetName,!float.IsNegativeInfinity(radius)? radius.ToString(CultureInfo.CurrentCulture): BaseClusteringPlugin.Instance.Translate("not_available"),target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),plants, barricades, structs, count));
+                m_WreckActions.Add(cId,
+                    new WreckAction(plants, barricades, structs, target, center, itemAssets, radius, itemAssetName));
+                UnturnedChat.Say(caller,
+                    BaseClusteringPlugin.Instance.Translate("wreck_action_queued", itemAssetName,
+                        !float.IsNegativeInfinity(radius)
+                            ? radius.ToString(CultureInfo.CurrentCulture)
+                            : BaseClusteringPlugin.Instance.Translate("not_available"),
+                        target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
+                        plants, barricades, structs, count));
             }
         }
     }

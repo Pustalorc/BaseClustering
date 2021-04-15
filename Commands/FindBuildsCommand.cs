@@ -85,7 +85,13 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             else if (assetCount > 1)
                 itemAssetName = itemAssetInput;
 
-            UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("build_count", builds.Count(), itemAssetName, !float.IsNegativeInfinity(radius) ? radius.ToString(CultureInfo.CurrentCulture) : BaseClusteringPlugin.Instance.Translate("not_available"), target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"), plants, barricades, structs));
+            UnturnedChat.Say(caller,
+                BaseClusteringPlugin.Instance.Translate("build_count", builds.Count(), itemAssetName,
+                    !float.IsNegativeInfinity(radius)
+                        ? radius.ToString(CultureInfo.CurrentCulture)
+                        : BaseClusteringPlugin.Instance.Translate("not_available"),
+                    target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
+                    plants, barricades, structs));
         }
     }
 }
