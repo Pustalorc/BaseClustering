@@ -45,9 +45,14 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var itemAsset = args.GetItemAsset(out index);
+            var itemAssetInput = BaseClusteringPlugin.Instance.Translate("not_available");
+            var itemAssets = args.GetMultipleItemAssets(out index);
+            var assetCount = itemAssets.Count;
             if (index > -1)
+            {
+                itemAssetInput = args[index];
                 args.RemoveAt(index);
+            }
 
             var radius = args.GetFloat(out index);
             if (index > -1)
@@ -60,7 +65,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (barricades) builds = builds.Where(k => k.Asset is ItemBarricadeAsset);
             else if (structs) builds = builds.Where(k => k.Asset is ItemStructureAsset);
 
-            if (itemAsset != null) builds = builds.Where(k => k.AssetId == itemAsset.id);
+            if (assetCount > 0) builds = builds.Where(k => itemAssets.Exists(l => k.AssetId == l.id));
 
             if (!float.IsNegativeInfinity(radius))
             {
@@ -74,14 +79,13 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 builds = builds.Where(k => (k.Position - cPlayer.Position).sqrMagnitude <= Mathf.Pow(radius, 2));
             }
 
-            UnturnedChat.Say(caller,
-                BaseClusteringPlugin.Instance.Translate("build_count", builds.Count(),
-                    itemAsset != null ? itemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"),
-                    !float.IsNegativeInfinity(radius)
-                        ? radius.ToString(CultureInfo.CurrentCulture)
-                        : BaseClusteringPlugin.Instance.Translate("not_available"),
-                    target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
-                    plants, barricades, structs));
+            var itemAssetName = BaseClusteringPlugin.Instance.Translate("not_available");
+            if (assetCount == 1)
+                itemAssetName = itemAssets.First().itemName;
+            else if (assetCount > 1)
+                itemAssetName = itemAssetInput;
+
+            UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("build_count", builds.Count(), itemAssetName, !float.IsNegativeInfinity(radius) ? radius.ToString(CultureInfo.CurrentCulture) : BaseClusteringPlugin.Instance.Translate("not_available"), target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"), plants, barricades, structs));
         }
     }
 }

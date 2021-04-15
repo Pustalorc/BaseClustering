@@ -50,31 +50,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         }
 
         [CanBeNull]
-        public static ItemAsset GetItemAsset([NotNull] this IEnumerable<string> args, out int index)
-        {
-            var argsL = args.ToList();
-            var assets = Assets.find(EAssetType.ITEM).Cast<ItemAsset>()
-                .Where(k => k?.itemName != null && k.name != null).OrderBy(k => k.itemName.Length).ToList();
-
-            for (index = 0; index < argsL.Count; index++)
-            {
-                var itemAsset = assets.FirstOrDefault(k =>
-                    argsL[0].Equals(k.id.ToString(), StringComparison.OrdinalIgnoreCase) ||
-                    argsL[0].Split(' ').All(l => k.itemName.ToLower().Contains(l)) ||
-                    argsL[0].Split(' ').All(l => k.name.ToLower().Contains(l)));
-
-                if (itemAsset == null)
-                    continue;
-
-                return itemAsset;
-            }
-
-            index = -1;
-            return null;
-        }
-
-
-        [CanBeNull]
         public static List<ItemAsset> GetMultipleItemAssets([NotNull] this IEnumerable<string> args, out int index)
         {
             var argsL = args.ToList();

@@ -35,9 +35,14 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var itemAsset = args.GetItemAsset(out index);
+            var itemAssetInput = BaseClusteringPlugin.Instance.Translate("not_available");
+            var itemAssets = args.GetMultipleItemAssets(out index);
+            var assetCount = itemAssets.Count;
             if (index > -1)
+            {
+                itemAssetInput = args[index];
                 args.RemoveAt(index);
+            }
 
             var radius = args.GetFloat(out index);
             if (index > -1)
@@ -48,7 +53,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 : clusterDirectory.GetClustersWithFilter(k =>
                     k.Buildables.Any(l => l.Owner.ToString().Equals(target.Id)));
 
-            if (itemAsset != null) clusters = clusters.Where(k => k.Buildables.Any(l => l.AssetId == itemAsset.id));
+            if (assetCount > 0) clusters = clusters.Where(k => k.Buildables.Any(l => itemAssets.Exists(z => l.AssetId == z.id)));
 
             if (!float.IsNegativeInfinity(radius))
             {
@@ -63,13 +68,13 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     k.Buildables.Any(l => (l.Position - cPlayer.Position).sqrMagnitude <= Mathf.Pow(radius, 2)));
             }
 
-            UnturnedChat.Say(caller,
-                pluginInstance.Translate("cluster_count", clusters.Count(),
-                    itemAsset != null ? itemAsset.itemName : pluginInstance.Translate("not_available"),
-                    !float.IsNegativeInfinity(radius)
-                        ? radius.ToString(CultureInfo.CurrentCulture)
-                        : pluginInstance.Translate("not_available"),
-                    target != null ? target.DisplayName : pluginInstance.Translate("not_available")));
+            var itemAssetName = BaseClusteringPlugin.Instance.Translate("not_available");
+            if (assetCount == 1)
+                itemAssetName = itemAssets.First().itemName;
+            else if (assetCount > 1)
+                itemAssetName = itemAssetInput;
+
+            UnturnedChat.Say(caller,pluginInstance.Translate("cluster_count", clusters.Count(),itemAssetName,!float.IsNegativeInfinity(radius)? radius.ToString(CultureInfo.CurrentCulture): pluginInstance.Translate("not_available"),target != null ? target.DisplayName : pluginInstance.Translate("not_available")));
         }
     }
 }
