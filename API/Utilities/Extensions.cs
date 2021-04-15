@@ -73,6 +73,31 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             return null;
         }
 
+
+        [CanBeNull]
+        public static List<ItemAsset> GetMultipleItemAssets([NotNull] this IEnumerable<string> args, out int index)
+        {
+            var argsL = args.ToList();
+            var assets = Assets.find(EAssetType.ITEM).Cast<ItemAsset>()
+                .Where(k => k?.itemName != null && k.name != null).OrderBy(k => k.itemName.Length).ToList();
+
+            for (index = 0; index < argsL.Count; index++)
+            {
+                var itemAssets = assets.Where(k =>
+                    argsL[0].Equals(k.id.ToString(), StringComparison.OrdinalIgnoreCase) ||
+                    argsL[0].Split(' ').All(l => k.itemName.ToLower().Contains(l)) ||
+                    argsL[0].Split(' ').All(l => k.name.ToLower().Contains(l))).ToList();
+
+                if (itemAssets.Count <= 0)
+                    continue;
+
+                return itemAssets;
+            }
+
+            index = -1;
+            return null;
+        }
+
         public static float GetFloat([NotNull] this IEnumerable<string> args, out int index)
         {
             var output = float.NegativeInfinity;

@@ -47,9 +47,14 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var itemAsset = args.GetItemAsset(out index);
+            var itemAssetInput = BaseClusteringPlugin.Instance.Translate("not_available");
+            var itemAssets = args.GetMultipleItemAssets(out index);
+            var assetCount = itemAssets.Count;
             if (index > -1)
+            {
+                itemAssetInput = args[index];
                 args.RemoveAt(index);
+            }
 
             var builds = BuildableDirectory.GetBuildables(includePlants: plants);
 
@@ -60,16 +65,19 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (barricades) builds = builds.Where(k => k.Asset is ItemBarricadeAsset);
             else if (structs) builds = builds.Where(k => k.Asset is ItemStructureAsset);
 
-            if (itemAsset != null) builds = builds.Where(k => k.AssetId == itemAsset.id);
+            if (assetCount > 0) builds = builds.Where(k => itemAssets.Exists(l => l.id == k.AssetId));
+
+            var itemAssetName = BaseClusteringPlugin.Instance.Translate("not_available");
+            if (assetCount == 1)
+                itemAssetName = itemAssets.First().itemName;
+            else if (assetCount > 1)
+                itemAssetName = itemAssetInput;
 
             var buildsL = builds.ToList();
             if (!buildsL.Any())
             {
                 UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_builds",
-                        itemAsset != null
-                            ? itemAsset.itemName
-                            : BaseClusteringPlugin.Instance.Translate("not_available"),
+                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_builds", itemAssetName,
                         target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
                         plants, barricades, structs));
                 return;
@@ -89,10 +97,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             else
             {
                 UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_builds_too_close",
-                        itemAsset != null
-                            ? itemAsset.itemName
-                            : BaseClusteringPlugin.Instance.Translate("not_available"),
+                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_builds_too_close", itemAssetName,
                         target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
                         plants, barricades, structs));
             }
