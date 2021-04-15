@@ -51,7 +51,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                 out var bRegion))
             {
                 Logging.Write(this,
-                    "Model related barricade information not found. Destruction of this object is not possible.",
+                    $"Model related barricade information not found. Destruction of this object is not possible. Barricade instance: {InstanceId}",
                     ConsoleColor.Red);
                 return;
             }

@@ -18,8 +18,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 {
     public sealed class BaseClusterDirectory
     {
-        [UsedImplicitly] public event VoidDelegate OnClustersCleared;
-
         [UsedImplicitly] public event VoidDelegate OnClustersGenerated;
 
         [UsedImplicitly] public event ClusterChange OnClusterAdded;
@@ -73,8 +71,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 $"Loaded {allBuildables.Count} buildables from the map. Took {stopwatch.ElapsedMilliseconds}ms",
                 ConsoleColor.Cyan);
 
-            m_Clusters.Clear();
-            OnClustersCleared?.Invoke();
+            foreach (var c in m_Clusters)
+                Return(c);
 
             var successfulLoad = false;
             if (loadSaveFile && LevelSavedata.fileExists("/Bases.dat"))
@@ -82,13 +80,15 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
             if (!successfulLoad)
             {
-                Logging.Write("BaseClustering", "Generating new clusters. This can take a LONG time. How long will depend on the following factors (but not limited to): CPU usage, CPU cores/threads, Buildables in the map. This generation only needs to be ran once from raw.");
+                Logging.Write("BaseClustering",
+                    "Generating new clusters. This can take a LONG time. How long will depend on the following factors (but not limited to): CPU usage, CPU cores/threads, Buildables in the map. This generation only needs to be ran once from raw.");
                 m_Clusters.AddRange(ClusterElements(allBuildables, true));
             }
 
             stopwatch.Stop();
             Logging.Write("BaseClustering",
-                $"Clusters Loaded: {m_Clusters.Count + (m_GlobalCluster == null ? 0 : 1)}. Took {stopwatch.ElapsedMilliseconds}ms.", ConsoleColor.Cyan);
+                $"Clusters Loaded: {m_Clusters.Count + (m_GlobalCluster == null ? 0 : 1)}. Took {stopwatch.ElapsedMilliseconds}ms.",
+                ConsoleColor.Cyan);
 
             OnClustersGenerated?.Invoke();
         }
@@ -119,10 +119,14 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         // ReSharper disable once FunctionComplexityOverflow
         private bool LoadClusters([NotNull] IEnumerable<Buildable> allBuildables)
         {
+            var bases = new List<BaseCluster>();
+
+            foreach (var c in m_Clusters)
+                Return(c);
+
             try
             {
                 var timer = Stopwatch.StartNew();
-                var bases = new List<BaseCluster>();
                 var river = new RiverExpanded(ServerSavedata.directory + "/" + Provider.serverID + "/Level/" +
                                               Level.info.name + "/Bases.dat");
                 var allBuilds = allBuildables.ToList();
@@ -200,8 +204,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                             ConsoleColor.Cyan);
                 }
 
-                m_Clusters.Clear();
-                OnClustersCleared?.Invoke();
                 m_Clusters.AddRange(bases);
 
                 if (m_Clusters.Count > 0)
@@ -223,6 +225,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 Logging.Write("BaseClustering",
                     $"Warning! An exception was thrown when attempting to load the save file. Assuming the data is corrupted. Clusters will be now rebuilt. Exception: {ex}",
                     ConsoleColor.Yellow);
+
+                foreach (var b in bases)
+                    Return(b);
+
                 return false;
             }
         }
@@ -321,7 +327,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                     var s = structuresOfCluster[i];
 
                     // Check which of all the structures in the world we can add here.
-                    var toAdd = structuresToCluster.Where(k => (k.Position - s.Position).sqrMagnitude <= maxStructureDistance).ToList();
+                    var toAdd = structuresToCluster
+                        .Where(k => (k.Position - s.Position).sqrMagnitude <= maxStructureDistance).ToList();
                     // Add all those structures to the cluster.
                     structuresOfCluster.AddRange(toAdd);
                     // Remove all those structures from the main list.
@@ -329,7 +336,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 }
 
                 // Barricades are simpler to cluster than structures. Barricades are only considered part of the cluster if there's a structure within range.
-                var barricadesToAdd = barricadesToCluster.Where(next => structuresOfCluster.Exists(k => (next.Position - k.Position).sqrMagnitude <= maxBarricadeDistance)).ToList();
+                var barricadesToAdd = barricadesToCluster.Where(next =>
+                        structuresOfCluster.Exists(k =>
+                            (next.Position - k.Position).sqrMagnitude <= maxBarricadeDistance))
+                    .ToList();
                 // Add all the barricades that are within range of one of the structures of this cluster.
                 buildablesOfCluster.AddRange(barricadesToAdd);
                 // Finally, remove all the barricades from the main list that we added to the cluster.
@@ -366,11 +376,14 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             }
 
             // Finally, we should make sure we are logging the 100% message with this check, should logging actually be needed.
+
+            // This invert is dumb, as we still need to return output. All we are doing is adding a visually earlier return, which makes 0 sense to do.
+            // ReSharper disable once InvertIf
             if (needLogging)
             {
                 var finalBuildCount = output.Sum(k => k.Buildables.Count) + remainingBarricadeCount;
                 Logging.Write("BaseClustering",
-                    $"Generating new clusters... {Math.Ceiling(finalBuildCount / (double)totalBuildablestoCluster * 100)}% [{finalBuildCount}/{totalBuildablestoCluster}] {stopwatch.ElapsedMilliseconds}ms",
+                    $"Generating new clusters... {Math.Ceiling(finalBuildCount / (double) totalBuildablestoCluster * 100)}% [{finalBuildCount}/{totalBuildablestoCluster}] {stopwatch.ElapsedMilliseconds}ms",
                     ConsoleColor.Cyan);
             }
 
@@ -484,17 +497,19 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 // However, if there's more than 1 cluster, select every single buildable from all found clusters and the global cluster.
                 default:
                     var allBuilds = bestClusters.SelectMany(k => k.Buildables).Concat(gCluster.Buildables).ToList();
+
+                    // Make sure to include the buildable we spawned in that set.
                     allBuilds.Add(buildable);
-
-                    // Clear the global cluster
-                    gCluster.Reset();
-
-                    // And ask the clustering tool to generate new clusters.
-                    var newClusters = ClusterElements(allBuilds);
 
                     // For all the found best clusters, we can now un-register them, as they are no longer needed.
                     foreach (var c in bestClusters)
                         Return(c);
+
+                    // Clear the global cluster
+                    gCluster.Reset();
+
+                    // And ask the clustering tool to generate new clusters, and populate the global cluster.
+                    var newClusters = ClusterElements(allBuilds);
 
                     // New clusters can be safely added now.
                     foreach (var c in newClusters)

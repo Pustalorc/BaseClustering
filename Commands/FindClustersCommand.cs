@@ -21,6 +21,14 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public void Execute(IRocketPlayer caller, [NotNull] string[] command)
         {
+            var pluginInstance = BaseClusteringPlugin.Instance;
+            var clusterDirectory = pluginInstance.BaseClusterDirectory;
+            if (clusterDirectory == null)
+            {
+                UnturnedChat.Say(caller, pluginInstance.Translate("command_fail_clustering_disabled"));
+                return;
+            }
+
             var args = command.ToList();
 
             var target = args.GetIRocketPlayer(out var index);
@@ -36,8 +44,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 args.RemoveAt(index);
 
             var clusters = target == null
-                ? BaseClusteringPlugin.Instance.BaseClusterDirectory.Clusters
-                : BaseClusteringPlugin.Instance.BaseClusterDirectory.GetClustersWithFilter(k =>
+                ? clusterDirectory.Clusters
+                : clusterDirectory.GetClustersWithFilter(k =>
                     k.Buildables.Any(l => l.Owner.ToString().Equals(target.Id)));
 
             if (itemAsset != null) clusters = clusters.Where(k => k.Buildables.Any(l => l.AssetId == itemAsset.id));
@@ -47,7 +55,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 if (!(caller is UnturnedPlayer cPlayer))
                 {
                     UnturnedChat.Say(caller,
-                        BaseClusteringPlugin.Instance.Translate("cannot_be_executed_from_console"));
+                        pluginInstance.Translate("cannot_be_executed_from_console"));
                     return;
                 }
 
@@ -56,12 +64,12 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             }
 
             UnturnedChat.Say(caller,
-                BaseClusteringPlugin.Instance.Translate("cluster_count", clusters.Count(),
-                    itemAsset != null ? itemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"),
+                pluginInstance.Translate("cluster_count", clusters.Count(),
+                    itemAsset != null ? itemAsset.itemName : pluginInstance.Translate("not_available"),
                     !float.IsNegativeInfinity(radius)
                         ? radius.ToString(CultureInfo.CurrentCulture)
-                        : BaseClusteringPlugin.Instance.Translate("not_available"),
-                    target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available")));
+                        : pluginInstance.Translate("not_available"),
+                    target != null ? target.DisplayName : pluginInstance.Translate("not_available")));
         }
     }
 }

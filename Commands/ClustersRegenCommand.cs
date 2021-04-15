@@ -21,8 +21,16 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
-            UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("clusters_regen_warning"));
-            BaseClusteringPlugin.Instance.BaseClusterDirectory.GenerateAndLoadAllClusters(false);
+            var pluginInstance = BaseClusteringPlugin.Instance;
+            var clusterDirectory = pluginInstance.BaseClusterDirectory;
+            if (clusterDirectory == null)
+            {
+                UnturnedChat.Say(caller, pluginInstance.Translate("command_fail_clustering_disabled"));
+                return;
+            }
+
+            UnturnedChat.Say(caller, pluginInstance.Translate("clusters_regen_warning"));
+            clusterDirectory.GenerateAndLoadAllClusters(false);
         }
     }
 }

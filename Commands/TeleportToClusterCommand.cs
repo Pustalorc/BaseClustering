@@ -25,6 +25,14 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public void Execute(IRocketPlayer caller, [NotNull] string[] command)
         {
+            var pluginInstance = BaseClusteringPlugin.Instance;
+            var clusterDirectory = pluginInstance.BaseClusterDirectory;
+            if (clusterDirectory == null)
+            {
+                UnturnedChat.Say(caller, pluginInstance.Translate("command_fail_clustering_disabled"));
+                return;
+            }
+
             if (!(caller is UnturnedPlayer player)) return;
 
             var args = command.ToList();
@@ -34,18 +42,18 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 args.RemoveAt(index);
 
             var clusters = target != null
-                ? BaseClusteringPlugin.Instance.BaseClusterDirectory.GetClustersWithFilter(k =>
+                ? clusterDirectory.GetClustersWithFilter(k =>
                     k.CommonOwner.ToString().Equals(target.Id))
-                : BaseClusteringPlugin.Instance.BaseClusterDirectory.Clusters;
+                : clusterDirectory.Clusters;
 
             var clustersL = clusters.ToList();
             if (!clustersL.Any())
             {
                 UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_clusters",
+                    pluginInstance.Translate("cannot_teleport_no_clusters",
                         target != null
                             ? target.DisplayName
-                            : BaseClusteringPlugin.Instance.Translate("not_available")));
+                            : pluginInstance.Translate("not_available")));
                 return;
             }
 
@@ -64,10 +72,10 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             else
             {
                 UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_clusters",
+                    pluginInstance.Translate("cannot_teleport_no_clusters",
                         target != null
                             ? target.DisplayName
-                            : BaseClusteringPlugin.Instance.Translate("not_available")));
+                            : pluginInstance.Translate("not_available")));
             }
         }
     }

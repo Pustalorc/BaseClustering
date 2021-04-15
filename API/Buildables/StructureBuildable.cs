@@ -51,7 +51,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             if (!StructureManager.tryGetInfo(Model, out var x, out var y, out var index, out var sRegion))
             {
                 Logging.Write(this,
-                    "Model related structure information not found. Destruction of this object is not possible.",
+                    $"Model related structure information not found. Destruction of this object is not possible. Structure instance: {InstanceId}",
                     ConsoleColor.Red);
                 return;
             }

@@ -25,6 +25,10 @@ namespace Pustalorc.Plugins.BaseClustering
         public override TranslationList DefaultTranslations => new TranslationList
         {
             {
+                "command_fail_clustering_disabled",
+                "This command is disabled as the base clustering feature is disabled."
+            },
+            {
                 "clusters_regen_warning",
                 "WARNING! This operation can take a long amount of time! The more buildables in the map the longer it will take! Please see console for when it is done."
             },
@@ -111,8 +115,12 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             Provider.onCommenceShutdown -= ForceDataSave;
 
-            BaseClusterDirectory.Unload();
-            BaseClusterDirectory = null;
+            if (BaseClusterDirectory != null)
+            {
+                BaseClusterDirectory.Unload();
+                BaseClusterDirectory = null;
+            }
+
             BuildableDirectory.Unload();
             BuildableDirectory = null;
             m_Harmony.UnpatchAll();
@@ -126,7 +134,10 @@ namespace Pustalorc.Plugins.BaseClustering
         {
             Provider.onCommenceShutdown += ForceDataSave;
             BuildableDirectory = new BuildableDirectory();
-            BaseClusterDirectory = new BaseClusterDirectory(Configuration.Instance, BuildableDirectory);
+
+            if (Configuration.Instance.EnableClustering)
+                BaseClusterDirectory = new BaseClusterDirectory(Configuration.Instance, BuildableDirectory);
+            
             OnPluginFullyLoaded?.Invoke();
         }
 

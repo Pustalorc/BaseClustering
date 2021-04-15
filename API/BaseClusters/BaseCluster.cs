@@ -121,7 +121,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             var buildsInRange = gCluster.Buildables.Where(IsWithinRange);
             AddBuildables(buildsInRange);
             gCluster.RemoveBuildables(buildsInRange);
-            OnBuildablesAdded?.Invoke(new[] {build});
+            // Include the buildables from the global cluster that got added.
+            OnBuildablesAdded?.Invoke(buildsInRange.Concat(new[] {build}));
         }
 
         /// <summary>
@@ -146,7 +147,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 OnBuildablesRemoved?.Invoke(builds);
 
             if (!IsBeingDestroyed && !IsGlobalCluster)
-                VerifyAndCorrectIntegrity(builds);
+                VerifyAndCorrectIntegrity();
         }
 
         /// <summary>
@@ -164,74 +165,53 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 OnBuildablesRemoved?.Invoke(removed);
 
             if (!IsBeingDestroyed && !IsGlobalCluster)
-                VerifyAndCorrectIntegrity(buildables);
+                VerifyAndCorrectIntegrity();
         }
 
-        private bool VerifyStructureIntegrityForced([NotNull] IList<StructureBuildable> structures)
-        {
-            var maxStructureDistance = Mathf.Pow(m_PluginConfiguration.MaxDistanceBetweenStructures, 2);
-            var succeeded = new List<StructureBuildable>();
-            var result = true;
-
-            var random = structures[Random.Range(0, structures.Count)];
-            random = structures.OrderByDescending(k => (random.Position - k.Position).sqrMagnitude).First();
-            succeeded.Add(random);
-            structures.Remove(random);
-
-            foreach (var str in structures.OrderBy(k => (random.Position - k.Position).sqrMagnitude))
-            {
-                if (!succeeded.Exists(k => (str.Position - k.Position).sqrMagnitude <= maxStructureDistance))
-                {
-                    result = false;
-                    break;
-                }
-
-                succeeded.Add(str);
-            }
-
-            return result;
-        }
-
-        private bool VerifyStructureIntegrity([CanBeNull] Buildable removedBuildable = null)
+        private bool VerifyStructureIntegrity()
         {
             var allStructures = Buildables.OfType<StructureBuildable>().ToList();
 
             if (allStructures.Count <= 0)
                 return false;
 
-            var affectedArea = new List<StructureBuildable>();
+            var maxStructureDistance = Mathf.Pow(m_PluginConfiguration.MaxDistanceBetweenStructures, 2);
+            var succeeded = new List<StructureBuildable>();
 
-            var result = true;
+            var random = allStructures[Random.Range(0, allStructures.Count)];
+            succeeded.Add(random);
+            allStructures.Remove(random);
 
-            if (removedBuildable != null)
+            for (var i = 0; i < succeeded.Count; i++)
             {
-                var maxDist = Mathf.Pow(m_PluginConfiguration.DestroyIntegrityCheckDistance, 2);
-                affectedArea = allStructures
-                    .Where(k => (removedBuildable.Position - k.Position).sqrMagnitude <= maxDist).ToList();
-                result = VerifyStructureIntegrityForced(affectedArea);
+                var element = succeeded[i];
+
+                var result = allStructures
+                    .Where(k => (element.Position - k.Position).sqrMagnitude <= maxStructureDistance)
+                    .ToList();
+                succeeded.AddRange(result);
+                allStructures.RemoveAll(result.Contains);
             }
 
-            if (!result && affectedArea.Count != allStructures.Count)
-                result = VerifyStructureIntegrityForced(allStructures);
-
-            return result;
+            return allStructures.Count == 0;
         }
 
         private bool VerifyBarricadeIntegrity()
         {
-            var barricades = Buildables.OfType<BarricadeBuildable>().ToList();
             var structures = Buildables.OfType<StructureBuildable>().ToList();
             var maxBuildableDistance =
                 Mathf.Pow(m_PluginConfiguration.MaxDistanceToConsiderPartOfBase, 2);
 
-            return barricades.All(br =>
+            return Buildables.OfType<BarricadeBuildable>().All(br =>
                 structures.Exists(k => (br.Position - k.Position).sqrMagnitude <= maxBuildableDistance));
         }
 
-        // WARNING: SERVER FREEZES HERE!!!!
-        private void VerifyAndCorrectIntegrity([NotNull] IEnumerable<Buildable> removedBuildables)
+        /// <summary>
+        /// This will verify the base integrity (that all the elements are still within range of configured limits) and if not, it will correct that.
+        /// </summary>
+        private void VerifyAndCorrectIntegrity()
         {
-            var structureIntegrity = !removedBuildables.OfType<StructureBuildable>().Any(k => !VerifyStructureIntegrity(k));
+            var structureIntegrity = VerifyStructureIntegrity();
             var barricadeIntegrity = VerifyBarricadeIntegrity();
 
             // If the base is still integrally sound, skip the rest of the code
@@ -272,11 +252,17 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             }
 
             // First, ask the clustering tool to generate a new set of clusters from the current buildables.
-            var clusterRegened = m_BaseClusterDirectory.ClusterElements(Buildables.Concat(globalCluster.Buildables).ToList());
+            var clusterRegened = m_BaseClusterDirectory
+                .ClusterElements(Buildables.Concat(globalCluster.Buildables).ToList())
+                .OrderByDescending(k => k.Buildables.Count).ToList();
             globalCluster.Reset();
 
+            // Dispose correctly of the cluster we are not going to add here.
+            var discarded = clusterRegened.First();
+            m_BaseClusterDirectory.Return(discarded);
+
             // Select all the clusters, except for the largest one.
-            foreach (var c in clusterRegened.OrderByDescending(k => k.Buildables.Count).Skip(1).ToList())
+            foreach (var c in clusterRegened.Skip(1).ToList())
             {
                 // Remove any of the elements on the new cluster from the old one.
                 RemoveBuildables(c.Buildables);
@@ -285,7 +271,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 m_BaseClusterDirectory.RegisterCluster(c);
             }
 
-            // Finally, if there's no structure buildables left int his cluster, call to remove it.
+            // Finally, if there's no structure buildables left in this cluster, call to remove it.
             if (!Buildables.OfType<StructureBuildable>().Any())
                 m_BaseClusterDirectory.Return(this);
 

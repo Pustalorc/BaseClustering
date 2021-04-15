@@ -22,7 +22,15 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
-            var clusters = BaseClusteringPlugin.Instance.BaseClusterDirectory.Clusters;
+            var pluginInstance = BaseClusteringPlugin.Instance;
+            var clusterDirectory = pluginInstance.BaseClusterDirectory;
+            if (clusterDirectory == null)
+            {
+                UnturnedChat.Say(caller, pluginInstance.Translate("command_fail_clustering_disabled"));
+                return;
+            }
+
+            var clusters = clusterDirectory.Clusters;
 
             var topClusters = clusters.GroupBy(k => k.CommonOwner).OrderByDescending(k => k.Count()).Take(5).ToList();
 
@@ -31,7 +39,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 var builder = topClusters.ElementAt(i);
 
                 UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("top_cluster_format", i + 1, builder.Key, builder.Count()));
+                    pluginInstance.Translate("top_cluster_format", i + 1, builder.Key, builder.Count()));
             }
         }
     }

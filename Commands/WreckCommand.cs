@@ -119,36 +119,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     return;
                 }
 
-                var averageTime = 0L;
-                var averageTicks = 0L;
-                var averageCount = 0;
-                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 foreach (var build in buildables)
-                {
-                    var startMs = stopwatch.ElapsedMilliseconds;
-                    var startTick = stopwatch.ElapsedTicks;
                     build.SafeDestroy();
-                    var endMs = stopwatch.ElapsedMilliseconds;
-                    var endTick = stopwatch.ElapsedTicks;
-
-                    var elapsedMs = endMs - startMs;
-                    var elapsedTick = endTick - startTick;
-
-                    if (averageCount == 0)
-                    {
-                        averageTime += elapsedMs;
-                        averageTicks += elapsedTick;
-                        averageCount++;
-                    }
-                    else
-                    {
-                        var oldCount = averageCount;
-                        averageCount++;
-                        averageTime = ((averageTime * oldCount) + elapsedMs) / averageCount;
-                        averageTicks = ((averageTicks * oldCount) + elapsedTick) / averageCount;
-                    }
-                }
-                System.Console.WriteLine($"Taken a total of {stopwatch.ElapsedMilliseconds}ms [{stopwatch.ElapsedTicks} Ticks]. Average time: {averageTime}ms [{averageTicks} Ticks]");
 
                 UnturnedChat.Say(caller,
                     BaseClusteringPlugin.Instance.Translate("wrecked", buildables.Count,
