@@ -33,7 +33,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         private int m_InstanceIds;
 
         // ReSharper disable once ReturnTypeCanBeEnumerable.Global
-        [NotNull] public IReadOnlyCollection<BaseCluster> Clusters => m_Clusters.AsReadOnly();
+        [NotNull] public IReadOnlyCollection<BaseCluster> Clusters => m_Clusters.Concat(new[] { GetOrCreateGlobalCluster() }).ToList().AsReadOnly();
 
         public BaseClusterDirectory(BaseClusteringPluginConfiguration pluginConfiguration,
             [NotNull] BuildableDirectory buildableDirectory)
@@ -87,7 +87,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
             stopwatch.Stop();
             Logging.Write("BaseClustering",
-                $"Clusters Loaded: {m_Clusters.Count + (m_GlobalCluster == null ? 0 : 1)}. Took {stopwatch.ElapsedMilliseconds}ms.",
+                $"Clusters Loaded: {Clusters.Count}. Took {stopwatch.ElapsedMilliseconds}ms.",
                 ConsoleColor.Cyan);
 
             OnClustersGenerated?.Invoke();
@@ -98,8 +98,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             var river = new RiverExpanded(ServerSavedata.directory + "/" + Provider.serverID + "/Level/" +
                                           Level.info.name + "/Bases.dat");
             river.WriteInt32(m_BuildableDirectory.Buildables.Count);
-            //river.WriteInt32(m_Clusters.SelectMany(k => k.Buildables).Count());
-            var clusters = m_Clusters.Concat(new[] {GetOrCreateGlobalCluster()}).ToList();
+            var clusters = Clusters;
             river.WriteInt32(clusters.Count);
             foreach (var cluster in clusters)
             {
@@ -206,12 +205,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
                 m_Clusters.AddRange(bases);
 
-                if (m_Clusters.Count > 0)
-                    m_InstanceIds = m_Clusters.Max(k => k.InstanceId) + 1;
+                if (Clusters.Count > 0)
+                    m_InstanceIds = Clusters.Max(k => k.InstanceId) + 1;
 
                 for (var i = 0; i < m_InstanceIds; i++)
                 {
-                    if (m_Clusters.Any(k => k.InstanceId == i) || m_ClusterPool.Any(k => k.InstanceId == i))
+                    if (Clusters.Any(k => k.InstanceId == i) || m_ClusterPool.Any(k => k.InstanceId == i))
                         continue;
 
                     m_ClusterPool.Add(CreateCluster(i));
