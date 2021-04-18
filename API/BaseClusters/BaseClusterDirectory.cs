@@ -260,6 +260,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
             baseCluster.Reset();
             m_Clusters.Remove(baseCluster);
+
+            if (baseCluster.IsGlobalCluster)
+                return;
+
             m_ClusterPool.Add(baseCluster);
             OnClusterRemoved?.Invoke(baseCluster);
         }

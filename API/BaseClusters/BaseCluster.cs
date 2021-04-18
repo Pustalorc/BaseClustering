@@ -68,6 +68,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             }
 
             m_BaseClusterDirectory.Return(this);
+
+            if (IsGlobalCluster)
+                IsBeingDestroyed = false;
         }
 
         /// <summary>
@@ -158,10 +161,13 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         public void RemoveBuildables([NotNull] IEnumerable<Buildable> builds)
         {
             var buildables = builds.ToList();
+            var removed = new List<Buildable>();
 
-            var removed = m_Buildables.Where(buildables.Contains).ToList();
-            m_Buildables.RemoveAll(removed.Contains);
-            buildables.RemoveAll(removed.Contains);
+            foreach (var build in m_Buildables.Where(build => buildables.Remove(build)).ToList())
+            {
+                m_Buildables.Remove(build);
+                removed.Add(build);
+            }
 
             if (removed.Count > 0)
                 OnBuildablesRemoved?.Invoke(removed);
