@@ -45,7 +45,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
             PatchBuildableTransforms.OnBuildableTransformed += BuildableTransformed;
             buildableDirectory.OnBuildableAdded += BuildableSpawned;
-            buildableDirectory.OnBuildableRemoved += BuildableDestroyed;
+            buildableDirectory.OnBuildablesRemoved += BuildablesDestroyed;
             SaveManager.onPostSave += Save;
             GenerateAndLoadAllClusters();
 
@@ -57,7 +57,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         {
             PatchBuildableTransforms.OnBuildableTransformed -= BuildableTransformed;
             m_BuildableDirectory.OnBuildableAdded -= BuildableSpawned;
-            m_BuildableDirectory.OnBuildableRemoved -= BuildableDestroyed;
+            m_BuildableDirectory.OnBuildablesRemoved -= BuildablesDestroyed;
             SaveManager.onPostSave -= Save;
             Save();
         }
@@ -95,6 +95,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
         public void Save()
         {
+            m_BuildableDirectory.WaitDestroyHandle();
             var river = new RiverExpanded(ServerSavedata.directory + "/" + Provider.serverID + "/Level/" +
                                           Level.info.name + "/Bases.dat");
             river.WriteInt32(m_BuildableDirectory.Buildables.Count);
@@ -448,15 +449,22 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 .OrderBy(k => (k.AverageCenterPosition - target).sqrMagnitude);
         }
 
-        private void BuildableDestroyed(Buildable buildable)
+        private void BuildablesDestroyed([NotNull] IEnumerable<Buildable> buildables)
         {
-            var cluster = GetClusterWithElement(buildable);
-            cluster?.RemoveBuildable(buildable);
+            var builds = buildables.ToList();
+
+            foreach (var cluster in Clusters.ToList())
+            {
+                if (!builds.Any())
+                    return;
+
+                cluster.RemoveBuildables(builds);
+            }
         }
 
         private void BuildableTransformed([NotNull] Buildable buildable)
         {
-            BuildableDestroyed(buildable);
+            BuildablesDestroyed(new[] { buildable });
             BuildableSpawned(buildable);
         }
 

@@ -1,10 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
+using System.Threading;
+using System.Timers;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using Pustalorc.Plugins.BaseClustering.API.Patches;
+using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using SDG.Unturned;
 using UnityEngine;
+using Timer = System.Timers.Timer;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 {
@@ -13,9 +19,13 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         private static BuildableDirectory _instance;
 
         public event BuildableChange OnBuildableAdded;
-        public event BuildableChange OnBuildableRemoved;
+        public event BuildablesChanged OnBuildablesRemoved;
 
         private readonly List<Buildable> m_Buildables;
+        private readonly List<Transform> m_TargetBuildsToRemove;
+        private readonly BackgroundWorker m_BackgroundWorker;
+        private readonly Timer m_WorkerTimeout;
+        private readonly AutoResetEvent m_BackgroundReset;
 
         [NotNull] public IReadOnlyCollection<Buildable> Buildables => m_Buildables.AsReadOnly();
 
@@ -23,10 +33,45 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         {
             var builds = GetBuildables();
             m_Buildables = builds.ToList();
+            m_BackgroundWorker = new BackgroundWorker();
+            m_BackgroundWorker.DoWork += HandleDestroyedInBulk;
+            m_WorkerTimeout = new Timer(500);
+            m_WorkerTimeout.AutoReset = false;
+            m_WorkerTimeout.Elapsed += HandleElapsed;
+            m_TargetBuildsToRemove = new List<Transform>();
+            m_BackgroundReset = new AutoResetEvent(true);
             _instance = this;
 
             PatchBuildableSpawns.OnBuildableSpawned += BuildableSpawned;
             PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
+        }
+
+        private void HandleElapsed(object sender, ElapsedEventArgs e)
+        {
+            m_BackgroundWorker.RunWorkerAsync();
+        }
+
+        private void HandleDestroyedInBulk(object sender, DoWorkEventArgs e)
+        {
+            m_BackgroundReset.Reset();
+
+            var count = m_TargetBuildsToRemove.Count;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var affected = new List<Buildable>();
+
+            foreach (var build in m_Buildables.ToList())
+            {
+                if (!m_TargetBuildsToRemove.Remove(build.Model))
+                    continue;
+
+                m_Buildables.Remove(build);
+                affected.Add(build);
+            }
+
+            if (affected.Count > 0)
+                OnBuildablesRemoved?.Invoke(affected);
+
+            m_BackgroundReset.Set();
         }
 
         internal void Unload()
@@ -35,10 +80,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             PatchBuildablesDestroy.OnBuildableDestroyed -= BuildableDestroyed;
         }
 
-        private void BuildableDestroyed(Buildable buildable)
+        private void BuildableDestroyed(Transform buildable)
         {
-            if (m_Buildables.Remove(buildable))
-                OnBuildableRemoved?.Invoke(buildable);
+            m_TargetBuildsToRemove.Add(buildable);
+            m_WorkerTimeout.Stop();
+            m_WorkerTimeout.Start();
         }
 
         private void BuildableSpawned(Buildable buildable)
@@ -56,7 +102,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             if (useGeneratedBuilds && _instance != null)
             {
                 result = _instance.Buildables;
-
                 if (!includePlants)
                     result = result.Except(result.Where(k => k.IsPlanted));
             }
@@ -96,6 +141,15 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                     ? result.Where(k => k.Owner == owner)
                     : result.Where(k => k.Owner == owner || k.Group == group)
             }).ToList();
+        }
+
+        internal void WaitDestroyHandle()
+        {
+            if (m_WorkerTimeout.Enabled || m_TargetBuildsToRemove.Count > 0 || m_BackgroundWorker.IsBusy)
+                m_BackgroundReset.WaitOne();
+
+            if (m_TargetBuildsToRemove.Count > 0)
+                HandleDestroyedInBulk(null, null);
         }
 
         [CanBeNull]

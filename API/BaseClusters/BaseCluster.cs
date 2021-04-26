@@ -121,7 +121,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
             m_Buildables.Add(build);
             var gCluster = m_BaseClusterDirectory.GetOrCreateGlobalCluster();
-            var buildsInRange = gCluster.Buildables.Where(IsWithinRange);
+            var buildsInRange = gCluster.Buildables.Where(IsWithinRange).ToList();
             AddBuildables(buildsInRange);
             gCluster.RemoveBuildables(buildsInRange);
             // Include the buildables from the global cluster that got added.
@@ -158,12 +158,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// Removes multiple buildables from the base. This method does not destroy any of the buildables.
         /// </summary>
         /// <param name="builds">The buildables to remove from the base.</param>
-        public void RemoveBuildables([NotNull] IEnumerable<Buildable> builds)
+        public void RemoveBuildables([NotNull] List<Buildable> builds)
         {
-            var buildables = builds.ToList();
             var removed = new List<Buildable>();
 
-            foreach (var build in m_Buildables.Where(build => buildables.Remove(build)).ToList())
+            foreach (var build in m_Buildables.Where(build => builds.Remove(build)).ToList())
             {
                 m_Buildables.Remove(build);
                 removed.Add(build);
@@ -273,7 +272,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             foreach (var c in clusterRegened.Skip(1).ToList())
             {
                 // Remove any of the elements on the new cluster from the old one.
-                RemoveBuildables(c.Buildables);
+                RemoveBuildables(c.Buildables.ToList());
 
                 // Add the new cluster to the directory.
                 m_BaseClusterDirectory.RegisterCluster(c);
