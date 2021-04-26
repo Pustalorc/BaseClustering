@@ -46,14 +46,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         public override void UnsafeDestroy()
         {
             ThreadUtil.assertIsGameThread();
-            if (!BarricadeManager.tryGetInfo(Model, out var x, out var y, out var plant, out var index,
-                out var bRegion))
-            {
-                Logging.Write(this,
-                    $"Model related barricade information not found. Destruction of this object is not possible. Barricade instance: {InstanceId}",
-                    ConsoleColor.Red);
+            if (!BarricadeManager.tryGetInfo(Model, out var x, out var y, out var plant, out var index, out var bRegion))
                 return;
-            }
 
             BarricadeManager.destroyBarricade(bRegion, x, y, plant, index);
         }

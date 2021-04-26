@@ -49,12 +49,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         {
             ThreadUtil.assertIsGameThread();
             if (!StructureManager.tryGetInfo(Model, out var x, out var y, out var index, out var sRegion))
-            {
-                Logging.Write(this,
-                    $"Model related structure information not found. Destruction of this object is not possible. Structure instance: {InstanceId}",
-                    ConsoleColor.Red);
                 return;
-            }
 
             StructureManager.destroyStructure(sRegion, x, y, index, Vector3.zero);
         }
