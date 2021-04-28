@@ -44,7 +44,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         internal void LevelLoaded()
         {
-            var builds = GetBuildables();
+            var builds = GetBuildables(useGeneratedBuilds: false);
             m_Buildables.AddRange(builds);
         }
 
