@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
@@ -7,7 +6,6 @@ using System.Timers;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using Pustalorc.Plugins.BaseClustering.API.Patches;
-using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using SDG.Unturned;
 using UnityEngine;
 using Timer = System.Timers.Timer;
@@ -31,12 +29,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         public BuildableDirectory()
         {
-            var builds = GetBuildables();
-            m_Buildables = builds.ToList();
+            m_Buildables = new List<Buildable>();
             m_BackgroundWorker = new BackgroundWorker();
             m_BackgroundWorker.DoWork += HandleDestroyedInBulk;
-            m_WorkerTimeout = new Timer(500);
-            m_WorkerTimeout.AutoReset = false;
+            m_WorkerTimeout = new Timer(500) {AutoReset = false};
             m_WorkerTimeout.Elapsed += HandleElapsed;
             m_TargetBuildsToRemove = new List<Transform>();
             m_BackgroundReset = new AutoResetEvent(true);
@@ -44,6 +40,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
             PatchBuildableSpawns.OnBuildableSpawned += BuildableSpawned;
             PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
+        }
+
+        internal void LevelLoaded()
+        {
+            var builds = GetBuildables();
+            m_Buildables.AddRange(builds);
         }
 
         private void HandleElapsed(object sender, ElapsedEventArgs e)
@@ -55,15 +57,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         {
             m_BackgroundReset.Reset();
 
-            var count = m_TargetBuildsToRemove.Count;
-            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var affected = new List<Buildable>();
 
-            foreach (var build in m_Buildables.ToList())
+            foreach (var build in m_Buildables.Where(build => m_TargetBuildsToRemove.Remove(build.Model)).ToList())
             {
-                if (!m_TargetBuildsToRemove.Remove(build.Model))
-                    continue;
-
                 m_Buildables.Remove(build);
                 affected.Add(build);
             }

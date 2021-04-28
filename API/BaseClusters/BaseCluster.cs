@@ -162,7 +162,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         {
             var removed = new List<Buildable>();
 
-            foreach (var build in m_Buildables.Where(build => builds.Remove(build)).ToList())
+            foreach (var build in m_Buildables.Where(builds.Remove).ToList())
             {
                 m_Buildables.Remove(build);
                 removed.Add(build);

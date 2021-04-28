@@ -33,7 +33,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         private int m_InstanceIds;
 
         // ReSharper disable once ReturnTypeCanBeEnumerable.Global
-        [NotNull] public IReadOnlyCollection<BaseCluster> Clusters => m_Clusters.Concat(new[] { GetOrCreateGlobalCluster() }).ToList().AsReadOnly();
+        [NotNull]
+        public IReadOnlyCollection<BaseCluster> Clusters =>
+            m_Clusters.Concat(new[] {GetOrCreateGlobalCluster()}).ToList().AsReadOnly();
 
         public BaseClusterDirectory(BaseClusteringPluginConfiguration pluginConfiguration,
             [NotNull] BuildableDirectory buildableDirectory)
@@ -47,6 +49,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             buildableDirectory.OnBuildableAdded += BuildableSpawned;
             buildableDirectory.OnBuildablesRemoved += BuildablesDestroyed;
             SaveManager.onPostSave += Save;
+        }
+
+        internal void LevelLoaded()
+        {
             GenerateAndLoadAllClusters();
 
             while (m_ClusterPool.Count < 25)
@@ -464,7 +470,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
         private void BuildableTransformed([NotNull] Buildable buildable)
         {
-            BuildablesDestroyed(new[] { buildable });
+            BuildablesDestroyed(new[] {buildable});
             BuildableSpawned(buildable);
         }
 

@@ -1,6 +1,4 @@
-﻿using System;
-using Pustalorc.Plugins.BaseClustering.API.Utilities;
-using SDG.Unturned;
+﻿using SDG.Unturned;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Buildables
@@ -41,12 +39,15 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         public override Asset Asset => m_BarricadeDrop.asset;
 
-        public override bool IsPlanted => m_BarricadeDrop != null && m_BarricadeDrop.model != null && m_BarricadeDrop.model.parent != null && m_BarricadeDrop.model.parent.CompareTag("Vehicle");
+        public override bool IsPlanted => m_BarricadeDrop != null && m_BarricadeDrop.model != null &&
+                                          m_BarricadeDrop.model.parent != null &&
+                                          m_BarricadeDrop.model.parent.CompareTag("Vehicle");
 
         public override void UnsafeDestroy()
         {
             ThreadUtil.assertIsGameThread();
-            if (!BarricadeManager.tryGetInfo(Model, out var x, out var y, out var plant, out var index, out var bRegion))
+            if (!BarricadeManager.tryGetInfo(Model, out var x, out var y, out var plant, out var index,
+                out var bRegion))
                 return;
 
             BarricadeManager.destroyBarricade(bRegion, x, y, plant, index);

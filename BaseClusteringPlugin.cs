@@ -102,21 +102,31 @@ namespace Pustalorc.Plugins.BaseClustering
 
         protected override void Load()
         {
-            Instance = this;
             m_Harmony = new Harmony("xyz.pustalorc.baseClustering");
             m_Harmony.PatchAll();
+
+            BuildableDirectory = new BuildableDirectory();
+
+            if (Configuration.Instance.EnableClustering)
+                BaseClusterDirectory = new BaseClusterDirectory(Configuration.Instance, BuildableDirectory);
 
             if (Level.isLoaded)
                 OnLevelLoaded(0);
             else
                 Level.onLevelLoaded += OnLevelLoaded;
 
+            Provider.onCommenceShutdown += SaveManager.save;
+
+            Instance = this;
             Logging.PluginLoaded(this);
         }
 
         protected override void Unload()
         {
-            Provider.onCommenceShutdown -= ForceDataSave;
+            Instance = null;
+
+            Provider.onCommenceShutdown -= SaveManager.save;
+            Level.onLevelLoaded -= OnLevelLoaded;
 
             if (BaseClusterDirectory != null)
             {
@@ -128,25 +138,15 @@ namespace Pustalorc.Plugins.BaseClustering
             BuildableDirectory = null;
             m_Harmony.UnpatchAll();
             m_Harmony = null;
-            Instance = null;
 
             Logging.PluginUnloaded(this);
         }
 
         private void OnLevelLoaded(int level)
         {
-            Provider.onCommenceShutdown += ForceDataSave;
-            BuildableDirectory = new BuildableDirectory();
-
-            if (Configuration.Instance.EnableClustering)
-                BaseClusterDirectory = new BaseClusterDirectory(Configuration.Instance, BuildableDirectory);
-
+            BuildableDirectory.LevelLoaded();
+            BaseClusterDirectory?.LevelLoaded();
             OnPluginFullyLoaded?.Invoke();
-        }
-
-        private static void ForceDataSave()
-        {
-            SaveManager.save();
         }
     }
 }

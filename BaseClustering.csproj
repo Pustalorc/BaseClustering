@@ -80,6 +80,7 @@
     <Compile Include="API\Buildables\Buildable.cs" />
     <Compile Include="API\Buildables\BuildableDirectory.cs" />
     <Compile Include="API\Buildables\StructureBuildable.cs" />
+    <Compile Include="API\Delegates\BuildableDeleted.cs" />
     <Compile Include="API\Delegates\BuildablesChanged.cs" />
     <Compile Include="API\Delegates\ClusterChange.cs" />
     <Compile Include="API\Delegates\VoidDelegate.cs" />
