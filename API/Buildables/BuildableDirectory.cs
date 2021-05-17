@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
@@ -25,14 +26,26 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         private readonly Timer m_WorkerTimeout;
         private readonly AutoResetEvent m_BackgroundReset;
 
-        [NotNull] public IReadOnlyCollection<Buildable> Buildables => m_Buildables.AsReadOnly();
+        [NotNull]
+        public IReadOnlyCollection<Buildable> Buildables
+        {
+            get
+            {
+                var cloned = new List<Buildable>();
+
+                for (var i = 0; i < m_Buildables.Count; i++)
+                    cloned.Add(m_Buildables[i]);
+
+                return cloned;
+            }
+        }
 
         public BuildableDirectory()
         {
             m_Buildables = new List<Buildable>();
             m_BackgroundWorker = new BackgroundWorker();
             m_BackgroundWorker.DoWork += HandleDestroyedInBulk;
-            m_WorkerTimeout = new Timer(500) {AutoReset = false};
+            m_WorkerTimeout = new Timer(1000);
             m_WorkerTimeout.Elapsed += HandleElapsed;
             m_TargetBuildsToRemove = new List<Transform>();
             m_BackgroundReset = new AutoResetEvent(true);
@@ -50,7 +63,14 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         private void HandleElapsed(object sender, ElapsedEventArgs e)
         {
+            var lastAdd = m_LastAdd;
+            if ((DateTime.UtcNow - lastAdd).TotalMilliseconds <= 1000)
+                return;
+
             m_BackgroundWorker.RunWorkerAsync();
+
+            if (lastAdd == m_LastAdd && m_TargetBuildsToRemove.Count == 0)
+                m_WorkerTimeout.Stop();
         }
 
         private void HandleDestroyedInBulk(object sender, DoWorkEventArgs e)
@@ -58,9 +78,21 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             m_BackgroundReset.Reset();
 
             var affected = new List<Buildable>();
+            var clonedTargets = new List<Transform>();
 
-            foreach (var build in m_Buildables.Where(build => m_TargetBuildsToRemove.Remove(build.Model)).ToList())
+            for (var i = m_TargetBuildsToRemove.Count - 1; i >= 0; i--)
             {
+                clonedTargets.Add(m_TargetBuildsToRemove[i]);
+                m_TargetBuildsToRemove.RemoveAt(i);
+            }
+
+            for (var i = m_Buildables.Count - 1; i >= 0; i--)
+            {
+                var build = m_Buildables[i];
+
+                if (!clonedTargets.Remove(build.Model))
+                    continue;
+
                 m_Buildables.Remove(build);
                 affected.Add(build);
             }
@@ -77,11 +109,15 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             PatchBuildablesDestroy.OnBuildableDestroyed -= BuildableDestroyed;
         }
 
+        private DateTime m_LastAdd;
+
         private void BuildableDestroyed(Transform buildable)
         {
+            m_LastAdd = DateTime.UtcNow;
             m_TargetBuildsToRemove.Add(buildable);
-            m_WorkerTimeout.Stop();
-            m_WorkerTimeout.Start();
+
+            if (!m_WorkerTimeout.Enabled)
+                m_WorkerTimeout.Start();
         }
 
         private void BuildableSpawned(Buildable buildable)

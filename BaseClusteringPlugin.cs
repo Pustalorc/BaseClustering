@@ -108,7 +108,7 @@ namespace Pustalorc.Plugins.BaseClustering
             BuildableDirectory = new BuildableDirectory();
 
             if (Configuration.Instance.EnableClustering)
-                BaseClusterDirectory = new BaseClusterDirectory(Configuration.Instance, BuildableDirectory);
+                BaseClusterDirectory = new BaseClusterDirectory(this, Configuration.Instance, BuildableDirectory);
 
             if (Level.isLoaded)
                 OnLevelLoaded(0);

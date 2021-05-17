@@ -1,7 +1,7 @@
 using System;
 using JetBrains.Annotations;
-using Rocket.API;
 using Rocket.Core.Logging;
+using Rocket.Core.Plugins;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Utilities
 {
@@ -25,8 +25,16 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         public static void Write(object source, object message, ConsoleColor consoleColor = ConsoleColor.Green,
             bool logInRocket = true, [CanBeNull] object rocketMessage = null, ConsoleColor? rocketColor = null)
         {
+            var sourceIdent = source.ToString();
+
+            if (source is RocketPlugin pl)
+            {
+                var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(pl.Assembly.Location).ProductVersion;
+                sourceIdent = $"{pl.Name} v{pluginVersion}";
+            }
+
             Console.ForegroundColor = consoleColor;
-            Console.WriteLine($"[{source}]: {message}");
+            Console.WriteLine($"[{sourceIdent}]: {message}");
 
             if (logInRocket)
                 Logger.ExternalLog(rocketMessage ?? message, rocketColor ?? consoleColor);
@@ -34,14 +42,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Console.ResetColor();
         }
 
-        public static void PluginLoaded([NotNull] IRocketPlugin plugin)
+        public static void PluginLoaded([NotNull] RocketPlugin plugin)
         {
-            Write(plugin.Name, $"{plugin.Name}, by Pustalorc, has been loaded.");
+            var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(plugin.Assembly.Location).ProductVersion;
+            var pluginIdentity = $"{plugin.Name} v{pluginVersion}";
+            Write(pluginIdentity, $"{pluginIdentity}, by Pustalorc, has been loaded.");
         }
 
-        public static void PluginUnloaded([NotNull] IRocketPlugin plugin)
+        public static void PluginUnloaded([NotNull] RocketPlugin plugin)
         {
-            Write(plugin.Name, $"{plugin.Name}, by Pustalorc, has been unloaded.");
+            var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(plugin.Assembly.Location).ProductVersion;
+            var pluginIdentity = $"{plugin.Name} v{pluginVersion}";
+            Write(pluginIdentity, $"{pluginIdentity}, by Pustalorc, has been unloaded.");
         }
     }
 }

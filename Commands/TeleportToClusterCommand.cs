@@ -46,7 +46,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     k.CommonOwner.ToString().Equals(target.Id))
                 : clusterDirectory.Clusters;
 
-            var clustersL = clusters.ToList();
+            var clustersL = clusters.Where(k => k.AverageCenterPosition != Vector3.zero).ToList();
             if (!clustersL.Any())
             {
                 UnturnedChat.Say(caller,

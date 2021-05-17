@@ -24,6 +24,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
         [UsedImplicitly] public event ClusterChange OnClusterRemoved;
 
+        private readonly BaseClusteringPlugin m_Plugin;
         private readonly BaseClusteringPluginConfiguration m_PluginConfiguration;
         private readonly BuildableDirectory m_BuildableDirectory;
         private readonly ConcurrentBag<BaseCluster> m_ClusterPool;
@@ -37,9 +38,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         public IReadOnlyCollection<BaseCluster> Clusters =>
             m_Clusters.Concat(new[] {GetOrCreateGlobalCluster()}).ToList().AsReadOnly();
 
-        public BaseClusterDirectory(BaseClusteringPluginConfiguration pluginConfiguration,
-            [NotNull] BuildableDirectory buildableDirectory)
+        public BaseClusterDirectory(BaseClusteringPlugin plugin, BaseClusteringPluginConfiguration pluginConfiguration, [NotNull] BuildableDirectory buildableDirectory)
         {
+            m_Plugin = plugin;
             m_PluginConfiguration = pluginConfiguration;
             m_BuildableDirectory = buildableDirectory;
             m_ClusterPool = new ConcurrentBag<BaseCluster>();
@@ -73,7 +74,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             var stopwatch = Stopwatch.StartNew();
 
             var allBuildables = BuildableDirectory.GetBuildables(includePlants: true).ToList();
-            Logging.Write("BaseClustering",
+            Logging.Write(m_Plugin,
                 $"Loaded {allBuildables.Count} buildables from the map. Took {stopwatch.ElapsedMilliseconds}ms",
                 ConsoleColor.Cyan);
 
@@ -86,13 +87,13 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
             if (!successfulLoad)
             {
-                Logging.Write("BaseClustering",
+                Logging.Write(m_Plugin,
                     "Generating new clusters. This can take a LONG time. How long will depend on the following factors (but not limited to): CPU usage, CPU cores/threads, Buildables in the map. This generation only needs to be ran once from raw.");
                 m_Clusters.AddRange(ClusterElements(allBuildables, true));
             }
 
             stopwatch.Stop();
-            Logging.Write("BaseClustering",
+            Logging.Write(m_Plugin,
                 $"Clusters Loaded: {Clusters.Count}. Took {stopwatch.ElapsedMilliseconds}ms.",
                 ConsoleColor.Cyan);
 
@@ -143,7 +144,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
                 if (allBuilds.Count != buildableCount)
                 {
-                    Logging.Write("BaseClustering",
+                    Logging.Write(m_Plugin,
                         "Warning! Buildable count doesn't match saved count! Buildable save data was most likely modified or lost during server downtime. Clusters will be now rebuilt.",
                         ConsoleColor.Yellow);
                     return false;
@@ -152,7 +153,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 var clusterCount = river.ReadInt32();
                 var logRate = Math.Floor(clusterCount * 0.085);
 
-                Logging.Write("BaseClustering",
+                Logging.Write(m_Plugin,
                     $"Loading saved clusters... 0% [0/{clusterCount}] {timer.ElapsedMilliseconds}ms",
                     ConsoleColor.Cyan);
 
@@ -174,7 +175,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
                         if (build == null)
                         {
-                            Logging.Write("BaseClustering",
+                            Logging.Write(m_Plugin,
                                 $"Warning! Buildable with InstanceId {buildInstanceId} [isStructure: {isStructure}] not found! Save data was most likely modified or lost during server downtime. Clusters will be now rebuilt.",
                                 ConsoleColor.Yellow);
                             river.CloseRiver();
@@ -205,7 +206,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                     }
 
                     if ((i + 1) % logRate == 0)
-                        Logging.Write("BaseClustering",
+                        Logging.Write(m_Plugin,
                             $"Loading saved clusters... {Math.Ceiling((i + 1) / (double) clusterCount * 100)}% [{i + 1}/{clusterCount}] {timer.ElapsedMilliseconds}ms",
                             ConsoleColor.Cyan);
                 }
@@ -228,7 +229,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             }
             catch (Exception ex)
             {
-                Logging.Write("BaseClustering",
+                Logging.Write(m_Plugin,
                     $"Warning! An exception was thrown when attempting to load the save file. Assuming the data is corrupted. Clusters will be now rebuilt. Exception: {ex}",
                     ConsoleColor.Yellow);
 
@@ -373,7 +374,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 if (!needLogging || !(currentCount / logRate > currentMultiplier)) continue;
 
                 currentMultiplier++;
-                Logging.Write("BaseClustering",
+                Logging.Write(m_Plugin,
                     $"Generating new clusters... {Math.Ceiling(currentCount / (double) totalBuildablesToCluster * 100)}% [{currentCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
                     ConsoleColor.Cyan);
             }
@@ -395,7 +396,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             if (needLogging)
             {
                 var finalBuildCount = output.Sum(k => k.Buildables.Count) + remainingBarricadeCount;
-                Logging.Write("BaseClustering",
+                Logging.Write(m_Plugin,
                     $"Generating new clusters... {Math.Ceiling(finalBuildCount / (double) totalBuildablesToCluster * 100)}% [{finalBuildCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
                     ConsoleColor.Cyan);
             }
