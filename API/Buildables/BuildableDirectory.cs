@@ -33,6 +33,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             {
                 var cloned = new List<Buildable>();
 
+                // Disabled warning as we want a thread-safe copy. Using .ToList() results in the code using a foreach,
+                // so if another thread .Removes or .Adds during that .ToList(), the code will throw ModifiedCollection exception.
+                // ReSharper disable once LoopCanBeConvertedToQuery
+                // ReSharper disable once ForCanBeConvertedToForeach
                 for (var i = 0; i < m_Buildables.Count; i++)
                     cloned.Add(m_Buildables[i]);
 

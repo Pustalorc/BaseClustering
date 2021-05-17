@@ -22,14 +22,15 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Console.ResetColor();
         }
 
-        public static void Write(object source, object message, ConsoleColor consoleColor = ConsoleColor.Green,
+        public static void Write([NotNull] object source, object message, ConsoleColor consoleColor = ConsoleColor.Green,
             bool logInRocket = true, [CanBeNull] object rocketMessage = null, ConsoleColor? rocketColor = null)
         {
             var sourceIdent = source.ToString();
 
             if (source is RocketPlugin pl)
             {
-                var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(pl.Assembly.Location).ProductVersion;
+                var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(pl.Assembly.Location)
+                    .ProductVersion;
                 sourceIdent = $"{pl.Name} v{pluginVersion}";
             }
 
@@ -44,14 +45,16 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
 
         public static void PluginLoaded([NotNull] RocketPlugin plugin)
         {
-            var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(plugin.Assembly.Location).ProductVersion;
+            var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(plugin.Assembly.Location)
+                .ProductVersion;
             var pluginIdentity = $"{plugin.Name} v{pluginVersion}";
             Write(pluginIdentity, $"{pluginIdentity}, by Pustalorc, has been loaded.");
         }
 
         public static void PluginUnloaded([NotNull] RocketPlugin plugin)
         {
-            var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(plugin.Assembly.Location).ProductVersion;
+            var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(plugin.Assembly.Location)
+                .ProductVersion;
             var pluginIdentity = $"{plugin.Name} v{pluginVersion}";
             Write(pluginIdentity, $"{pluginIdentity}, by Pustalorc, has been unloaded.");
         }

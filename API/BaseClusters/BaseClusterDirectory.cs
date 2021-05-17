@@ -38,7 +38,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         public IReadOnlyCollection<BaseCluster> Clusters =>
             m_Clusters.Concat(new[] {GetOrCreateGlobalCluster()}).ToList().AsReadOnly();
 
-        public BaseClusterDirectory(BaseClusteringPlugin plugin, BaseClusteringPluginConfiguration pluginConfiguration, [NotNull] BuildableDirectory buildableDirectory)
+        public BaseClusterDirectory(BaseClusteringPlugin plugin, BaseClusteringPluginConfiguration pluginConfiguration,
+            [NotNull] BuildableDirectory buildableDirectory)
         {
             m_Plugin = plugin;
             m_PluginConfiguration = pluginConfiguration;
