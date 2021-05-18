@@ -1,122 +1,44 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D64124CB-7B6E-4334-AB68-857848E03858}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <PackageLicenseExpression></PackageLicenseExpression>
+    <PackageTags>openmod openmod-plugin universal</PackageTags>
     <RootNamespace>Pustalorc.Plugins.BaseClustering</RootNamespace>
-    <AssemblyName>0BaseClustering</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <LangVersion>8</LangVersion>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateNugetPackage>true</GenerateNugetPackage>
+    <Product>Base Clustering</Product>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>nullable</WarningsAsErrors>
+    <NoWarn>$(NoWarn);NU1701;NU1702;CS0436</NoWarn>
+    <LangVersion>9.0</LangVersion>
+    <Version>0.1.0</Version>
+    <InformationalVersion>0.1.0</InformationalVersion>
+    <PackageVersion>0.1.0</PackageVersion>
+    <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
+    <Authors>Pustalorc</Authors>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
+    <Copyright>2020-2021</Copyright>
+    <RepositoryType>Git</RepositoryType>
+    <RepositoryUrl>https://github.com/Pustalorc/BaseClustering</RepositoryUrl>
+    <Description>A universal OpenMod plugin that clusters buildables into Base definitions.</Description>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+
   <ItemGroup>
-    <Reference Include="0Harmony, Version=2.0.4.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>packages\Lib.Harmony.2.0.4\lib\net45\0Harmony.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>libs/Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Rocket.API">
-      <HintPath>libs\Rocket.API.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Rocket.Core">
-      <HintPath>libs\Rocket.Core.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Rocket.Unturned">
-      <HintPath>libs\Rocket.Unturned.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Steamworks.NET, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>libs\Steamworks.NET.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>libs\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>libs\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>libs\UnityEngine.PhysicsModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
+    <PackageReference Include="OpenMod.Core" Version="3.0.28+ae5ced2" />
+    <PackageReference Include="OpenMod.Extensions.Games.Abstractions" Version="3.0.28" />
   </ItemGroup>
+
   <ItemGroup>
-    <Compile Include="API\BaseClusters\BaseCluster.cs" />
-    <Compile Include="API\BaseClusters\BaseClusterDirectory.cs" />
-    <Compile Include="API\Buildables\BarricadeBuildable.cs" />
-    <Compile Include="API\Buildables\Buildable.cs" />
-    <Compile Include="API\Buildables\BuildableDirectory.cs" />
-    <Compile Include="API\Buildables\StructureBuildable.cs" />
-    <Compile Include="API\Delegates\BuildableDeleted.cs" />
-    <Compile Include="API\Delegates\BuildablesChanged.cs" />
-    <Compile Include="API\Delegates\ClusterChange.cs" />
-    <Compile Include="API\Delegates\VoidDelegate.cs" />
-    <Compile Include="API\Utilities\Extensions.cs" />
-    <Compile Include="API\Utilities\RiverExpanded.cs" />
-    <Compile Include="API\WreckingActions\WreckAction.cs" />
-    <Compile Include="API\WreckingActions\WreckClustersAction.cs" />
-    <Compile Include="API\Delegates\BuildableChange.cs" />
-    <Compile Include="API\Utilities\Logging.cs" />
-    <Compile Include="BaseClusteringPlugin.cs" />
-    <Compile Include="Commands\ClustersRegenCommand.cs" />
-    <Compile Include="Commands\FindBuildsCommand.cs" />
-    <Compile Include="Commands\FindClustersCommand.cs" />
-    <Compile Include="Commands\RemoveBuildableCommand.cs" />
-    <Compile Include="Commands\TeleportToBuildCommand.cs" />
-    <Compile Include="Commands\TeleportToClusterCommand.cs" />
-    <Compile Include="Commands\TopBuildersCommand.cs" />
-    <Compile Include="Commands\TopClustersCommand.cs" />
-    <Compile Include="Commands\WreckClustersCommand.cs" />
-    <Compile Include="Commands\WreckCommand.cs" />
-    <Compile Include="Commands\WreckVehicleCommand.cs" />
-    <Compile Include="Config\BaseClusteringPluginConfiguration.cs" />
-    <Compile Include="API\Patches\PatchBuildableTransforms.cs" />
-    <Compile Include="API\Patches\PatchBuildablesDestroy.cs" />
-    <Compile Include="API\Patches\PatchBuildableSpawns.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="config.yaml" />
+    <EmbeddedResource Include="translations.yaml" />
   </ItemGroup>
+
   <ItemGroup>
-    <None Include="packages.config" />
+    <None Include="LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-         Other similar extension points exist, see Microsoft.Common.targets.
-    <Target Name="BeforeBuild">
-    </Target>
-    <Target Name="AfterBuild">
-    </Target>
-    -->
+
 </Project>

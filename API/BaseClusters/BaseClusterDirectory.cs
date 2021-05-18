@@ -3,30 +3,29 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Buildables;
-using Pustalorc.Plugins.BaseClustering.API.Delegates;
-using Pustalorc.Plugins.BaseClustering.API.Patches;
-using Pustalorc.Plugins.BaseClustering.API.Utilities;
-using Pustalorc.Plugins.BaseClustering.Config;
-using SDG.Unturned;
-using Steamworks;
-using UnityEngine;
-using Random = UnityEngine.Random;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using MyOpenModPlugin;
+using OpenMod.API.Eventing;
+using OpenMod.API.Ioc;
+using OpenMod.API.Prioritization;
+using OpenMod.Extensions.Games.Abstractions.Building;
 
 namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 {
-    public sealed class BaseClusterDirectory
+    [Service]
+    public interface IBaseClusterDirectory : IEventListener<>, IEventListener<>, IEventListener<>
     {
-        [UsedImplicitly] public event VoidDelegate OnClustersGenerated;
+        public Task<IReadOnlyCollection<IBaseCluster>> GetClustersAsync();
+    }
 
-        [UsedImplicitly] public event ClusterChange OnClusterAdded;
-
-        [UsedImplicitly] public event ClusterChange OnClusterRemoved;
-
-        private readonly BaseClusteringPlugin m_Plugin;
-        private readonly BaseClusteringPluginConfiguration m_PluginConfiguration;
-        private readonly BuildableDirectory m_BuildableDirectory;
+    [PluginServiceImplementation(Lifetime = ServiceLifetime.Singleton, Priority = Priority.Lowest)]
+    public sealed class BaseClusterDirectory : IBaseClusterDirectory
+    {
+        private readonly IConfiguration m_PluginConfiguration;
+        private readonly IBuildableDirectory m_BuildableDirectory;
         private readonly ConcurrentBag<BaseCluster> m_ClusterPool;
         private readonly List<BaseCluster> m_Clusters;
 
@@ -35,18 +34,17 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
         // ReSharper disable once ReturnTypeCanBeEnumerable.Global
         [NotNull]
-        public IReadOnlyCollection<BaseCluster> Clusters =>
-            m_Clusters.Concat(new[] {GetOrCreateGlobalCluster()}).ToList().AsReadOnly();
+        public async Task<IReadOnlyCollection<IBaseCluster>> GetClustersAsync() =>
+            m_Clusters.Concat(new[] { GetOrCreateGlobalCluster() }).ToList().AsReadOnly();
 
-        public BaseClusterDirectory(BaseClusteringPlugin plugin, BaseClusteringPluginConfiguration pluginConfiguration,
-            [NotNull] BuildableDirectory buildableDirectory)
+        public BaseClusterDirectory(IConfiguration pluginConfiguration, [NotNull] IBuildableDirectory buildableDirectory)
         {
-            m_Plugin = plugin;
             m_PluginConfiguration = pluginConfiguration;
             m_BuildableDirectory = buildableDirectory;
             m_ClusterPool = new ConcurrentBag<BaseCluster>();
             m_Clusters = new List<BaseCluster>();
 
+            
             PatchBuildableTransforms.OnBuildableTransformed += BuildableTransformed;
             buildableDirectory.OnBuildableAdded += BuildableSpawned;
             buildableDirectory.OnBuildablesRemoved += BuildablesDestroyed;
@@ -171,7 +169,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                         var buildInstanceId = river.ReadUInt32();
                         var isStructure = river.ReadBoolean();
                         var build = isStructure
-                            ? (Buildable) structures.FirstOrDefault(k => k.InstanceId == buildInstanceId)
+                            ? (Buildable)structures.FirstOrDefault(k => k.InstanceId == buildInstanceId)
                             : barricades.FirstOrDefault(k => k.InstanceId == buildInstanceId);
 
                         if (build == null)
@@ -208,7 +206,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
                     if ((i + 1) % logRate == 0)
                         Logging.Write(m_Plugin,
-                            $"Loading saved clusters... {Math.Ceiling((i + 1) / (double) clusterCount * 100)}% [{i + 1}/{clusterCount}] {timer.ElapsedMilliseconds}ms",
+                            $"Loading saved clusters... {Math.Ceiling((i + 1) / (double)clusterCount * 100)}% [{i + 1}/{clusterCount}] {timer.ElapsedMilliseconds}ms",
                             ConsoleColor.Cyan);
                 }
 
@@ -376,7 +374,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
                 currentMultiplier++;
                 Logging.Write(m_Plugin,
-                    $"Generating new clusters... {Math.Ceiling(currentCount / (double) totalBuildablesToCluster * 100)}% [{currentCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
+                    $"Generating new clusters... {Math.Ceiling(currentCount / (double)totalBuildablesToCluster * 100)}% [{currentCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
                     ConsoleColor.Cyan);
             }
 
@@ -398,7 +396,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             {
                 var finalBuildCount = output.Sum(k => k.Buildables.Count) + remainingBarricadeCount;
                 Logging.Write(m_Plugin,
-                    $"Generating new clusters... {Math.Ceiling(finalBuildCount / (double) totalBuildablesToCluster * 100)}% [{finalBuildCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
+                    $"Generating new clusters... {Math.Ceiling(finalBuildCount / (double)totalBuildablesToCluster * 100)}% [{finalBuildCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
                     ConsoleColor.Cyan);
             }
 
@@ -472,7 +470,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
         private void BuildableTransformed([NotNull] Buildable buildable)
         {
-            BuildablesDestroyed(new[] {buildable});
+            BuildablesDestroyed(new[] { buildable });
             BuildableSpawned(buildable);
         }
 

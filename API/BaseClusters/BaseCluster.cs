@@ -1,18 +1,15 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Buildables;
-using Pustalorc.Plugins.BaseClustering.API.Delegates;
-using Pustalorc.Plugins.BaseClustering.API.Utilities;
-using Pustalorc.Plugins.BaseClustering.Config;
-using SDG.Unturned;
-using UnityEngine;
-using Random = UnityEngine.Random;
 
 namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 {
-    public sealed class BaseCluster
+    public interface IBaseCluster
+    {
+    }
+
+    public sealed class BaseCluster : IBaseCluster
     {
         private readonly BaseClusteringPluginConfiguration m_PluginConfiguration;
         private readonly BaseClusterDirectory m_BaseClusterDirectory;
@@ -125,7 +122,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             AddBuildables(buildsInRange);
             gCluster.RemoveBuildables(buildsInRange);
             // Include the buildables from the global cluster that got added.
-            OnBuildablesAdded?.Invoke(buildsInRange.Concat(new[] {build}));
+            OnBuildablesAdded?.Invoke(buildsInRange.Concat(new[] { build }));
         }
 
         /// <summary>
@@ -145,7 +142,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <param name="build">The buildable to remove from the base.</param>
         public void RemoveBuildable(Buildable build)
         {
-            var builds = new[] {build};
+            var builds = new[] { build };
             var removedSomething = m_Buildables.Remove(build);
             if (removedSomething)
                 OnBuildablesRemoved?.Invoke(builds);

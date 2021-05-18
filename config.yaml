@@ -1,0 +1,5 @@
+clustering:
+  - type: "Structure"
+    maxDistance: "6.1"
+  - type: "Barricade"
+    maxDistance: "10"
