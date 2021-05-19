@@ -25,23 +25,23 @@ namespace Pustalorc.Plugins.BaseClustering
         public override TranslationList DefaultTranslations => new TranslationList
         {
             {
-                "not_looking_buildable", "You are not looking at a structure/barricade, so you cannot get any info."
-            },
-            {
                 "command_fail_clustering_disabled",
                 "This command is disabled as the base clustering feature is disabled."
             },
             {
                 "clusters_regen_warning",
-                "WARNING! This operation can take a long amount of time! The more buildables in the map the longer it will take! Please see console for when it is done."
+                "WARNING! This operation can take a long amount of time! The more buildables in the map the longer it will take! Please see console for when this operation is completed."
             },
-            {"cannot_be_executed_from_console", "That command cannot be executed from console with those arguments."},
             {"not_available", "N/A"},
+            {"cannot_be_executed_from_console", "That command cannot be executed from console with those arguments."},
             {
                 "build_count",
                 "There are a total of {0} builds. Specific Item: {1}, Radius: {2}, Player: {3}, Planted Barricades Included: {4}, Filter by Barricades: {5}, Filter by Structures: {6}"
             },
             {"cluster_count", "There are a total of {0} clusters. Specific Item: {1}, Radius: {2}, Player: {3}"},
+            {
+                "not_looking_buildable", "You are not looking at a structure/barricade, so you cannot get any info."
+            },
             {
                 "cannot_teleport_no_builds",
                 "Cannot teleport anywhere, no buildables found with the following filters. Specific Item: {0}, Player: {1}, Planted Barricades Included: {2}, Filter by Barricades: {3}, Filter by Structures: {4}"
@@ -56,6 +56,7 @@ namespace Pustalorc.Plugins.BaseClustering
             },
             {"top_builder_format", "At number {0}, {1} with {2} buildables!"},
             {"top_cluster_format", "At number {0}, {1} with {2} clusters!"},
+            {"not_enough_args", "You need more arguments to use this command."},
             {"action_cancelled", "The wreck action was cancelled."},
             {"no_action_queued", "There is no wreck action queued."},
             {"cannot_wreck_no_clusters", "There are no clusters selected, so nothing can be wrecked."},
@@ -96,8 +97,7 @@ namespace Pustalorc.Plugins.BaseClustering
                 "vehicle_no_plant",
                 "The vehicle appears to have no assigned barricades to it, please make sure that it has barricades before asking to wreck them."
             },
-            {"vehicle_wreck", "Wrecked buildables from {0} [{1}]. Instance ID: {2}, Owner: {3}"},
-            {"not_enough_args", "You need more arguments to use this command."}
+            {"vehicle_wreck", "Wrecked buildables from {0} [{1}]. Instance ID: {2}, Owner: {3}"}
         };
 
         protected override void Load()
