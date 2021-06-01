@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 
@@ -10,19 +10,23 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
-        [NotNull] public string Name => "topclusters";
+        public string Name => "topclusters";
 
-        [NotNull] public string Help => "Displays the top 5 clusters in the game.";
+        public string Help => "Displays the top 5 clusters in the game.";
 
-        [NotNull] public string Syntax => "";
+        public string Syntax => "";
 
-        [NotNull] public List<string> Aliases => new List<string> {"topc"};
+        public List<string> Aliases => new() {"topc"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"topclusters"};
+        public List<string> Permissions => new() {"topclusters"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
             var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
             var clusterDirectory = pluginInstance.BaseClusterDirectory;
             if (clusterDirectory == null)
             {
@@ -38,8 +42,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             {
                 var builder = topClusters.ElementAt(i);
 
-                UnturnedChat.Say(caller,
-                    pluginInstance.Translate("top_cluster_format", i + 1, builder.Key, builder.Count()));
+                UnturnedChat.Say(caller, pluginInstance.Translate("top_cluster_format", i + 1, builder.Key, builder.Count()));
             }
         }
     }

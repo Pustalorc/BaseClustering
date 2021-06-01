@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using JetBrains.Annotations;
+﻿using System;
+using System.Collections.Generic;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 
@@ -9,19 +9,23 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
-        [NotNull] public string Name => "clustersregen";
+        public string Name => "clustersregen";
 
-        [NotNull] public string Help => "Regenerates all clusters from scratch.";
+        public string Help => "Regenerates all clusters from scratch.";
 
-        [NotNull] public string Syntax => "";
+        public string Syntax => "";
 
-        [NotNull] public List<string> Aliases => new List<string>();
+        public List<string> Aliases => new();
 
-        [NotNull] public List<string> Permissions => new List<string> {"clustersregen"};
+        public List<string> Permissions => new() {"clustersregen"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
             var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
             var clusterDirectory = pluginInstance.BaseClusterDirectory;
             if (clusterDirectory == null)
             {

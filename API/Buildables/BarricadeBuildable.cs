@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 {
+    /// <inheritdoc />
     public sealed class BarricadeBuildable : Buildable
     {
         private readonly BarricadeData m_BarricadeData;
@@ -18,7 +19,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         public override ushort Health => m_BarricadeData.barricade.health;
 
-        public override byte[] State => m_BarricadeData.barricade.state;
+        public override byte[]? State => m_BarricadeData.barricade.state;
 
         public override ulong Owner => m_BarricadeData.owner;
         public override ulong Group => m_BarricadeData.group;
@@ -33,13 +34,13 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         public override Transform Model => m_BarricadeDrop.model;
 
-        public override Interactable Interactable => m_BarricadeDrop.interactable;
+        public override Interactable? Interactable => m_BarricadeDrop.interactable;
 
         public override uint InstanceId => m_BarricadeData.instanceID;
 
         public override Asset Asset => m_BarricadeDrop.asset;
 
-        public override bool IsPlanted => m_BarricadeDrop != null && m_BarricadeDrop.model != null &&
+        public override bool IsPlanted => m_BarricadeDrop.model != null &&
                                           m_BarricadeDrop.model.parent != null &&
                                           m_BarricadeDrop.model.parent.CompareTag("Vehicle");
 

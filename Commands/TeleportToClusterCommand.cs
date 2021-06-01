@@ -1,11 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
@@ -13,19 +14,23 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;
 
-        [NotNull] public string Name => "teleporttocluster";
+        public string Name => "teleporttocluster";
 
-        [NotNull] public string Help => "Teleports you to a random cluster on the map based on filters.";
+        public string Help => "Teleports you to a random cluster on the map based on filters.";
 
-        [NotNull] public string Syntax => "[player]";
+        public string Syntax => "[player]";
 
-        [NotNull] public List<string> Aliases => new List<string> {"tpc"};
+        public List<string> Aliases => new() {"tpc"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"teleporttocluster"};
+        public List<string> Permissions => new() {"teleporttocluster"};
 
-        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
+        public void Execute(IRocketPlayer caller, string[] command)
         {
             var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
             var clusterDirectory = pluginInstance.BaseClusterDirectory;
             if (clusterDirectory == null)
             {

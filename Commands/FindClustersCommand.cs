@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
 using Rocket.Unturned.Chat;
@@ -13,15 +13,19 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
     public sealed class FindClustersCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
-        [NotNull] public string Name => "findclusters";
-        [NotNull] public string Help => "Finds clusters around the map";
-        [NotNull] public string Syntax => "<player> [id] [radius] | [id] [radius]";
-        [NotNull] public List<string> Aliases => new List<string> {"fc"};
-        [NotNull] public List<string> Permissions => new List<string> {"findclusters"};
+        public string Name => "findclusters";
+        public string Help => "Finds clusters around the map";
+        public string Syntax => "<player> [id] [radius] | [id] [radius]";
+        public List<string> Aliases => new() {"fc"};
+        public List<string> Permissions => new() {"findclusters"};
 
-        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
+        public void Execute(IRocketPlayer caller, string[] command)
         {
             var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
             var clusterDirectory = pluginInstance.BaseClusterDirectory;
             if (clusterDirectory == null)
             {
@@ -35,7 +39,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var itemAssetInput = BaseClusteringPlugin.Instance.Translate("not_available");
+            var itemAssetInput = pluginInstance.Translate("not_available");
             var itemAssets = args.GetMultipleItemAssets(out index);
             var assetCount = itemAssets.Count;
             if (index > -1)
@@ -69,11 +73,17 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     k.Buildables.Any(l => (l.Position - cPlayer.Position).sqrMagnitude <= Mathf.Pow(radius, 2)));
             }
 
-            var itemAssetName = BaseClusteringPlugin.Instance.Translate("not_available");
-            if (assetCount == 1)
-                itemAssetName = itemAssets.First().itemName;
-            else if (assetCount > 1)
-                itemAssetName = itemAssetInput;
+            var itemAssetName = pluginInstance.Translate("not_available");
+
+            switch (assetCount)
+            {
+                case 1:
+                    itemAssetName = itemAssets.First().itemName;
+                    break;
+                case > 1:
+                    itemAssetName = itemAssetInput;
+                    break;
+            }
 
             UnturnedChat.Say(caller,
                 pluginInstance.Translate("cluster_count", clusters.Count(), itemAssetName,

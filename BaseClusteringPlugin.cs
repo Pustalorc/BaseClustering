@@ -11,18 +11,40 @@ using SDG.Unturned;
 
 namespace Pustalorc.Plugins.BaseClustering
 {
+    /// <summary>
+    /// Main class for the Base Clustering Plugin. Handles instances of both <see cref="BuildableDirectory"/> and <see cref="BaseClusterDirectory"/>.
+    /// </summary>
     public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConfiguration>
     {
-        public static BaseClusteringPlugin Instance { get; private set; }
-        [UsedImplicitly] public static event VoidDelegate OnPluginFullyLoaded;
+        /// <summary>
+        /// A singleton accessor for the plugin.
+        /// </summary>
+        public static BaseClusteringPlugin? Instance { get; private set; }
 
-        private Harmony m_Harmony;
+        /// <summary>
+        /// This event is only raised when the plugin has fully loaded.
+        /// <br/>
+        /// To be exact, the plugin instantiates everything first on <see cref="BaseClusteringPlugin.Load()"/> and then has the instances correctly initialize once the level has loaded completely.
+        /// </summary>
+        [UsedImplicitly]
+        public static event VoidDelegate? OnPluginFullyLoaded;
 
-        public BuildableDirectory BuildableDirectory { get; private set; }
-        public BaseClusterDirectory BaseClusterDirectory { get; private set; }
+        /// <summary>
+        /// Harmony instance that the plugin utilizes.
+        /// </summary>
+        private Harmony? m_Harmony;
 
-        [NotNull]
-        public override TranslationList DefaultTranslations => new TranslationList
+        /// <summary>
+        /// The main instance of type <see cref="BuildableDirectory"/>.
+        /// </summary>
+        public BuildableDirectory? BuildableDirectory { get; private set; }
+
+        /// <summary>
+        /// The main instance of type <see cref="BaseClusterDirectory"/>.
+        /// </summary>
+        public BaseClusterDirectory? BaseClusterDirectory { get; private set; }
+
+        public override TranslationList DefaultTranslations => new()
         {
             {
                 "command_fail_clustering_disabled",
@@ -134,17 +156,24 @@ namespace Pustalorc.Plugins.BaseClustering
                 BaseClusterDirectory = null;
             }
 
-            BuildableDirectory.Unload();
-            BuildableDirectory = null;
-            m_Harmony.UnpatchAll();
-            m_Harmony = null;
+            if (BuildableDirectory != null)
+            {
+                BuildableDirectory.Unload();
+                BuildableDirectory = null;
+            }
+
+            if (m_Harmony != null)
+            {
+                m_Harmony.UnpatchAll();
+                m_Harmony = null;
+            }
 
             Logging.PluginUnloaded(this);
         }
 
         private void OnLevelLoaded(int level)
         {
-            BuildableDirectory.LevelLoaded();
+            BuildableDirectory?.LevelLoaded();
             BaseClusterDirectory?.LevelLoaded();
             OnPluginFullyLoaded?.Invoke();
         }

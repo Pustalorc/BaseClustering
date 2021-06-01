@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 using System.Timers;
-using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using Pustalorc.Plugins.BaseClustering.API.Patches;
 using SDG.Unturned;
@@ -13,12 +13,25 @@ using Timer = System.Timers.Timer;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 {
+    /// <summary>
+    /// A directory that keeps track of all <see cref="Buildable"/>s.
+    /// </summary>
     public sealed class BuildableDirectory
     {
-        private static BuildableDirectory _instance;
+        /// <summary>
+        /// An internal singleton accessor. To be used only by <see cref="BuildableDirectory.GetBuildables"/>.
+        /// </summary>
+        private static BuildableDirectory? _instance;
 
-        public event BuildableChange OnBuildableAdded;
-        public event BuildablesChanged OnBuildablesRemoved;
+        /// <summary>
+        /// This event is raised every time a buildable is added.
+        /// </summary>
+        public event BuildableChange? OnBuildableAdded;
+
+        /// <summary>
+        /// This event is raised every time buildables are removed (in bulk).
+        /// </summary>
+        public event BuildablesChanged? OnBuildablesRemoved;
 
         private readonly List<Buildable> m_Buildables;
         private readonly List<Transform> m_TargetBuildsToRemove;
@@ -26,7 +39,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         private readonly Timer m_WorkerTimeout;
         private readonly AutoResetEvent m_BackgroundReset;
 
-        [NotNull]
+        /// <summary>
+        /// Gets a copied <see cref="IReadOnlyCollection{Buildable}"/> of all the buildables tracked.
+        /// </summary>
         public IReadOnlyCollection<Buildable> Buildables
         {
             get
@@ -40,7 +55,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                 for (var i = 0; i < m_Buildables.Count; i++)
                     cloned.Add(m_Buildables[i]);
 
-                return cloned;
+                return new ReadOnlyCollection<Buildable>(cloned);
             }
         }
 
@@ -77,7 +92,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                 m_WorkerTimeout.Stop();
         }
 
-        private void HandleDestroyedInBulk(object sender, DoWorkEventArgs e)
+        private void HandleDestroyedInBulk(object? sender, DoWorkEventArgs? e)
         {
             m_BackgroundReset.Reset();
 
@@ -130,9 +145,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             OnBuildableAdded?.Invoke(buildable);
         }
 
-        [NotNull]
-        public static IEnumerable<Buildable> GetBuildables(ulong owner = 0, ulong group = 0, bool includePlants = false,
-            bool useGeneratedBuilds = true)
+        /// <summary>
+        /// Gets all of the <see cref="Buildable"/>s from the map or from the already generated cache.
+        /// </summary>
+        /// <param name="owner">The owner with which to filter the result.</param>
+        /// <param name="group">The group with which to filter the result.</param>
+        /// <param name="includePlants">If planted (on vehicle) barricades should be included.</param>
+        /// <param name="useGeneratedBuilds">If the <see cref="Buildables"/> should be used instead of generating a new <see cref="IEnumerable{Buildable}"/> from the map.</param>
+        /// <returns>An <see cref="IEnumerable{Buildable}"/></returns>
+        /// <remarks>
+        /// If <paramref name="owner"/> or <paramref name="group"/> are equal to 0, then there will be no filtering done respective to whichever is 0.
+        /// </remarks>
+        public static IEnumerable<Buildable> GetBuildables(ulong owner = 0, ulong group = 0, bool includePlants = false, bool useGeneratedBuilds = true)
         {
             IEnumerable<Buildable> result;
 
@@ -162,12 +186,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                         var drop = barricadeDrops.ElementAt(i);
                         return drop == null ? null : new BarricadeBuildable(k, drop);
                     })
-                    .Concat<Buildable>(structureDatas.Select((k, i) =>
+                    .Concat<Buildable?>(structureDatas.Select((k, i) =>
                     {
                         var drop = structureDrops.ElementAt(i);
                         return drop == null ? null : new StructureBuildable(k, drop);
                     }))
-                    .Where(d => d != null);
+                    .Where(d => d != null)!;
             }
 
             return (owner switch
@@ -189,14 +213,31 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                 HandleDestroyedInBulk(null, null);
         }
 
-        [CanBeNull]
-        public static Buildable GetBuildable(Transform buildable)
+        /// <summary>
+        /// Gets a specific buildable based on a <see cref="Transform"/>.
+        /// </summary>
+        /// <param name="buildable">The <see cref="Transform"/> of the buildable to find.</param>
+        /// <returns>
+        /// <see langword="null"/> if the buildable was not found.
+        /// <br/>
+        /// An instance of <see cref="Buildable"/> if the buildable was found.
+        /// </returns>
+        public static Buildable? GetBuildable(Transform buildable)
         {
             return GetBuildables(includePlants: true).FirstOrDefault(k => k.Model == buildable);
         }
 
-        [CanBeNull]
-        public static Buildable GetBuildable(uint instanceId, bool isStructure)
+        /// <summary>
+        /// Gets a specific buildable based on their instanceId and if they are a structure or not.
+        /// </summary>
+        /// <param name="instanceId">The instance id of the buildable to find.</param>
+        /// <param name="isStructure">If the buildable we are trying to find is a structure or a barricade.</param>
+        /// <returns>
+        /// <see langword="null"/> if the buildable was not found.
+        /// <br/>
+        /// An instance of <see cref="Buildable"/> if the buildable was found.
+        /// </returns>
+        public static Buildable? GetBuildable(uint instanceId, bool isStructure)
         {
             var buildables = GetBuildables(includePlants: true);
 

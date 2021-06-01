@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
@@ -8,6 +8,7 @@ using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
@@ -15,18 +16,23 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;
 
-        [NotNull] public string Name => "teleporttobuild";
+        public string Name => "teleporttobuild";
 
-        [NotNull] public string Help => "Teleports you to a random buildable on the map based on filters.";
+        public string Help => "Teleports you to a random buildable on the map based on filters.";
 
-        [NotNull] public string Syntax => "b [player] | s [player] | v [player] | [player] [id]";
+        public string Syntax => "b [player] | s [player] | v [player] | [player] [id]";
 
-        [NotNull] public List<string> Aliases => new List<string> {"tpb"};
+        public List<string> Aliases => new() {"tpb"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"teleporttobuild"};
+        public List<string> Permissions => new() {"teleporttobuild"};
 
-        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
+        public void Execute(IRocketPlayer caller, string[] command)
         {
+            var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
             if (!(caller is UnturnedPlayer player)) return;
 
             var args = command.ToList();
@@ -47,7 +53,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var itemAssetInput = BaseClusteringPlugin.Instance.Translate("not_available");
+            var itemAssetInput = pluginInstance.Translate("not_available");
             var itemAssets = args.GetMultipleItemAssets(out index);
             var assetCount = itemAssets.Count;
             if (index > -1)
@@ -67,19 +73,22 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (assetCount > 0) builds = builds.Where(k => itemAssets.Exists(l => l.id == k.AssetId));
 
-            var itemAssetName = BaseClusteringPlugin.Instance.Translate("not_available");
-            if (assetCount == 1)
-                itemAssetName = itemAssets.First().itemName;
-            else if (assetCount > 1)
-                itemAssetName = itemAssetInput;
+            var itemAssetName = pluginInstance.Translate("not_available");
+
+            switch (assetCount)
+            {
+                case 1:
+                    itemAssetName = itemAssets.First().itemName;
+                    break;
+                case > 1:
+                    itemAssetName = itemAssetInput;
+                    break;
+            }
 
             var buildsL = builds.ToList();
             if (!buildsL.Any())
             {
-                UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_builds", itemAssetName,
-                        target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
-                        plants, barricades, structs));
+                UnturnedChat.Say(caller, pluginInstance.Translate("cannot_teleport_no_builds", itemAssetName, target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants, barricades, structs));
                 return;
             }
 
@@ -96,10 +105,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             }
             else
             {
-                UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_builds_too_close", itemAssetName,
-                        target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
-                        plants, barricades, structs));
+                UnturnedChat.Say(caller, pluginInstance.Translate("cannot_teleport_builds_too_close", itemAssetName, target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants, barricades, structs));
             }
         }
     }

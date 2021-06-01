@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using JetBrains.Annotations;
+﻿using System;
+using System.Collections.Generic;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Rocket.API;
 using Rocket.Unturned.Chat;
@@ -13,18 +13,23 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;
 
-        [NotNull] public string Name => "removebuildable";
+        public string Name => "removebuildable";
 
-        [NotNull] public string Help => "Removes the buildable you are staring at";
+        public string Help => "Removes the buildable you are staring at";
 
-        [NotNull] public string Syntax => "";
+        public string Syntax => "";
 
-        [NotNull] public List<string> Aliases => new List<string>();
+        public List<string> Aliases => new();
 
-        [NotNull] public List<string> Permissions => new List<string> {"removebuildable"};
+        public List<string> Permissions => new() {"removebuildable"};
 
-        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
+        public void Execute(IRocketPlayer caller, string[] command)
         {
+            var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
             if (!(caller is UnturnedPlayer player)) return;
 
             if (!Physics.Raycast(new Ray(player.Player.look.aim.position, player.Player.look.aim.forward), out var hit,
@@ -33,7 +38,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     RayMasks.STRUCTURE_INTERACT) ||
                 hit.transform == null)
             {
-                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("not_looking_buildable"));
+                UnturnedChat.Say(caller, pluginInstance.Translate("not_looking_buildable"));
                 return;
             }
 
@@ -41,7 +46,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (buildable == null)
             {
-                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("not_looking_buildable"));
+                UnturnedChat.Say(caller, pluginInstance.Translate("not_looking_buildable"));
                 return;
             }
 

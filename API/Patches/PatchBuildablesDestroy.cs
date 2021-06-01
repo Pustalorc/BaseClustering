@@ -7,7 +7,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
 {
     public static class PatchBuildablesDestroy
     {
-        public static event BuildableDeleted OnBuildableDestroyed;
+        public static event BuildableDeleted? OnBuildableDestroyed;
 
         [HarmonyPatch]
         internal static class InternalPatches
@@ -15,7 +15,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
             [HarmonyPatch(typeof(BarricadeManager), "destroyBarricade")]
             [HarmonyPrefix]
             [UsedImplicitly]
-            internal static void DestroyBarricade([NotNull] BarricadeRegion region, ushort index)
+            internal static void DestroyBarricade(BarricadeRegion region, ushort index)
             {
                 ThreadUtil.assertIsGameThread();
                 OnBuildableDestroyed?.Invoke(region.drops[index].model);
@@ -24,7 +24,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
             [HarmonyPatch(typeof(StructureManager), "destroyStructure")]
             [HarmonyPrefix]
             [UsedImplicitly]
-            internal static void DestroyStructure([NotNull] StructureRegion region, ushort index)
+            internal static void DestroyStructure(StructureRegion region, ushort index)
             {
                 ThreadUtil.assertIsGameThread();
                 OnBuildableDestroyed?.Invoke(region.drops[index].model);

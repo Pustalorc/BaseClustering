@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Pustalorc.Plugins.BaseClustering.API.WreckingActions;
 using Rocket.API;
@@ -13,24 +13,27 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class WreckClustersCommand : IRocketCommand
     {
-        private readonly Dictionary<string, WreckClustersAction>
-            m_WreckActions = new Dictionary<string, WreckClustersAction>();
+        private readonly Dictionary<string, WreckClustersAction> m_WreckActions = new();
 
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
-        [NotNull] public string Name => "wreckclusters";
+        public string Name => "wreckclusters";
 
-        [NotNull] public string Help => "Destroys clusters from the map.";
+        public string Help => "Destroys clusters from the map.";
 
-        [NotNull] public string Syntax => "confirm | abort | [player] [item] [radius]";
+        public string Syntax => "confirm | abort | [player] [item] [radius]";
 
-        [NotNull] public List<string> Aliases => new List<string> {"wc"};
+        public List<string> Aliases => new() {"wc"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"wreckclusters"};
+        public List<string> Permissions => new() {"wreckclusters"};
 
-        public void Execute([NotNull] IRocketPlayer caller, [NotNull] string[] command)
+        public void Execute(IRocketPlayer caller, string[] command)
         {
             var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
             var clusterDirectory = pluginInstance.BaseClusterDirectory;
             if (clusterDirectory == null)
             {
@@ -59,7 +62,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var itemAssetInput = BaseClusteringPlugin.Instance.Translate("not_available");
+            var itemAssetInput = pluginInstance.Translate("not_available");
             var itemAssets = args.GetMultipleItemAssets(out index);
             var assetCount = itemAssets.Count;
             if (index > -1)
@@ -161,11 +164,17 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            var itemAssetName = BaseClusteringPlugin.Instance.Translate("not_available");
-            if (assetCount == 1)
-                itemAssetName = itemAssets.First().itemName;
-            else if (assetCount > 1)
-                itemAssetName = itemAssetInput;
+            var itemAssetName = pluginInstance.Translate("not_available");
+
+            switch (assetCount)
+            {
+                case 1:
+                    itemAssetName = itemAssets.First().itemName;
+                    break;
+                case > 1:
+                    itemAssetName = itemAssetInput;
+                    break;
+            }
 
             if (m_WreckActions.TryGetValue(cId, out _))
             {

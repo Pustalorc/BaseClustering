@@ -8,15 +8,26 @@ using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Utilities
 {
+    /// <summary>
+    /// A modified class of <see cref="River"/> that implements more types and isn't sealed, so other plugins can inherit and expand it with more.
+    /// </summary>
     [UsedImplicitly]
     public class RiverExpanded
     {
+        /// <summary>
+        /// Reads a <see cref="double"/> from the stream.
+        /// </summary>
+        /// <returns>A <see cref="double"/>.</returns>
         public double ReadDouble()
         {
             Stream.Read(Buffer, 0, 8);
             return BitConverter.ToDouble(Buffer, 0);
         }
 
+        /// <summary>
+        /// Writes a <see cref="double"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="double"/> value to write.</param>
         public void WriteDouble(double value)
         {
             var bytes = BitConverter.GetBytes(value);
@@ -24,7 +35,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Water += 8;
         }
 
-        [NotNull]
+        /// <summary>
+        /// Reads a <see cref="string"/> from the stream.
+        /// </summary>
+        /// <returns>A <see cref="string"/>.</returns>
         public string ReadString()
         {
             var count = Stream.ReadByte();
@@ -32,17 +46,28 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             return Encoding.UTF8.GetString(Buffer, 0, count);
         }
 
+        /// <summary>
+        /// Reads a <see cref="bool"/> from the stream.
+        /// </summary>
+        /// <returns>A <see cref="bool"/>.</returns>
         public bool ReadBoolean()
         {
             return Stream.ReadByte() != 0;
         }
 
+        /// <summary>
+        /// Reads a <see cref="byte"/> from the stream.
+        /// </summary>
+        /// <returns>A <see cref="byte"/>.</returns>
         public byte ReadByte()
         {
             return (byte) Stream.ReadByte();
         }
 
-        [NotNull]
+        /// <summary>
+        /// Reads multiple <see cref="byte"/>s from the stream.
+        /// </summary>
+        /// <returns>An <see cref="Array"/> of <see cref="byte"/>s.</returns>
         public byte[] ReadBytes()
         {
             var array = new byte[ReadUInt16()];
@@ -50,74 +75,126 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             return array;
         }
 
+        /// <summary>
+        /// Reads an <see cref="short"/> from the stream.
+        /// </summary>
+        /// <returns>An <see cref="short"/>.</returns>
         public short ReadInt16()
         {
             Stream.Read(Buffer, 0, 2);
             return BitConverter.ToInt16(Buffer, 0);
         }
 
+        /// <summary>
+        /// Reads an <see cref="ushort"/> from the stream.
+        /// </summary>
+        /// <returns>An <see cref="ushort"/>.</returns>
         public ushort ReadUInt16()
         {
             Stream.Read(Buffer, 0, 2);
             return BitConverter.ToUInt16(Buffer, 0);
         }
 
+        /// <summary>
+        /// Reads an <see cref="int"/> from the stream.
+        /// </summary>
+        /// <returns>An <see cref="int"/>.</returns>
         public int ReadInt32()
         {
             Stream.Read(Buffer, 0, 4);
             return BitConverter.ToInt32(Buffer, 0);
         }
 
+        /// <summary>
+        /// Reads an <see cref="uint"/> from the stream.
+        /// </summary>
+        /// <returns>An <see cref="uint"/>.</returns>
         public uint ReadUInt32()
         {
             Stream.Read(Buffer, 0, 4);
             return BitConverter.ToUInt32(Buffer, 0);
         }
 
+        /// <summary>
+        /// Reads a <see cref="float"/> from the stream.
+        /// </summary>
+        /// <returns>A <see cref="float"/>.</returns>
         public float ReadSingle()
         {
             Stream.Read(Buffer, 0, 4);
             return BitConverter.ToSingle(Buffer, 0);
         }
 
+        /// <summary>
+        /// Reads an <see cref="long"/> from the stream.
+        /// </summary>
+        /// <returns>An <see cref="long"/>.</returns>
         public long ReadInt64()
         {
             Stream.Read(Buffer, 0, 8);
             return BitConverter.ToInt64(Buffer, 0);
         }
 
+        /// <summary>
+        /// Reads an <see cref="ulong"/> from the stream.
+        /// </summary>
+        /// <returns>An <see cref="ulong"/>.</returns>
         public ulong ReadUInt64()
         {
             Stream.Read(Buffer, 0, 8);
             return BitConverter.ToUInt64(Buffer, 0);
         }
 
+        /// <summary>
+        /// Reads a <see cref="CSteamID"/> from the stream.
+        /// </summary>
+        /// <returns>A <see cref="CSteamID"/>.</returns>
         public CSteamID ReadSteamID()
         {
-            return new CSteamID(ReadUInt64());
+            return new(ReadUInt64());
         }
 
+        /// <summary>
+        /// Reads a <see cref="Vector3"/> from the stream.
+        /// </summary>
+        /// <returns>A <see cref="Vector3"/>.</returns>
         public Vector3 ReadSingleVector3()
         {
-            return new Vector3(ReadSingle(), ReadSingle(), ReadSingle());
+            return new(ReadSingle(), ReadSingle(), ReadSingle());
         }
 
+        /// <summary>
+        /// Reads a <see cref="Quaternion"/> from the stream.
+        /// </summary>
+        /// <returns>A <see cref="Quaternion"/>.</returns>
         public Quaternion ReadSingleQuaternion()
         {
             return Quaternion.Euler(ReadSingle(), ReadSingle(), ReadSingle());
         }
 
+        /// <summary>
+        /// Reads a <see cref="Color"/> from the stream.
+        /// </summary>
+        /// <returns>A <see cref="Color"/>.</returns>
         public Color ReadColor()
         {
-            return new Color(ReadByte() / 255f, ReadByte() / 255f, ReadByte() / 255f);
+            return new(ReadByte() / 255f, ReadByte() / 255f, ReadByte() / 255f);
         }
 
+        /// <summary>
+        /// Reads a <see cref="DateTime"/> from the stream.
+        /// </summary>
+        /// <returns>A <see cref="DateTime"/>.</returns>
         public DateTime ReadDateTime()
         {
             return DateTime.FromBinary(ReadInt64());
         }
 
-        public void WriteString([NotNull] string value)
+        /// <summary>
+        /// Writes a <see cref="string"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="string"/> value to write.</param>
+        public void WriteString(string value)
         {
             var bytes = Encoding.UTF8.GetBytes(value);
             var b = (byte) bytes.Length;
@@ -126,19 +203,31 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Water += 1 + b;
         }
 
+        /// <summary>
+        /// Writes a <see cref="bool"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="bool"/> value to write.</param>
         public void WriteBoolean(bool value)
         {
             Stream.WriteByte((byte) (value ? 1 : 0));
             Water++;
         }
 
+        /// <summary>
+        /// Writes a <see cref="byte"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="byte"/> value to write.</param>
         public void WriteByte(byte value)
         {
             Stream.WriteByte(value);
             Water++;
         }
 
-        public void WriteBytes([NotNull] byte[] values)
+        /// <summary>
+        /// Writes an <see cref="Array"/> of <see cref="double"/>s to the stream.
+        /// </summary>
+        /// <param name="values">The <see cref="Array"/> of <see cref="double"/>s to write.</param>
+        public void WriteBytes(byte[] values)
         {
             var num = (ushort) values.Length;
             WriteUInt16(num);
@@ -146,6 +235,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Water += num;
         }
 
+        /// <summary>
+        /// Writes an <see cref="short"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="short"/> value to write.</param>
         public void WriteInt16(short value)
         {
             var bytes = BitConverter.GetBytes(value);
@@ -153,6 +246,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Water += 2;
         }
 
+        /// <summary>
+        /// Writes an <see cref="ushort"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="ushort"/> value to write.</param>
         public void WriteUInt16(ushort value)
         {
             var bytes = BitConverter.GetBytes(value);
@@ -160,6 +257,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Water += 2;
         }
 
+        /// <summary>
+        /// Writes an <see cref="int"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="int"/> value to write.</param>
         public void WriteInt32(int value)
         {
             var bytes = BitConverter.GetBytes(value);
@@ -167,6 +268,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Water += 4;
         }
 
+        /// <summary>
+        /// Writes an <see cref="uint"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="uint"/> value to write.</param>
         public void WriteUInt32(uint value)
         {
             var bytes = BitConverter.GetBytes(value);
@@ -174,6 +279,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Water += 4;
         }
 
+        /// <summary>
+        /// Writes a <see cref="float"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="float"/> value to write.</param>
         public void WriteSingle(float value)
         {
             var bytes = BitConverter.GetBytes(value);
@@ -181,6 +290,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Water += 4;
         }
 
+        /// <summary>
+        /// Writes an <see cref="long"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="long"/> value to write.</param>
         public void WriteInt64(long value)
         {
             var bytes = BitConverter.GetBytes(value);
@@ -188,6 +301,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Water += 8;
         }
 
+        /// <summary>
+        /// Writes an <see cref="ulong"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="ulong"/> value to write.</param>
         public void WriteUInt64(ulong value)
         {
             var bytes = BitConverter.GetBytes(value);
@@ -195,11 +312,19 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Water += 8;
         }
 
-        public void WriteSteamID(CSteamID steamID)
+        /// <summary>
+        /// Writes a <see cref="CSteamID"/> to the stream.
+        /// </summary>
+        /// <param name="steamId">The <see cref="CSteamID"/> value to write.</param>
+        public void WriteSteamID(CSteamID steamId)
         {
-            WriteUInt64(steamID.m_SteamID);
+            WriteUInt64(steamId.m_SteamID);
         }
 
+        /// <summary>
+        /// Writes a <see cref="Vector3"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="Vector3"/> value to write.</param>
         public void WriteSingleVector3(Vector3 value)
         {
             WriteSingle(value.x);
@@ -207,6 +332,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             WriteSingle(value.z);
         }
 
+        /// <summary>
+        /// Writes a <see cref="Quaternion"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="Quaternion"/> value to write.</param>
         public void WriteSingleQuaternion(Quaternion value)
         {
             var eulerAngles = value.eulerAngles;
@@ -215,6 +344,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             WriteSingle(eulerAngles.z);
         }
 
+        /// <summary>
+        /// Writes a <see cref="Color"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="Color"/> value to write.</param>
         public void WriteColor(Color value)
         {
             WriteByte((byte) (value.r * 255f));
@@ -222,11 +355,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             WriteByte((byte) (value.b * 255f));
         }
 
+        /// <summary>
+        /// Writes a <see cref="DateTime"/> to the stream.
+        /// </summary>
+        /// <param name="value">The <see cref="DateTime"/> value to write.</param>
         public void WriteDateTime(DateTime value)
         {
             WriteInt64(value.ToBinary());
         }
 
+        /// <summary>
+        /// Closes and disposes of the stream.
+        /// </summary>
         public void CloseRiver()
         {
             if (Water > 0)
@@ -237,6 +377,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Stream.Dispose();
         }
 
+        /// <summary>
+        /// Creates a new instance of <see cref="RiverExpanded"/>.
+        /// </summary>
+        /// <param name="newPath">The path of the file to which this object will read and write to.</param>
+        /// <param name="usePath">If the path should be combined with <see cref="ReadWrite.PATH"/>.</param>
         public RiverExpanded(string newPath, bool usePath = true)
         {
             Path = newPath;
@@ -245,12 +390,16 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
 
             var dir = System.IO.Path.GetDirectoryName(Path);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
+                Directory.CreateDirectory(dir!);
 
             Stream = new FileStream(Path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
             Water = 0;
         }
 
+        /// <summary>
+        /// Reads <paramref name="count"/> <see cref="byte"/>s but does not interpret them in any way, essentially skipping them.
+        /// </summary>
+        /// <param name="count">The number of <see cref="byte"/>s that you wish to skip ahead.</param>
         public void Skip(int count)
         {
             Stream.Read(Buffer, 0, count);

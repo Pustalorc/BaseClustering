@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
@@ -12,19 +12,24 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
-        [NotNull] public string Name => "topbuilders";
+        public string Name => "topbuilders";
 
-        [NotNull] public string Help => "Displays the top 5 builders in the game.";
+        public string Help => "Displays the top 5 builders in the game.";
 
-        [NotNull] public string Syntax => "v";
+        public string Syntax => "v";
 
-        [NotNull] public List<string> Aliases => new List<string> {"topb"};
+        public List<string> Aliases => new() {"topb"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"topbuilders"};
+        public List<string> Permissions => new() {"topbuilders"};
 
-        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
+        public void Execute(IRocketPlayer caller, string[] command)
         {
             var args = command.ToList();
+            var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
 
             var plants = args.CheckArgsIncludeString("v", out var index);
             if (index > -1)
@@ -38,8 +43,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             {
                 var builder = topBuilders.ElementAt(i);
 
-                UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("top_builder_format", i + 1, builder.Key, builder.Count()));
+                UnturnedChat.Say(caller, pluginInstance.Translate("top_builder_format", i + 1, builder.Key, builder.Count()));
             }
         }
     }

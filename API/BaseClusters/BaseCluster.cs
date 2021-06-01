@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
-using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
@@ -12,34 +12,84 @@ using Random = UnityEngine.Random;
 
 namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 {
+    /// <summary>
+    /// This class defines the structure of a BaseCluster.
+    /// </summary>
     public sealed class BaseCluster
     {
         private readonly BaseClusteringPluginConfiguration m_PluginConfiguration;
         private readonly BaseClusterDirectory m_BaseClusterDirectory;
         private readonly List<Buildable> m_Buildables;
 
-        [UsedImplicitly] public event VoidDelegate OnClusterReset;
-        [UsedImplicitly] public event BuildablesChanged OnBuildablesAdded;
-        [UsedImplicitly] public event BuildablesChanged OnBuildablesRemoved;
+        /// <summary>
+        /// This event is raised if <see cref="Reset"/> is called.
+        /// </summary>
+        public event VoidDelegate? OnClusterReset;
 
+        /// <summary>
+        /// This event is raised if new buildables are added to the cluster.
+        /// </summary>
+        public event BuildablesChanged? OnBuildablesAdded;
+
+        /// <summary>
+        /// This event is raised if buildables are removed from the cluster.
+        /// </summary>
+        public event BuildablesChanged? OnBuildablesRemoved;
+
+        /// <summary>
+        /// Gets the common owner of the entire cluster based on who owns the most things.
+        /// </summary>
         public ulong CommonOwner => m_Buildables.GroupBy(k => k.Owner)
             .OrderByDescending(k => k.Count())
             .Select(g => g.Key).ToList().FirstOrDefault();
 
+        /// <summary>
+        /// Gets the common group of the entire cluster based on which group owns the most things.
+        /// </summary>
         public ulong CommonGroup => m_Buildables.GroupBy(k => k.Group)
             .OrderByDescending(k => k.Count())
             .Select(g => g.Key).ToList().FirstOrDefault();
 
+        /// <summary>
+        /// Gets the average center position of the cluster.
+        /// </summary>
         public Vector3 AverageCenterPosition =>
             m_Buildables.OfType<StructureBuildable>().AverageCenter(k => k.Position);
 
+        /// <summary>
+        /// Gets the unique instanceId of this cluster.
+        /// </summary>
         public int InstanceId { get; }
 
+        /// <summary>
+        /// Defines if this cluster is a global cluster.
+        /// </summary>
         public bool IsGlobalCluster { get; }
 
+        /// <summary>
+        /// Defines if this cluster is being destroyed, and therefore integrity check operations shouldn't be handled.
+        /// </summary>
         public bool IsBeingDestroyed { get; set; }
 
-        public IReadOnlyCollection<Buildable> Buildables => m_Buildables;
+        /// <summary>
+        /// Gets a copied <see cref="IReadOnlyCollection{Buildable}"/> of all the buildables in the cluster.
+        /// </summary>
+        public IReadOnlyCollection<Buildable> Buildables
+        {
+            get
+            {
+                var cloned = new List<Buildable>();
+
+                // Disabled warning as we want a thread-safe copy. Using .ToList() results in the code using a foreach,
+                // so if another thread .Removes or .Adds during that .ToList(), the code will throw ModifiedCollection exception.
+                // ReSharper disable once LoopCanBeConvertedToQuery
+                // ReSharper disable once ForCanBeConvertedToForeach
+                for (var i = 0; i < m_Buildables.Count; i++)
+                    cloned.Add(m_Buildables[i]);
+
+                return new ReadOnlyCollection<Buildable>(cloned);
+            }
+        }
 
         internal BaseCluster(BaseClusteringPluginConfiguration pluginConfiguration,
             BaseClusterDirectory baseClusterDirectory, int instanceId, bool isGlobalCluster = false)
@@ -52,9 +102,13 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         }
 
         /// <summary>
-        /// Destroy this base, including all the buildables in it.
+        /// Destroys this base, including all the buildables in it.
         /// </summary>
-        /// <param name="shouldDropItems">Should items from storages in the base drop?</param>
+        /// <param name="shouldDropItems">
+        /// If <see cref="bool.True"/>, <see cref="InteractableStorage"/>s will drop all their contents on the ground.
+        /// <br/>
+        /// If <see cref="bool.False"/>, <see cref="InteractableStorage"/>s will not drop any of their contents on the ground.
+        /// </param>
         public void Destroy(bool shouldDropItems = true)
         {
             IsBeingDestroyed = true;
@@ -74,10 +128,14 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         }
 
         /// <summary>
-        /// Check if another buildable is within range of the base.
+        /// Checks if another buildable is within range of this base cluster.
         /// </summary>
         /// <param name="buildable">The buildable to check.</param>
-        /// <returns>If the buildable provided is within range of the base.</returns>
+        /// <returns>
+        /// <see cref="bool.True"/> if the buildable is within range.
+        /// <br/>
+        /// <see cref="bool.False"/> if the buildable is outside range.
+        /// </returns>
         public bool IsWithinRange(Buildable buildable)
         {
             var structures = Buildables.OfType<StructureBuildable>();
@@ -89,10 +147,17 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         }
 
         /// <summary>
-        /// Check if a position is within range of the base.
+        /// Checks if a position is within range of this base cluster.
         /// </summary>
-        /// <param name="position">The position.</param>
-        /// <returns>If the position provided is within range of the base</returns>
+        /// <param name="position">The position to check.</param>
+        /// <returns>
+        /// <see cref="bool.True"/> If the position is within range.
+        /// <br/>
+        /// <see cref="bool.False"/> If the position is outside range.
+        /// </returns>
+        /// <remarks>
+        /// Unlike <see cref="IsWithinRange(Buildable)"/>, this method only checks with <see cref="BaseClusteringPluginConfiguration.MaxDistanceToConsiderPartOfBase"/> not with <see cref="BaseClusteringPluginConfiguration.MaxDistanceBetweenStructures"/>.
+        /// </remarks>
         public bool IsWithinRange(Vector3 position)
         {
             var distanceCheck = Mathf.Pow(m_PluginConfiguration.MaxDistanceToConsiderPartOfBase, 2);
@@ -101,7 +166,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         }
 
         /// <summary>
-        /// Resets a base to the default. This method currently only clears the buildables that are in it.
+        /// Resets a base to the default state (empty).
+        /// <br/>
+        /// This method only clears the buildables that are in it and raises <see cref="OnClusterReset"/>.
         /// </summary>
         public void Reset()
         {
@@ -131,8 +198,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <summary>
         /// Adds multiple buildables to the base. This method does not spawn in any of the buildables.
         /// </summary>
-        /// <param name="builds">The IEnumerable of buildables to add to the base.</param>
-        public void AddBuildables([NotNull] IEnumerable<Buildable> builds)
+        /// <param name="builds">The <see cref="IEnumerable{Buildable}"/> of <see cref="Buildable"/>s to add to the base.</param>
+        public void AddBuildables(IEnumerable<Buildable> builds)
         {
             var consolidate = builds.ToList();
             m_Buildables.AddRange(consolidate);
@@ -157,8 +224,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <summary>
         /// Removes multiple buildables from the base. This method does not destroy any of the buildables.
         /// </summary>
-        /// <param name="builds">The buildables to remove from the base.</param>
-        public void RemoveBuildables([NotNull] List<Buildable> builds)
+        /// <param name="builds">The <see cref="IEnumerable{Buildable}"/> of <see cref="Buildable"/>s to remove from the base.</param>
+        public void RemoveBuildables(List<Buildable> builds)
         {
             var removed = new List<Buildable>();
 

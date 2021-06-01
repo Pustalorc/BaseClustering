@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using Pustalorc.Plugins.BaseClustering.API.Patches;
@@ -16,13 +16,25 @@ using Random = UnityEngine.Random;
 
 namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 {
+    /// <summary>
+    /// A directory that keeps track of all <see cref="BaseCluster"/>s.
+    /// </summary>
     public sealed class BaseClusterDirectory
     {
-        [UsedImplicitly] public event VoidDelegate OnClustersGenerated;
+        /// <summary>
+        /// This event is raised when <see cref="GenerateAndLoadAllClusters"/> has finished executing.
+        /// </summary>
+        public event VoidDelegate? OnClustersGenerated;
 
-        [UsedImplicitly] public event ClusterChange OnClusterAdded;
+        /// <summary>
+        /// This event is raised whenever a new cluster is added.
+        /// </summary>
+        public event ClusterChange? OnClusterAdded;
 
-        [UsedImplicitly] public event ClusterChange OnClusterRemoved;
+        /// <summary>
+        /// This event is raised whenever a cluster is removed.
+        /// </summary>
+        public event ClusterChange? OnClusterRemoved;
 
         private readonly BaseClusteringPlugin m_Plugin;
         private readonly BaseClusteringPluginConfiguration m_PluginConfiguration;
@@ -30,16 +42,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         private readonly ConcurrentBag<BaseCluster> m_ClusterPool;
         private readonly List<BaseCluster> m_Clusters;
 
-        private BaseCluster m_GlobalCluster;
+        private BaseCluster? m_GlobalCluster;
         private int m_InstanceIds;
 
-        // ReSharper disable once ReturnTypeCanBeEnumerable.Global
-        [NotNull]
-        public IReadOnlyCollection<BaseCluster> Clusters =>
-            m_Clusters.Concat(new[] {GetOrCreateGlobalCluster()}).ToList().AsReadOnly();
+        /// <summary>
+        /// Gets a copied <see cref="IReadOnlyCollection{BaseCluster}"/> of all the clusters tracked.
+        /// </summary>
+        /// <remarks>
+        /// This copied collection includes the global cluster from <see cref="GetOrCreateGlobalCluster"/>.
+        /// </remarks>
+        public IReadOnlyCollection<BaseCluster> Clusters => new ReadOnlyCollection<BaseCluster>(m_Clusters.Concat(new[] {GetOrCreateGlobalCluster()}).ToList());
 
-        public BaseClusterDirectory(BaseClusteringPlugin plugin, BaseClusteringPluginConfiguration pluginConfiguration,
-            [NotNull] BuildableDirectory buildableDirectory)
+        public BaseClusterDirectory(BaseClusteringPlugin plugin, BaseClusteringPluginConfiguration pluginConfiguration, BuildableDirectory buildableDirectory)
         {
             m_Plugin = plugin;
             m_PluginConfiguration = pluginConfiguration;
@@ -101,6 +115,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             OnClustersGenerated?.Invoke();
         }
 
+        /// <summary>
+        /// Saves the current data in <see cref="Clusters"/>.
+        /// </summary>
         public void Save()
         {
             m_BuildableDirectory.WaitDestroyHandle();
@@ -124,8 +141,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             river.CloseRiver();
         }
 
-        // ReSharper disable once FunctionComplexityOverflow
-        private bool LoadClusters([NotNull] IEnumerable<Buildable> allBuildables)
+        private bool LoadClusters(IEnumerable<Buildable> allBuildables)
         {
             var bases = new List<BaseCluster>();
 
@@ -138,8 +154,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 var river = new RiverExpanded(ServerSavedata.directory + "/" + Provider.serverID + "/Level/" +
                                               Level.info.name + "/Bases.dat");
                 var allBuilds = allBuildables.ToList();
-                var structures = allBuilds.OfType<StructureBuildable>().ToList();
-                var barricades = allBuilds.OfType<BarricadeBuildable>().ToList();
+                var structures = allBuilds.OfType<StructureBuildable>().ToDictionary(k => k.InstanceId);
+                var barricades = allBuilds.OfType<BarricadeBuildable>().ToDictionary(k => k.InstanceId);
 
                 var buildableCount = river.ReadInt32();
 
@@ -171,8 +187,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                         var buildInstanceId = river.ReadUInt32();
                         var isStructure = river.ReadBoolean();
                         var build = isStructure
-                            ? (Buildable) structures.FirstOrDefault(k => k.InstanceId == buildInstanceId)
-                            : barricades.FirstOrDefault(k => k.InstanceId == buildInstanceId);
+                            ? (Buildable) structures[buildInstanceId]
+                            : barricades[buildInstanceId];
 
                         if (build == null)
                         {
@@ -242,9 +258,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         }
 
         /// <summary>
-        /// Gets a BaseCluster from the pool. If one isn't available from the pool, it will be instantiated instead.
+        /// Gets a <see cref="BaseCluster"/> from the pool.
+        /// <br/>
+        /// If a <see cref="BaseCluster"/> isn't available from the pool, a new instance will be created and provided.
         /// </summary>
-        /// <returns>A BaseCluster </returns>
+        /// <returns>An instance of type <see cref="BaseCluster"/>.</returns>
         public BaseCluster GetOrCreatePooledCluster()
         {
             return m_ClusterPool.TryTake(out var baseCluster)
@@ -252,17 +270,16 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 : CreateCluster(m_InstanceIds++);
         }
 
-        [NotNull]
-        internal BaseCluster CreateCluster(int instanceId, bool globalCluster = false)
+        private BaseCluster CreateCluster(int instanceId, bool globalCluster = false)
         {
-            return new BaseCluster(m_PluginConfiguration, this, instanceId, globalCluster);
+            return new(m_PluginConfiguration, this, instanceId, globalCluster);
         }
 
         /// <summary>
-        /// Returns and resets a BaseCluster to the pool.
+        /// Returns and resets a <see cref="BaseCluster"/> to the pool.
         /// </summary>
-        /// <param name="baseCluster">The BaseCluster to reset and return to the pool.</param>
-        public void Return([CanBeNull] BaseCluster baseCluster)
+        /// <param name="baseCluster">The <see cref="BaseCluster"/> to reset and return to the pool.</param>
+        public void Return(BaseCluster? baseCluster)
         {
             if (baseCluster == null)
                 return;
@@ -278,24 +295,23 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         }
 
         /// <summary>
-        /// Gets the global cluster for the instance. If there's no global cluster, one is created.
+        /// Gets the global <see cref="BaseCluster"/>.
+        /// <br/>
+        /// If there's no global <see cref="BaseCluster"/> available, a new instance will be created and provided.
         /// </summary>
-        /// <returns>The global cluster for the instance.</returns>
-        [NotNull]
+        /// <returns>An instance of <see cref="BaseCluster"/>.</returns>
         public BaseCluster GetOrCreateGlobalCluster()
         {
             return m_GlobalCluster ??= CreateCluster(m_InstanceIds++, true);
         }
 
         /// <summary>
-        /// Generates a new IEnumerable with all the clusters generated from the inputs.
+        /// Generates a new <see cref="IEnumerable{BaseCluster}"/> with all the clusters generated from the inputs.
         /// </summary>
-        /// <param name="buildables">The buildables to cluster.</param>
-        /// <param name="needLogging">Should progress be logged whilst it clusters.</param>
-        /// <returns>An IEnumerable with all the generated clusters</returns>
-        [NotNull]
-        public IEnumerable<BaseCluster> ClusterElements([NotNull] IEnumerable<Buildable> buildables,
-            bool needLogging = false)
+        /// <param name="buildables">The <see cref="IEnumerable{Buildable}"/> to cluster.</param>
+        /// <param name="needLogging">Should progress be logged to console whilst it clusters.</param>
+        /// <returns>An <see cref="IEnumerable{BaseCluster}"/> with all the generated clusters</returns>
+        public IEnumerable<BaseCluster> ClusterElements(IEnumerable<Buildable> buildables, bool needLogging = false)
         {
             // TODO IDEA: Use background worker and have this wait until the background worker is done.
             // Start a new stopwatch. This will be used to log how long the program is taking with each step.
@@ -405,19 +421,26 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             return output;
         }
 
-        public void RegisterCluster(BaseCluster c)
+        /// <summary>
+        /// Registers a new <see cref="BaseCluster"/> to <see cref="Clusters"/>.
+        /// </summary>
+        /// <param name="cluster">The <see cref="BaseCluster"/> to register.</param>
+        public void RegisterCluster(BaseCluster cluster)
         {
-            m_Clusters.Add(c);
-            OnClusterAdded?.Invoke(c);
+            m_Clusters.Add(cluster);
+            OnClusterAdded?.Invoke(cluster);
         }
 
         /// <summary>
         /// Finds the best cluster for a specific buildable to be placed in.
         /// </summary>
         /// <param name="target">The buildable to find the best clusters for.</param>
-        /// <returns>An instance of BaseCluster if there's at least one good cluster, or null if none.</returns>
-        [CanBeNull]
-        public BaseCluster FindBestCluster([NotNull] Buildable target)
+        /// <returns>
+        /// <see langword="null"/> if no best cluster is available.
+        /// <br/>
+        /// An instance of <see cref="BaseCluster"/> if a best cluster is available.
+        /// </returns>
+        public BaseCluster? FindBestCluster(Buildable target)
         {
             return FindBestClusters(target).FirstOrDefault();
         }
@@ -426,9 +449,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// Finds the best clusters for a specific buildable to be placed in.
         /// </summary>
         /// <param name="target">The buildable to find the best clusters for.</param>
-        /// <returns>An IEnumerable with the best clusters for the buildable. If none are found the IEnumerable is empty.</returns>
-        [NotNull]
-        public IEnumerable<BaseCluster> FindBestClusters([NotNull] Buildable target)
+        /// <returns>
+        /// An <see cref="IEnumerable{BaseCluster}"/> with the best <see cref="BaseCluster"/>s for the buildable.
+        /// If no best clusters are found, <see cref="IEnumerable{BaseCluster}"/> will be empty.
+        /// </returns>
+        public IEnumerable<BaseCluster> FindBestClusters(Buildable target)
         {
             return Clusters.Where(k => k.IsWithinRange(target))
                 .OrderBy(k => (k.AverageCenterPosition - target.Position).sqrMagnitude);
@@ -438,9 +463,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// Finds the best cluster within range of a specific position
         /// </summary>
         /// <param name="target">The position to check within range.</param>
-        /// <returns>An instance of BaseCluster if there's at least one good cluster, or null if none.</returns>
-        [CanBeNull]
-        public BaseCluster FindBestCluster(Vector3 target)
+        /// <returns>
+        /// <see langword="null"/> if no best cluster is available.
+        /// <br/>
+        /// An instance of <see cref="BaseCluster"/> if a best cluster is available.
+        /// </returns>
+        public BaseCluster? FindBestCluster(Vector3 target)
         {
             return FindBestClusters(target).FirstOrDefault();
         }
@@ -449,15 +477,17 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// Finds the best clusters within range of a specific position.
         /// </summary>
         /// <param name="target">The position to check within range.</param>
-        /// <returns>An IEnumerable with the best clusters for the position. If none are found the IEnumerable is empty.</returns>
-        [NotNull]
+        /// <returns>
+        /// An <see cref="IEnumerable{BaseCluster}"/> with the best <see cref="BaseCluster"/>s for the buildable.
+        /// If no best clusters are found, <see cref="IEnumerable{BaseCluster}"/> will be empty.
+        /// </returns>
         public IEnumerable<BaseCluster> FindBestClusters(Vector3 target)
         {
             return Clusters.Where(k => k.IsWithinRange(target))
                 .OrderBy(k => (k.AverageCenterPosition - target).sqrMagnitude);
         }
 
-        private void BuildablesDestroyed([NotNull] IEnumerable<Buildable> buildables)
+        private void BuildablesDestroyed(IEnumerable<Buildable> buildables)
         {
             var builds = buildables.ToList();
 
@@ -470,13 +500,13 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             }
         }
 
-        private void BuildableTransformed([NotNull] Buildable buildable)
+        private void BuildableTransformed(Buildable buildable)
         {
             BuildablesDestroyed(new[] {buildable});
             BuildableSpawned(buildable);
         }
 
-        private void BuildableSpawned([NotNull] Buildable buildable)
+        private void BuildableSpawned(Buildable buildable)
         {
             if (buildable.IsPlanted) return;
 
@@ -542,11 +572,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         }
 
         /// <summary>
-        /// Retrieves all clusters that have the player as the most common owner.
+        /// Retrieves all clusters that have the specified <paramref name="player"/> as the most common owner.
         /// </summary>
         /// <param name="player">The player to use for the search as the most common owner.</param>
-        /// <returns>An IEnumerable holding all the clusters that this player is deemed "most common owner" of.</returns>
-        [NotNull]
+        /// <returns>
+        /// An <see cref="IEnumerable{BaseCluster}"/> holding all the clusters that this player is deemed "most common owner" of.
+        /// </returns>
         public IEnumerable<BaseCluster> GetMostOwnedClusters(CSteamID player)
         {
             return GetClustersWithFilter(k => k.CommonOwner == player.m_SteamID);
@@ -556,58 +587,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// Retrieves all clusters that satisfy the custom filter.
         /// </summary>
         /// <param name="filter">An anonymous function that takes BaseCluster as parameter and returns bool.</param>
-        /// <returns>A list of clusters that satisfy the filter.</returns>
-        [NotNull]
-        public IEnumerable<BaseCluster> GetClustersWithFilter([NotNull] Func<BaseCluster, bool> filter)
+        /// <returns>
+        /// An <see cref="IEnumerable{BaseCluster}"/> that satisfies the filter.
+        /// </returns>
+        public IEnumerable<BaseCluster> GetClustersWithFilter(Func<BaseCluster, bool> filter)
         {
             return Clusters.Where(filter);
-        }
-
-        /// <summary>
-        /// Gets the cluster that contains the element with the provided model.
-        /// </summary>
-        /// <param name="model">The model of the buildable within a cluster.</param>
-        /// <returns>The cluster in which the model is located within. Null if no cluster is found.</returns>
-        [CanBeNull]
-        public BaseCluster GetClusterWithElement(Transform model)
-        {
-            return Clusters.FirstOrDefault(k => k.Buildables.Any(l => l.Model == model));
-        }
-
-        /// <summary>
-        /// Gets the cluster that contains the element with the provided position.
-        /// </summary>
-        /// <param name="instanceId">The instanceId of the buildable within a cluster.</param>
-        /// <param name="isStructure">If the instanceId belongs to a structure or a barricade.</param>
-        /// <returns>The cluster containing the element provided.</returns>
-        [CanBeNull]
-        public BaseCluster GetClusterWithElement(uint instanceId, bool isStructure)
-        {
-            return Clusters.FirstOrDefault(k =>
-            {
-                var builds = k.Buildables.AsEnumerable();
-
-                if (builds == null)
-                    return false;
-
-                if (isStructure)
-                    builds = builds.OfType<StructureBuildable>();
-                else
-                    builds = builds.OfType<BarricadeBuildable>();
-
-                return builds.Any(l => l.InstanceId == instanceId);
-            });
-        }
-
-        /// <summary>
-        /// Gets the cluster that contains the element with the provided buildable instance.
-        /// </summary>
-        /// <param name="buildable">The buildable within a cluster.</param>
-        /// <returns>The cluster this buildable belongs to.</returns>
-        [CanBeNull]
-        public BaseCluster GetClusterWithElement(Buildable buildable)
-        {
-            return Clusters.FirstOrDefault(k => k.Buildables.Contains(buildable));
         }
     }
 }

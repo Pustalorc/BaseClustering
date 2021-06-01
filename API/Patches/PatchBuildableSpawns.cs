@@ -12,7 +12,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
 {
     public static class PatchBuildableSpawns
     {
-        public static event BuildableChange OnBuildableSpawned;
+        public static event BuildableChange? OnBuildableSpawned;
 
         [HarmonyPatch]
         internal static class InternalPatches

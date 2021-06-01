@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
@@ -15,18 +15,24 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
     public sealed class FindBuildsCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
-        [NotNull] public string Name => "findbuilds";
-        [NotNull] public string Help => "Finds buildables around the map";
 
-        [NotNull]
-        public string Syntax =>
-            "b [radius] | s [radius] | [id] [radius] | v [id] [radius] | [player] [id] [radius] | [player] b [radius] | [player] s [radius] | [player] v [id] [radius]";
+        public string Name => "findbuilds";
 
-        [NotNull] public List<string> Aliases => new List<string> {"fb"};
-        [NotNull] public List<string> Permissions => new List<string> {"findbuilds"};
+        public string Help => "Finds buildables around the map";
 
-        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
+        public string Syntax => "b [radius] | s [radius] | [id] [radius] | v [id] [radius] | [player] [id] [radius] | [player] b [radius] | [player] s [radius] | [player] v [id] [radius]";
+
+        public List<string> Aliases => new() {"fb"};
+
+        public List<string> Permissions => new() {"findbuilds"};
+
+        public void Execute(IRocketPlayer caller, string[] command)
         {
+            var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
             var args = command.ToList();
 
             var barricades = args.CheckArgsIncludeString("b", out var index);
@@ -45,7 +51,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var itemAssetInput = BaseClusteringPlugin.Instance.Translate("not_available");
+            var itemAssetInput = pluginInstance.Translate("not_available");
             var itemAssets = args.GetMultipleItemAssets(out index);
             var assetCount = itemAssets.Count;
             if (index > -1)
@@ -71,27 +77,26 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             {
                 if (!(caller is UnturnedPlayer cPlayer))
                 {
-                    UnturnedChat.Say(caller,
-                        BaseClusteringPlugin.Instance.Translate("cannot_be_executed_from_console"));
+                    UnturnedChat.Say(caller, pluginInstance.Translate("cannot_be_executed_from_console"));
                     return;
                 }
 
                 builds = builds.Where(k => (k.Position - cPlayer.Position).sqrMagnitude <= Mathf.Pow(radius, 2));
             }
 
-            var itemAssetName = BaseClusteringPlugin.Instance.Translate("not_available");
-            if (assetCount == 1)
-                itemAssetName = itemAssets.First().itemName;
-            else if (assetCount > 1)
-                itemAssetName = itemAssetInput;
+            var itemAssetName = pluginInstance.Translate("not_available");
 
-            UnturnedChat.Say(caller,
-                BaseClusteringPlugin.Instance.Translate("build_count", builds.Count(), itemAssetName,
-                    !float.IsNegativeInfinity(radius)
-                        ? radius.ToString(CultureInfo.CurrentCulture)
-                        : BaseClusteringPlugin.Instance.Translate("not_available"),
-                    target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
-                    plants, barricades, structs));
+            switch (assetCount)
+            {
+                case 1:
+                    itemAssetName = itemAssets.First().itemName;
+                    break;
+                case > 1:
+                    itemAssetName = itemAssetInput;
+                    break;
+            }
+
+            UnturnedChat.Say(caller, pluginInstance.Translate("build_count", builds.Count(), itemAssetName, !float.IsNegativeInfinity(radius) ? radius.ToString(CultureInfo.CurrentCulture) : pluginInstance.Translate("not_available"), target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants, barricades, structs));
         }
     }
 }

@@ -1,9 +1,9 @@
-﻿using JetBrains.Annotations;
-using SDG.Unturned;
+﻿using SDG.Unturned;
 using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 {
+    /// <inheritdoc />
     public sealed class StructureBuildable : Buildable
     {
         private readonly StructureData m_StructureData;
@@ -19,7 +19,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         public override ushort Health => m_StructureData.structure.health;
 
-        [CanBeNull] public override byte[] State => null;
+        public override byte[]? State => null;
 
         public override ulong Owner => m_StructureData.owner;
 
@@ -35,7 +35,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         public override Transform Model => m_StructureDrop.model;
 
-        [CanBeNull] public override Interactable Interactable => null;
+        public override Interactable? Interactable => null;
 
         public override uint InstanceId => m_StructureData.instanceID;
 
