@@ -598,5 +598,64 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         {
             return Clusters.Where(filter);
         }
+
+        /// <summary>
+        /// Gets the cluster that contains the element with the provided model.
+        /// </summary>
+        /// <param name="model">The model of the buildable within a cluster.</param>
+        /// <returns>
+        /// <see langword="null"/> if no cluster is found.
+        /// <br/>
+        /// An instance of <see cref="BaseCluster"/> if a cluster exists.
+        /// </returns>
+        [UsedImplicitly]
+        public BaseCluster? GetClusterWithElement(Transform model)
+        {
+            return Clusters.FirstOrDefault(k => k.Buildables.Any(l => l.Model == model));
+        }
+
+        /// <summary>
+        /// Gets the cluster that contains the element with the provided position.
+        /// </summary>
+        /// <param name="instanceId">The instanceId of the buildable within a cluster.</param>
+        /// <param name="isStructure">If the instanceId belongs to a structure or a barricade.</param>
+        /// <returns>
+        /// <see langword="null"/> if no cluster is found.
+        /// <br/>
+        /// An instance of <see cref="BaseCluster"/> if a cluster exists.
+        /// </returns>
+        [UsedImplicitly]
+        public BaseCluster? GetClusterWithElement(uint instanceId, bool isStructure)
+        {
+            return Clusters.FirstOrDefault(k =>
+            {
+                var builds = k.Buildables.AsEnumerable();
+
+                if (builds == null)
+                    return false;
+
+                if (isStructure)
+                    builds = builds.OfType<StructureBuildable>();
+                else
+                    builds = builds.OfType<BarricadeBuildable>();
+
+                return builds.Any(l => l.InstanceId == instanceId);
+            });
+        }
+
+        /// <summary>
+        /// Gets the cluster that contains the element with the provided buildable instance.
+        /// </summary>
+        /// <param name="buildable">The buildable within a cluster.</param>
+        /// <returns>
+        /// <see langword="null"/> if no cluster is found.
+        /// <br/>
+        /// An instance of <see cref="BaseCluster"/> if a cluster exists.
+        /// </returns>
+        [UsedImplicitly]
+        public BaseCluster? GetClusterWithElement(Buildable buildable)
+        {
+            return Clusters.FirstOrDefault(k => k.Buildables.Contains(buildable));
+        }
     }
 }
