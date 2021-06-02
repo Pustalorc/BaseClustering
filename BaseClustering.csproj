@@ -32,6 +32,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\BaseClustering.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.0.4.0, Culture=neutral, PublicKeyToken=null">
@@ -106,7 +107,6 @@
     <Compile Include="Config\BaseClusteringPluginConfiguration.cs" />
     <Compile Include="API\Patches\PatchBuildableTransforms.cs" />
     <Compile Include="API\Patches\PatchBuildablesDestroy.cs" />
-    <Compile Include="API\Patches\PatchBuildableSpawns.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

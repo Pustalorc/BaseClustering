@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace Pustalorc.Plugins.BaseClustering.API.Delegates
+﻿namespace Pustalorc.Plugins.BaseClustering.API.Delegates
 {
-    public delegate void BuildableDeleted(Transform buildable);
+    public delegate void BuildableDeleted(uint instanceId, bool isStructure);
 }

@@ -127,7 +127,7 @@ namespace Pustalorc.Plugins.BaseClustering
             m_Harmony = new Harmony("xyz.pustalorc.baseClustering");
             m_Harmony.PatchAll();
 
-            BuildableDirectory = new BuildableDirectory();
+            BuildableDirectory = new BuildableDirectory(Configuration.Instance);
 
             if (Configuration.Instance.EnableClustering)
                 BaseClusterDirectory = new BaseClusterDirectory(this, Configuration.Instance, BuildableDirectory);

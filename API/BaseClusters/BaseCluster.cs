@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
@@ -24,16 +25,19 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <summary>
         /// This event is raised if <see cref="Reset"/> is called.
         /// </summary>
+        [UsedImplicitly]
         public event VoidDelegate? OnClusterReset;
 
         /// <summary>
         /// This event is raised if new buildables are added to the cluster.
         /// </summary>
+        [UsedImplicitly]
         public event BuildablesChanged? OnBuildablesAdded;
 
         /// <summary>
         /// This event is raised if buildables are removed from the cluster.
         /// </summary>
+        [UsedImplicitly]
         public event BuildablesChanged? OnBuildablesRemoved;
 
         /// <summary>
@@ -74,22 +78,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <summary>
         /// Gets a copied <see cref="IReadOnlyCollection{Buildable}"/> of all the buildables in the cluster.
         /// </summary>
-        public IReadOnlyCollection<Buildable> Buildables
-        {
-            get
-            {
-                var cloned = new List<Buildable>();
-
-                // Disabled warning as we want a thread-safe copy. Using .ToList() results in the code using a foreach,
-                // so if another thread .Removes or .Adds during that .ToList(), the code will throw ModifiedCollection exception.
-                // ReSharper disable once LoopCanBeConvertedToQuery
-                // ReSharper disable once ForCanBeConvertedToForeach
-                for (var i = 0; i < m_Buildables.Count; i++)
-                    cloned.Add(m_Buildables[i]);
-
-                return new ReadOnlyCollection<Buildable>(cloned);
-            }
-        }
+        public IReadOnlyCollection<Buildable> Buildables => new ReadOnlyCollection<Buildable>(m_Buildables);
 
         internal BaseCluster(BaseClusteringPluginConfiguration pluginConfiguration,
             BaseClusterDirectory baseClusterDirectory, int instanceId, bool isGlobalCluster = false)
@@ -212,10 +201,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <param name="build">The buildable to remove from the base.</param>
         public void RemoveBuildable(Buildable build)
         {
-            var builds = new[] {build};
             var removedSomething = m_Buildables.Remove(build);
             if (removedSomething)
-                OnBuildablesRemoved?.Invoke(builds);
+                OnBuildablesRemoved?.Invoke(new[] {build});
 
             if (removedSomething && !IsBeingDestroyed && !IsGlobalCluster)
                 VerifyAndCorrectIntegrity();

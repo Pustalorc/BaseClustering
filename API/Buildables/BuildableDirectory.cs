@@ -7,6 +7,8 @@ using System.Threading;
 using System.Timers;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using Pustalorc.Plugins.BaseClustering.API.Patches;
+using Pustalorc.Plugins.BaseClustering.Config;
+using Rocket.Core.Utils;
 using SDG.Unturned;
 using UnityEngine;
 using Timer = System.Timers.Timer;
@@ -33,8 +35,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// </summary>
         public event BuildablesChanged? OnBuildablesRemoved;
 
-        private readonly List<Buildable> m_Buildables;
-        private readonly List<Transform> m_TargetBuildsToRemove;
+        private readonly Dictionary<uint, BarricadeBuildable> m_BarricadeBuildables;
+        private readonly Dictionary<uint, StructureBuildable> m_StructureBuildables;
+
+        private readonly HashSet<KeyValuePair<uint, bool>> m_BuildablesToRemove;
         private readonly BackgroundWorker m_BackgroundWorker;
         private readonly Timer m_WorkerTimeout;
         private readonly AutoResetEvent m_BackgroundReset;
@@ -42,42 +46,48 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// <summary>
         /// Gets a copied <see cref="IReadOnlyCollection{Buildable}"/> of all the buildables tracked.
         /// </summary>
-        public IReadOnlyCollection<Buildable> Buildables
+        public IReadOnlyCollection<Buildable> Buildables => new ReadOnlyCollection<Buildable>(m_BarricadeBuildables.Values.Concat<Buildable>(m_StructureBuildables.Values).ToList());
+
+        public BuildableDirectory(BaseClusteringPluginConfiguration configuration)
         {
-            get
-            {
-                var cloned = new List<Buildable>();
-
-                // Disabled warning as we want a thread-safe copy. Using .ToList() results in the code using a foreach,
-                // so if another thread .Removes or .Adds during that .ToList(), the code will throw ModifiedCollection exception.
-                // ReSharper disable once LoopCanBeConvertedToQuery
-                // ReSharper disable once ForCanBeConvertedToForeach
-                for (var i = 0; i < m_Buildables.Count; i++)
-                    cloned.Add(m_Buildables[i]);
-
-                return new ReadOnlyCollection<Buildable>(cloned);
-            }
-        }
-
-        public BuildableDirectory()
-        {
-            m_Buildables = new List<Buildable>();
+            m_BarricadeBuildables = new Dictionary<uint, BarricadeBuildable>(configuration.BuildableCapacity);
+            m_StructureBuildables = new Dictionary<uint, StructureBuildable>(configuration.BuildableCapacity);
             m_BackgroundWorker = new BackgroundWorker();
             m_BackgroundWorker.DoWork += HandleDestroyedInBulk;
             m_WorkerTimeout = new Timer(1000);
             m_WorkerTimeout.Elapsed += HandleElapsed;
-            m_TargetBuildsToRemove = new List<Transform>();
+            m_BuildablesToRemove = new HashSet<KeyValuePair<uint, bool>>();
             m_BackgroundReset = new AutoResetEvent(true);
             _instance = this;
 
-            PatchBuildableSpawns.OnBuildableSpawned += BuildableSpawned;
+            StructureManager.onStructureSpawned -= StructureSpawned;
+            BarricadeManager.onBarricadeSpawned -= BarricadeSpawned;
             PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
         }
 
         internal void LevelLoaded()
         {
             var builds = GetBuildables(useGeneratedBuilds: false);
-            m_Buildables.AddRange(builds);
+
+            foreach (var element in builds)
+            {
+                switch (element)
+                {
+                    case BarricadeBuildable b:
+                        m_BarricadeBuildables.Add(element.InstanceId, b);
+                        break;
+                    case StructureBuildable s:
+                        m_StructureBuildables.Add(element.InstanceId, s);
+                        break;
+                }
+            }
+        }
+
+        internal void Unload()
+        {
+            StructureManager.onStructureSpawned -= StructureSpawned;
+            BarricadeManager.onBarricadeSpawned -= BarricadeSpawned;
+            PatchBuildablesDestroy.OnBuildableDestroyed -= BuildableDestroyed;
         }
 
         private void HandleElapsed(object sender, ElapsedEventArgs e)
@@ -88,31 +98,41 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
             m_BackgroundWorker.RunWorkerAsync();
 
-            if (lastAdd == m_LastAdd && m_TargetBuildsToRemove.Count == 0)
+            if (lastAdd == m_LastAdd)
                 m_WorkerTimeout.Stop();
         }
 
-        private void HandleDestroyedInBulk(object? sender, DoWorkEventArgs? e)
+        private void HandleDestroyedInBulk(object sender, DoWorkEventArgs e)
         {
             m_BackgroundReset.Reset();
+            TaskDispatcher.QueueOnMainThread(InternalHandleDestroyedInBulk);
+        }
 
+        private void InternalHandleDestroyedInBulk()
+        {
             var affected = new List<Buildable>();
-            var clonedTargets = new List<Transform>();
 
-            for (var i = m_TargetBuildsToRemove.Count - 1; i >= 0; i--)
+            foreach (var element in m_BuildablesToRemove)
             {
-                clonedTargets.Add(m_TargetBuildsToRemove[i]);
-                m_TargetBuildsToRemove.RemoveAt(i);
-            }
+                Buildable build;
 
-            for (var i = m_Buildables.Count - 1; i >= 0; i--)
-            {
-                var build = m_Buildables[i];
+                if (element.Value)
+                {
+                    if (!m_StructureBuildables.TryGetValue(element.Key, out var s))
+                        continue;
 
-                if (!clonedTargets.Remove(build.Model))
-                    continue;
+                    build = s;
+                    m_StructureBuildables.Remove(element.Key);
+                }
+                else
+                {
+                    if (!m_BarricadeBuildables.TryGetValue(element.Key, out var b))
+                        continue;
 
-                m_Buildables.Remove(build);
+                    build = b;
+                    m_BarricadeBuildables.Remove(element.Key);
+                }
+
                 affected.Add(build);
             }
 
@@ -122,26 +142,52 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             m_BackgroundReset.Set();
         }
 
-        internal void Unload()
+        internal void WaitDestroyHandle()
         {
-            PatchBuildableSpawns.OnBuildableSpawned -= BuildableSpawned;
-            PatchBuildablesDestroy.OnBuildableDestroyed -= BuildableDestroyed;
+            if (m_WorkerTimeout.Enabled || m_BuildablesToRemove.Count > 0 || m_BackgroundWorker.IsBusy)
+                m_BackgroundReset.WaitOne();
+
+            if (m_BuildablesToRemove.Count > 0)
+                InternalHandleDestroyedInBulk();
         }
 
         private DateTime m_LastAdd;
 
-        private void BuildableDestroyed(Transform buildable)
+        private void BuildableDestroyed(uint instanceId, bool isStructure)
         {
             m_LastAdd = DateTime.UtcNow;
-            m_TargetBuildsToRemove.Add(buildable);
+            m_BuildablesToRemove.Add(new KeyValuePair<uint, bool>(instanceId, isStructure));
 
             if (!m_WorkerTimeout.Enabled)
                 m_WorkerTimeout.Start();
         }
 
+        private void StructureSpawned(StructureRegion region, StructureDrop drop)
+        {
+            var data = region.structures.Find(k => k.instanceID == drop.instanceID);
+            BuildableSpawned(new StructureBuildable(data, drop));
+        }
+
+        private void BarricadeSpawned(BarricadeRegion region, BarricadeDrop drop)
+        {
+            var data = region.barricades.Find(k => k.instanceID == drop.instanceID);
+            BuildableSpawned(new BarricadeBuildable(data, drop));
+        }
+
         private void BuildableSpawned(Buildable buildable)
         {
-            m_Buildables.Add(buildable);
+            switch (buildable)
+            {
+                case BarricadeBuildable b:
+                    m_BarricadeBuildables.Add(buildable.InstanceId, b);
+                    break;
+                case StructureBuildable s:
+                    m_StructureBuildables.Add(buildable.InstanceId, s);
+                    break;
+                default:
+                    return;
+            }
+
             OnBuildableAdded?.Invoke(buildable);
         }
 
@@ -164,7 +210,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             {
                 result = _instance.Buildables;
                 if (!includePlants)
-                    result = result.Except(result.Where(k => k.IsPlanted));
+                    result = result.Where(k => !k.IsPlanted);
             }
             else
             {
@@ -202,15 +248,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                     ? result.Where(k => k.Owner == owner)
                     : result.Where(k => k.Owner == owner || k.Group == group)
             }).ToList();
-        }
-
-        internal void WaitDestroyHandle()
-        {
-            if (m_WorkerTimeout.Enabled || m_TargetBuildsToRemove.Count > 0 || m_BackgroundWorker.IsBusy)
-                m_BackgroundReset.WaitOne();
-
-            if (m_TargetBuildsToRemove.Count > 0)
-                HandleDestroyedInBulk(null, null);
         }
 
         /// <summary>

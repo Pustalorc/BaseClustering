@@ -1,4 +1,5 @@
 ﻿using Pustalorc.Plugins.BaseClustering.API.BaseClusters;
+using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Rocket.API;
 
 namespace Pustalorc.Plugins.BaseClustering.Config
@@ -32,12 +33,18 @@ namespace Pustalorc.Plugins.BaseClustering.Config
         /// </summary>
         public float MaxDistanceToConsiderPartOfBase;
 
+        /// <summary>
+        /// The default buildable capacity when initializing <see cref="BuildableDirectory"/>.
+        /// </summary>
+        public int BuildableCapacity;
+
         public void LoadDefaults()
         {
             VerboseLogging = false;
             EnableClustering = true;
             MaxDistanceBetweenStructures = 6.1f;
             MaxDistanceToConsiderPartOfBase = 10f;
+            BuildableCapacity = 60000;
         }
     }
 }

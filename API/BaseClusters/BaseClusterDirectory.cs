@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
+using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using Pustalorc.Plugins.BaseClustering.API.Patches;
@@ -24,16 +25,19 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <summary>
         /// This event is raised when <see cref="GenerateAndLoadAllClusters"/> has finished executing.
         /// </summary>
+        [UsedImplicitly]
         public event VoidDelegate? OnClustersGenerated;
 
         /// <summary>
         /// This event is raised whenever a new cluster is added.
         /// </summary>
+        [UsedImplicitly]
         public event ClusterChange? OnClusterAdded;
 
         /// <summary>
         /// This event is raised whenever a cluster is removed.
         /// </summary>
+        [UsedImplicitly]
         public event ClusterChange? OnClusterRemoved;
 
         private readonly BaseClusteringPlugin m_Plugin;
@@ -493,7 +497,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
             foreach (var cluster in Clusters.ToList())
             {
-                if (!builds.Any())
+                if (builds.Count == 0)
                     return;
 
                 cluster.RemoveBuildables(builds);
