@@ -5,8 +5,14 @@ using SDG.Unturned;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Patches
 {
+    /// <summary>
+    /// A patch for barricades and structures being destroyed.
+    /// </summary>
     public static class PatchBuildablesDestroy
     {
+        /// <summary>
+        /// Event is fired whenever a barricade or structure is destroyed.
+        /// </summary>
         public static event BuildableDeleted? OnBuildableDestroyed;
 
         [HarmonyPatch]

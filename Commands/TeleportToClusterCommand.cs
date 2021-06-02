@@ -8,6 +8,8 @@ using Rocket.Unturned.Player;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class TeleportToClusterCommand : IRocketCommand

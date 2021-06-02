@@ -38,6 +38,9 @@ namespace Pustalorc.Plugins.BaseClustering.Config
         /// </summary>
         public int BuildableCapacity;
 
+        /// <summary>
+        /// Loads the default values for the config.
+        /// </summary>
         public void LoadDefaults()
         {
             VerboseLogging = false;

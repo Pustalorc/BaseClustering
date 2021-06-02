@@ -209,6 +209,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// <param name="value">The <see cref="bool"/> value to write.</param>
         public void WriteBoolean(bool value)
         {
+            // ReSharper disable once RedundantCast
+            // Removing cast causes compile exception.
             Stream.WriteByte((byte) (value ? 1 : 0));
             Water++;
         }
@@ -405,12 +407,24 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
             Stream.Read(Buffer, 0, count);
         }
 
+        /// <summary>
+        /// The buffer to which all reads are performed to.
+        /// </summary>
         protected byte[] Buffer = new byte[Block.BUFFER_SIZE];
 
+        /// <summary>
+        /// The number of bytes currently pending to be written and flushed.
+        /// </summary>
         protected int Water;
 
+        /// <summary>
+        /// The path to the file to read/write from/to.
+        /// </summary>
         protected string Path;
 
+        /// <summary>
+        /// The FileStream dealing with the file.
+        /// </summary>
         protected FileStream Stream;
     }
 }

@@ -196,6 +196,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             UnsafeHeal(amount);
         }
 
+        /// <inheritdoc />
         public override string ToString()
         {
             return $"Buildable [{AssetId}:{InstanceId}] located at {Position}";

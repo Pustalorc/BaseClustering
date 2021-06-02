@@ -73,7 +73,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// <param name="plugin">The instance of the plugin that was loaded.</param>
         public static void PluginLoaded(RocketPlugin plugin)
         {
-            var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(plugin.Assembly.Location).ProductVersion;
+            var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(plugin.Assembly.Location)
+                .ProductVersion;
             var pluginIdentity = $"{plugin.Name} v{pluginVersion}";
             Write(pluginIdentity, $"{pluginIdentity}, by Pustalorc, has been loaded.");
         }
@@ -84,7 +85,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// <param name="plugin">The instance of the plugin that was unloaded.</param>
         public static void PluginUnloaded(RocketPlugin plugin)
         {
-            var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(plugin.Assembly.Location).ProductVersion;
+            var pluginVersion = System.Diagnostics.FileVersionInfo.GetVersionInfo(plugin.Assembly.Location)
+                .ProductVersion;
             var pluginIdentity = $"{plugin.Name} v{pluginVersion}";
             Write(pluginIdentity, $"{pluginIdentity}, by Pustalorc, has been unloaded.");
         }

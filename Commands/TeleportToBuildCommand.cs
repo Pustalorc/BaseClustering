@@ -10,6 +10,8 @@ using SDG.Unturned;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class TeleportToBuildCommand : IRocketCommand
@@ -88,7 +90,10 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             var buildsL = builds.ToList();
             if (!buildsL.Any())
             {
-                UnturnedChat.Say(caller, pluginInstance.Translate("cannot_teleport_no_builds", itemAssetName, target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants, barricades, structs));
+                UnturnedChat.Say(caller,
+                    pluginInstance.Translate("cannot_teleport_no_builds", itemAssetName,
+                        target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants,
+                        barricades, structs));
                 return;
             }
 
@@ -105,7 +110,10 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             }
             else
             {
-                UnturnedChat.Say(caller, pluginInstance.Translate("cannot_teleport_builds_too_close", itemAssetName, target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants, barricades, structs));
+                UnturnedChat.Say(caller,
+                    pluginInstance.Translate("cannot_teleport_builds_too_close", itemAssetName,
+                        target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants,
+                        barricades, structs));
             }
         }
     }

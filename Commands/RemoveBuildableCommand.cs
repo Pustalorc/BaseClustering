@@ -7,6 +7,8 @@ using Rocket.Unturned.Player;
 using SDG.Unturned;
 using UnityEngine;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class RemoveBuildableCommand : IRocketCommand

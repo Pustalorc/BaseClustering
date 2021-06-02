@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Pustalorc.Plugins.BaseClustering.API.WreckingActions
 {
     /// <summary>
-    /// A wreck action for a <see cref="BaseCluster"/>.
+    /// A wreck action for a collection of <see cref="BaseCluster"/>s.
     /// <br/>
     /// Actions determine how the plugin will do a final search when performing a confirmed wreck.
     /// </summary>
@@ -40,7 +40,20 @@ namespace Pustalorc.Plugins.BaseClustering.API.WreckingActions
         /// </summary>
         public string ItemAssetName;
 
-        public WreckClustersAction(IRocketPlayer? target, Vector3 center, List<ItemAsset> assets, float radius, string assetName)
+        /// <summary>
+        /// Creates a new instance of the class.
+        /// </summary>
+        /// <param name="target">The player we might possibly be targeting that owns specific clusters.</param>
+        /// <param name="center">
+        /// The center position of the wreck action.
+        /// <br/>
+        /// If no position is wanted, this value is to be set to <see cref="Vector3.negativeInfinity"/>.
+        /// </param>
+        /// <param name="assets">A list of all <see cref="ItemAsset"/>s that will be targeted.</param>
+        /// <param name="radius">The radius based on the Center specified in this object.</param>
+        /// <param name="assetName">The name of the user input for item asset search, or the name of the only item asset used.</param>
+        public WreckClustersAction(IRocketPlayer? target, Vector3 center, List<ItemAsset> assets, float radius,
+            string assetName)
         {
             TargetPlayer = target;
             Center = center;

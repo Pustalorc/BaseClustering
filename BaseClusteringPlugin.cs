@@ -44,6 +44,9 @@ namespace Pustalorc.Plugins.BaseClustering
         /// </summary>
         public BaseClusterDirectory? BaseClusterDirectory { get; private set; }
 
+        /// <summary>
+        /// Gets the default translations that the plugin uses.
+        /// </summary>
         public override TranslationList DefaultTranslations => new()
         {
             {
@@ -122,6 +125,9 @@ namespace Pustalorc.Plugins.BaseClustering
             {"vehicle_wreck", "Wrecked buildables from {0} [{1}]. Instance ID: {2}, Owner: {3}"}
         };
 
+        /// <summary>
+        /// Loads and initializes the plugin.
+        /// </summary>
         protected override void Load()
         {
             m_Harmony = new Harmony("xyz.pustalorc.baseClustering");
@@ -143,6 +149,9 @@ namespace Pustalorc.Plugins.BaseClustering
             Logging.PluginLoaded(this);
         }
 
+        /// <summary>
+        /// Unloads and de-initializes the plugin.
+        /// </summary>
         protected override void Unload()
         {
             Instance = null;

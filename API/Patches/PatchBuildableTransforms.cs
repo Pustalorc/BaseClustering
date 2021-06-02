@@ -9,8 +9,14 @@ using SDG.Unturned;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Patches
 {
+    /// <summary>
+    /// A patch for barricades and structures being transformed.
+    /// </summary>
     public static class PatchBuildableTransforms
     {
+        /// <summary>
+        /// Event is fired whenever a barricade or structure is transformed.
+        /// </summary>
         public static event BuildableChange? OnBuildableTransformed;
 
         [HarmonyPatch]

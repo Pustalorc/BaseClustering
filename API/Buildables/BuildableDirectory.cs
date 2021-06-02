@@ -46,8 +46,14 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// <summary>
         /// Gets a copied <see cref="IReadOnlyCollection{Buildable}"/> of all the buildables tracked.
         /// </summary>
-        public IReadOnlyCollection<Buildable> Buildables => new ReadOnlyCollection<Buildable>(m_BarricadeBuildables.Values.Concat<Buildable>(m_StructureBuildables.Values).ToList());
+        public IReadOnlyCollection<Buildable> Buildables =>
+            new ReadOnlyCollection<Buildable>(m_BarricadeBuildables.Values
+                .Concat<Buildable>(m_StructureBuildables.Values).ToList());
 
+        /// <summary>
+        /// Creates a new instance of the buildable directory.
+        /// </summary>
+        /// <param name="configuration">The plugin's configuration to utilize here.</param>
         public BuildableDirectory(BaseClusteringPluginConfiguration configuration)
         {
             m_BarricadeBuildables = new Dictionary<uint, BarricadeBuildable>(configuration.BuildableCapacity);
@@ -70,7 +76,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             var builds = GetBuildables(useGeneratedBuilds: false);
 
             foreach (var element in builds)
-            {
                 switch (element)
                 {
                     case BarricadeBuildable b:
@@ -80,7 +85,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
                         m_StructureBuildables.Add(element.InstanceId, s);
                         break;
                 }
-            }
         }
 
         internal void Unload()
@@ -202,7 +206,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// <remarks>
         /// If <paramref name="owner"/> or <paramref name="group"/> are equal to 0, then there will be no filtering done respective to whichever is 0.
         /// </remarks>
-        public static IEnumerable<Buildable> GetBuildables(ulong owner = 0, ulong group = 0, bool includePlants = false, bool useGeneratedBuilds = true)
+        public static IEnumerable<Buildable> GetBuildables(ulong owner = 0, ulong group = 0, bool includePlants = false,
+            bool useGeneratedBuilds = true)
         {
             IEnumerable<Buildable> result;
 

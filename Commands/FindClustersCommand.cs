@@ -8,6 +8,8 @@ using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using UnityEngine;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class FindClustersCommand : IRocketCommand

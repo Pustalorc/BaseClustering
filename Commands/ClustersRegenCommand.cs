@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class ClustersRegenCommand : IRocketCommand

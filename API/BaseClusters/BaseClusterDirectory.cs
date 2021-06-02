@@ -55,9 +55,17 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <remarks>
         /// This copied collection includes the global cluster from <see cref="GetOrCreateGlobalCluster"/>.
         /// </remarks>
-        public IReadOnlyCollection<BaseCluster> Clusters => new ReadOnlyCollection<BaseCluster>(m_Clusters.Concat(new[] {GetOrCreateGlobalCluster()}).ToList());
+        public IReadOnlyCollection<BaseCluster> Clusters =>
+            new ReadOnlyCollection<BaseCluster>(m_Clusters.Concat(new[] {GetOrCreateGlobalCluster()}).ToList());
 
-        public BaseClusterDirectory(BaseClusteringPlugin plugin, BaseClusteringPluginConfiguration pluginConfiguration, BuildableDirectory buildableDirectory)
+        /// <summary>
+        /// Creates a new instance of the BaseCluster Directory.
+        /// </summary>
+        /// <param name="plugin">The instance of the plugin.</param>
+        /// <param name="pluginConfiguration">The configuration of the plugin.</param>
+        /// <param name="buildableDirectory">The buildable directory, which should've been initialized beforehand.</param>
+        public BaseClusterDirectory(BaseClusteringPlugin plugin, BaseClusteringPluginConfiguration pluginConfiguration,
+            BuildableDirectory buildableDirectory)
         {
             m_Plugin = plugin;
             m_PluginConfiguration = pluginConfiguration;

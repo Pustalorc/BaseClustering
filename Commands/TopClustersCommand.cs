@@ -4,6 +4,8 @@ using System.Linq;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class TopClustersCommand : IRocketCommand
@@ -42,7 +44,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             {
                 var builder = topClusters.ElementAt(i);
 
-                UnturnedChat.Say(caller, pluginInstance.Translate("top_cluster_format", i + 1, builder.Key, builder.Count()));
+                UnturnedChat.Say(caller,
+                    pluginInstance.Translate("top_cluster_format", i + 1, builder.Key, builder.Count()));
             }
         }
     }

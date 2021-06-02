@@ -11,6 +11,8 @@ using Rocket.Unturned.Player;
 using SDG.Unturned;
 using UnityEngine;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class WreckCommand : IRocketCommand
@@ -23,7 +25,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Help => "Destroys buildables from the map.";
 
-        public string Syntax => "confirm | abort | b [radius] | s [radius] | <item> [radius] | v [item] [radius] | <player> [item] [radius]";
+        public string Syntax =>
+            "confirm | abort | b [radius] | s [radius] | <item> [radius] | v [item] [radius] | <player> [item] [radius]";
 
         public List<string> Aliases => new() {"w"};
 

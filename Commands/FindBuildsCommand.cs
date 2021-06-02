@@ -10,6 +10,8 @@ using Rocket.Unturned.Player;
 using SDG.Unturned;
 using UnityEngine;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class FindBuildsCommand : IRocketCommand
@@ -20,7 +22,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Help => "Finds buildables around the map";
 
-        public string Syntax => "b [radius] | s [radius] | [id] [radius] | v [id] [radius] | [player] [id] [radius] | [player] b [radius] | [player] s [radius] | [player] v [id] [radius]";
+        public string Syntax =>
+            "b [radius] | s [radius] | [id] [radius] | v [id] [radius] | [player] [id] [radius] | [player] b [radius] | [player] s [radius] | [player] v [id] [radius]";
 
         public List<string> Aliases => new() {"fb"};
 
@@ -96,7 +99,13 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                     break;
             }
 
-            UnturnedChat.Say(caller, pluginInstance.Translate("build_count", builds.Count(), itemAssetName, !float.IsNegativeInfinity(radius) ? radius.ToString(CultureInfo.CurrentCulture) : pluginInstance.Translate("not_available"), target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants, barricades, structs));
+            UnturnedChat.Say(caller,
+                pluginInstance.Translate("build_count", builds.Count(), itemAssetName,
+                    !float.IsNegativeInfinity(radius)
+                        ? radius.ToString(CultureInfo.CurrentCulture)
+                        : pluginInstance.Translate("not_available"),
+                    target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants, barricades,
+                    structs));
         }
     }
 }

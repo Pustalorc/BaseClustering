@@ -6,6 +6,8 @@ using Rocket.Unturned.Player;
 using SDG.Unturned;
 using UnityEngine;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
     public sealed class WreckVehicleCommand : IRocketCommand
@@ -25,7 +27,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
         public void Execute(IRocketPlayer caller, string[] command)
         {
             var player = (UnturnedPlayer) caller;
-            var raycastInfo = DamageTool.raycast(new Ray(player.Player.look.aim.position, player.Player.look.aim.forward), 10f, RayMasks.VEHICLE);
+            var raycastInfo =
+                DamageTool.raycast(new Ray(player.Player.look.aim.position, player.Player.look.aim.forward), 10f,
+                    RayMasks.VEHICLE);
             var baseClusteringPlugin = BaseClusteringPlugin.Instance;
 
             if (baseClusteringPlugin == null)
