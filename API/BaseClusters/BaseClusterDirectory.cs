@@ -325,7 +325,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <returns>An <see cref="IEnumerable{BaseCluster}"/> with all the generated clusters</returns>
         public IEnumerable<BaseCluster> ClusterElements(IEnumerable<Buildable> buildables, bool needLogging = false)
         {
-            // TODO IDEA: Use background worker and have this wait until the background worker is done.
             // Start a new stopwatch. This will be used to log how long the program is taking with each step.
             var stopwatch = Stopwatch.StartNew();
             // Initialize an empty sample output for this method.
@@ -398,7 +397,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 output.Add(cluster);
 
                 // Finally, check if we need logging, and if we are ready to log it.
-                // TODO: Just make this code look cleaner, this looks like I grabbed my keyboard and slammed my head against it.
                 currentCount += cluster.Buildables.Count;
                 if (!needLogging || !(currentCount / logRate > currentMultiplier)) continue;
 
@@ -480,6 +478,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <br/>
         /// An instance of <see cref="BaseCluster"/> if a best cluster is available.
         /// </returns>
+        [UsedImplicitly]
         public BaseCluster? FindBestCluster(Vector3 target)
         {
             return FindBestClusters(target).FirstOrDefault();
@@ -590,6 +589,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <returns>
         /// An <see cref="IEnumerable{BaseCluster}"/> holding all the clusters that this player is deemed "most common owner" of.
         /// </returns>
+        [UsedImplicitly]
         public IEnumerable<BaseCluster> GetMostOwnedClusters(CSteamID player)
         {
             return GetClustersWithFilter(k => k.CommonOwner == player.m_SteamID);

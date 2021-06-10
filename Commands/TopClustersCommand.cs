@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 
@@ -8,6 +9,7 @@ using Rocket.Unturned.Chat;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
+    [UsedImplicitly]
     public sealed class TopClustersCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;

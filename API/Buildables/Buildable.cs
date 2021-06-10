@@ -30,6 +30,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// <summary>
         /// The amount of health this buildable has.
         /// </summary>
+        [UsedImplicitly]
         public abstract ushort Health { get; }
 
         /// <summary>
@@ -38,6 +39,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// <remarks>
         /// This is <see cref="Nullable"/> because <see cref="Structure"/> does not have any State information.
         /// </remarks>
+        [UsedImplicitly]
         public abstract byte[]? State { get; }
 
 
@@ -56,16 +58,19 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// <summary>
         /// The angle of rotation on the X axis of this buildable.
         /// </summary>
+        [UsedImplicitly]
         public abstract byte AngleX { get; }
 
         /// <summary>
         /// The angle of rotation on the Y axis of this buildable.
         /// </summary>
+        [UsedImplicitly]
         public abstract byte AngleY { get; }
 
         /// <summary>
         /// The angle of rotation on the Z axis of this buildable.
         /// </summary>
+        [UsedImplicitly]
         public abstract byte AngleZ { get; }
 
         /// <summary>
@@ -109,7 +114,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// This determines if the buildable is planted (on a vehicle).
         /// </summary>
         /// <remarks>
-        /// This will always return <see cref="bool.False"/> if its a <see cref="StructureBuildable"/>.
+        /// This will always return <see langword="false"/> if its a <see cref="StructureBuildable"/>.
         /// </remarks>
         public abstract bool IsPlanted { get; }
 
@@ -155,6 +160,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// <remarks>
         /// <paramref name="damage"/> is in raw damage, not a percentage of max health.
         /// </remarks>
+        [UsedImplicitly]
         public void SafeDamage(ushort damage)
         {
             if (!Thread.CurrentThread.IsGameThread())
@@ -185,6 +191,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// <remarks>
         /// <paramref name="amount"/> is in raw healing, not a percentage of max health.
         /// </remarks>
+        [UsedImplicitly]
         public void SafeHeal(ushort amount)
         {
             if (!Thread.CurrentThread.IsGameThread())

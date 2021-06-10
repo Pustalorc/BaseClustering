@@ -18,6 +18,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Reads a <see cref="double"/> from the stream.
         /// </summary>
         /// <returns>A <see cref="double"/>.</returns>
+        [UsedImplicitly]
         public double ReadDouble()
         {
             Stream.Read(Buffer, 0, 8);
@@ -28,6 +29,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Writes a <see cref="double"/> to the stream.
         /// </summary>
         /// <param name="value">The <see cref="double"/> value to write.</param>
+        [UsedImplicitly]
         public void WriteDouble(double value)
         {
             var bytes = BitConverter.GetBytes(value);
@@ -39,6 +41,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Reads a <see cref="string"/> from the stream.
         /// </summary>
         /// <returns>A <see cref="string"/>.</returns>
+        [UsedImplicitly]
         public string ReadString()
         {
             var count = Stream.ReadByte();
@@ -68,6 +71,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Reads multiple <see cref="byte"/>s from the stream.
         /// </summary>
         /// <returns>An <see cref="Array"/> of <see cref="byte"/>s.</returns>
+        [UsedImplicitly]
         public byte[] ReadBytes()
         {
             var array = new byte[ReadUInt16()];
@@ -79,6 +83,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Reads an <see cref="short"/> from the stream.
         /// </summary>
         /// <returns>An <see cref="short"/>.</returns>
+        [UsedImplicitly]
         public short ReadInt16()
         {
             Stream.Read(Buffer, 0, 2);
@@ -149,6 +154,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Reads a <see cref="CSteamID"/> from the stream.
         /// </summary>
         /// <returns>A <see cref="CSteamID"/>.</returns>
+        [UsedImplicitly]
         public CSteamID ReadSteamID()
         {
             return new(ReadUInt64());
@@ -158,6 +164,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Reads a <see cref="Vector3"/> from the stream.
         /// </summary>
         /// <returns>A <see cref="Vector3"/>.</returns>
+        [UsedImplicitly]
         public Vector3 ReadSingleVector3()
         {
             return new(ReadSingle(), ReadSingle(), ReadSingle());
@@ -167,6 +174,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Reads a <see cref="Quaternion"/> from the stream.
         /// </summary>
         /// <returns>A <see cref="Quaternion"/>.</returns>
+        [UsedImplicitly]
         public Quaternion ReadSingleQuaternion()
         {
             return Quaternion.Euler(ReadSingle(), ReadSingle(), ReadSingle());
@@ -176,6 +184,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Reads a <see cref="Color"/> from the stream.
         /// </summary>
         /// <returns>A <see cref="Color"/>.</returns>
+        [UsedImplicitly]
         public Color ReadColor()
         {
             return new(ReadByte() / 255f, ReadByte() / 255f, ReadByte() / 255f);
@@ -185,6 +194,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Reads a <see cref="DateTime"/> from the stream.
         /// </summary>
         /// <returns>A <see cref="DateTime"/>.</returns>
+        [UsedImplicitly]
         public DateTime ReadDateTime()
         {
             return DateTime.FromBinary(ReadInt64());
@@ -194,6 +204,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Writes a <see cref="string"/> to the stream.
         /// </summary>
         /// <param name="value">The <see cref="string"/> value to write.</param>
+        [UsedImplicitly]
         public void WriteString(string value)
         {
             var bytes = Encoding.UTF8.GetBytes(value);
@@ -229,6 +240,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Writes an <see cref="Array"/> of <see cref="double"/>s to the stream.
         /// </summary>
         /// <param name="values">The <see cref="Array"/> of <see cref="double"/>s to write.</param>
+        [UsedImplicitly]
         public void WriteBytes(byte[] values)
         {
             var num = (ushort) values.Length;
@@ -241,6 +253,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Writes an <see cref="short"/> to the stream.
         /// </summary>
         /// <param name="value">The <see cref="short"/> value to write.</param>
+        [UsedImplicitly]
         public void WriteInt16(short value)
         {
             var bytes = BitConverter.GetBytes(value);
@@ -318,6 +331,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Writes a <see cref="CSteamID"/> to the stream.
         /// </summary>
         /// <param name="steamId">The <see cref="CSteamID"/> value to write.</param>
+        [UsedImplicitly]
         public void WriteSteamID(CSteamID steamId)
         {
             WriteUInt64(steamId.m_SteamID);
@@ -327,6 +341,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Writes a <see cref="Vector3"/> to the stream.
         /// </summary>
         /// <param name="value">The <see cref="Vector3"/> value to write.</param>
+        [UsedImplicitly]
         public void WriteSingleVector3(Vector3 value)
         {
             WriteSingle(value.x);
@@ -338,6 +353,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Writes a <see cref="Quaternion"/> to the stream.
         /// </summary>
         /// <param name="value">The <see cref="Quaternion"/> value to write.</param>
+        [UsedImplicitly]
         public void WriteSingleQuaternion(Quaternion value)
         {
             var eulerAngles = value.eulerAngles;
@@ -350,6 +366,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Writes a <see cref="Color"/> to the stream.
         /// </summary>
         /// <param name="value">The <see cref="Color"/> value to write.</param>
+        [UsedImplicitly]
         public void WriteColor(Color value)
         {
             WriteByte((byte) (value.r * 255f));
@@ -361,6 +378,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Writes a <see cref="DateTime"/> to the stream.
         /// </summary>
         /// <param name="value">The <see cref="DateTime"/> value to write.</param>
+        [UsedImplicitly]
         public void WriteDateTime(DateTime value)
         {
             WriteInt64(value.ToBinary());
@@ -402,6 +420,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// Reads <paramref name="count"/> <see cref="byte"/>s but does not interpret them in any way, essentially skipping them.
         /// </summary>
         /// <param name="count">The number of <see cref="byte"/>s that you wish to skip ahead.</param>
+        [UsedImplicitly]
         public void Skip(int count)
         {
             Stream.Read(Buffer, 0, count);
@@ -410,21 +429,23 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// <summary>
         /// The buffer to which all reads are performed to.
         /// </summary>
-        protected byte[] Buffer = new byte[Block.BUFFER_SIZE];
+        [UsedImplicitly]
+        public byte[] Buffer { get; protected set; } = new byte[Block.BUFFER_SIZE];
 
         /// <summary>
         /// The number of bytes currently pending to be written and flushed.
         /// </summary>
-        protected int Water;
+        public int Water { get; protected set; }
 
         /// <summary>
         /// The path to the file to read/write from/to.
         /// </summary>
-        protected string Path;
+        public string Path { get; }
 
         /// <summary>
         /// The FileStream dealing with the file.
         /// </summary>
-        protected FileStream Stream;
+        [UsedImplicitly]
+        public FileStream Stream { get; protected set; }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
@@ -10,6 +11,7 @@ using Rocket.Unturned.Chat;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
+    [UsedImplicitly]
     public sealed class TopBuildersCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;

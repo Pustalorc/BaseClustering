@@ -50,6 +50,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <summary>
         /// Gets the common group of the entire cluster based on which group owns the most things.
         /// </summary>
+        [UsedImplicitly]
         public ulong CommonGroup => m_Buildables.GroupBy(k => k.Group)
             .OrderByDescending(k => k.Count())
             .Select(g => g.Key).ToList().FirstOrDefault();
@@ -94,9 +95,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// Destroys this base, including all the buildables in it.
         /// </summary>
         /// <param name="shouldDropItems">
-        /// If <see cref="bool.True"/>, <see cref="InteractableStorage"/>s will drop all their contents on the ground.
+        /// If <see langword="true"/>, <see cref="InteractableStorage"/>s will drop all their contents on the ground.
         /// <br/>
-        /// If <see cref="bool.False"/>, <see cref="InteractableStorage"/>s will not drop any of their contents on the ground.
+        /// If <see langword="false"/>, <see cref="InteractableStorage"/>s will not drop any of their contents on the ground.
         /// </param>
         public void Destroy(bool shouldDropItems = true)
         {
@@ -121,9 +122,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// </summary>
         /// <param name="buildable">The buildable to check.</param>
         /// <returns>
-        /// <see cref="bool.True"/> if the buildable is within range.
+        /// <see langword="true"/> if the buildable is within range.
         /// <br/>
-        /// <see cref="bool.False"/> if the buildable is outside range.
+        /// <see langword="false"/> if the buildable is outside range.
         /// </returns>
         public bool IsWithinRange(Buildable buildable)
         {
@@ -140,9 +141,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// </summary>
         /// <param name="position">The position to check.</param>
         /// <returns>
-        /// <see cref="bool.True"/> If the position is within range.
+        /// <see langword="true"/> If the position is within range.
         /// <br/>
-        /// <see cref="bool.False"/> If the position is outside range.
+        /// <see langword="false"/> If the position is outside range.
         /// </returns>
         /// <remarks>
         /// Unlike <see cref="IsWithinRange(Buildable)"/>, this method only checks with <see cref="BaseClusteringPluginConfiguration.MaxDistanceToConsiderPartOfBase"/> not with <see cref="BaseClusteringPluginConfiguration.MaxDistanceBetweenStructures"/>.
@@ -199,6 +200,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// Removes a buildable from the base. This method does not destroy the buildable.
         /// </summary>
         /// <param name="build">The buildable to remove from the base.</param>
+        [UsedImplicitly]
         public void RemoveBuildable(Buildable build)
         {
             var removedSomething = m_Buildables.Remove(build);

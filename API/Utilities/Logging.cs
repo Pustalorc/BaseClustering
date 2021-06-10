@@ -1,5 +1,4 @@
 using System;
-using Pustalorc.Plugins.BaseClustering.Config;
 using Rocket.Core.Logging;
 using Rocket.Core.Plugins;
 
@@ -10,30 +9,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
     /// </summary>
     internal static class Logging
     {
-        /// <summary>
-        /// Logs a Verbose level message, if <see cref="BaseClusteringPluginConfiguration.VerboseLogging"/> is true.
-        /// </summary>
-        /// <param name="source">The apparent source that sent this message.</param>
-        /// <param name="message">The actual message to be printed out.</param>
-        /// <param name="consoleColor">The <see cref="ConsoleColor"/> to use in console.</param>
-        /// <param name="logInRocket">If the verbose message should be logged in rocketmod's log file.</param>
-        /// <param name="rocketMessage">If the message is to be modified when logging to rocketmod's log file, this value will be used if it is not null.</param>
-        /// <param name="rocketColor">If the color that rocket perceives was used is to be modified when logging to rocketmod's log file, this value will be used if it is not null.</param>
-        public static void Verbose(object source, object message, ConsoleColor consoleColor = ConsoleColor.Green,
-            bool logInRocket = true, object? rocketMessage = null, ConsoleColor? rocketColor = null)
-        {
-            if (BaseClusteringPlugin.Instance != null &&
-                (!BaseClusteringPlugin.Instance.Configuration?.Instance?.VerboseLogging ?? false)) return;
-
-            Console.ForegroundColor = consoleColor;
-            Console.WriteLine($"[VERBOSE {source}]: {message}");
-
-            if (logInRocket)
-                Logger.ExternalLog($"[VERBOSE {source}]: " + (rocketMessage ?? message), rocketColor ?? consoleColor);
-
-            Console.ResetColor();
-        }
-
         /// <summary>
         /// Logs a normal level message.
         /// </summary>

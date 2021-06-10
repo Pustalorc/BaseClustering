@@ -71,9 +71,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// If <paramref name="include"/> isn't found in <paramref name="args"/>, this will be -1.
         /// </param>
         /// <returns>
-        /// <see cref="bool.True"/> if <paramref name="index"/> is > -1.
+        /// <see langword="true"/> if <paramref name="index"/> is > -1.
         /// <br/>
-        /// <see cref="bool.False"/> if <paramref name="index"/> is == -1.
+        /// <see langword="false"/> if <paramref name="index"/> is == -1.
         /// </returns>
         public static bool CheckArgsIncludeString(this IEnumerable<string> args, string include, out int index)
         {
@@ -170,9 +170,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// </summary>
         /// <param name="vector">The <see cref="Vector3"/> to compare to negative infinity.</param>
         /// <returns>
-        /// <see cref="bool.True"/> if <paramref name="vector"/> has any <see cref="float.NegativeInfinity"/> component.
+        /// <see langword="true"/> if <paramref name="vector"/> has any <see cref="float.NegativeInfinity"/> component.
         /// <br/>
-        /// <see cref="bool.False"/> if <paramref name="vector"/> has no <see cref="float.NegativeInfinity"/> component.
+        /// <see langword="false"/> if <paramref name="vector"/> has no <see cref="float.NegativeInfinity"/> component.
         /// </returns>
         public static bool IsNegativeInfinity(this Vector3 vector)
         {

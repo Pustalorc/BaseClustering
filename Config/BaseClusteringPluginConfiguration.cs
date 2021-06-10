@@ -1,4 +1,5 @@
-﻿using Pustalorc.Plugins.BaseClustering.API.BaseClusters;
+﻿using JetBrains.Annotations;
+using Pustalorc.Plugins.BaseClustering.API.BaseClusters;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Rocket.API;
 
@@ -7,13 +8,9 @@ namespace Pustalorc.Plugins.BaseClustering.Config
     /// <summary>
     /// Configuration for the plugin when it comes to how it should operate and handle things.
     /// </summary>
+    [UsedImplicitly]
     public sealed class BaseClusteringPluginConfiguration : IRocketPluginConfiguration
     {
-        /// <summary>
-        /// If verbose level logging (i.e: extra logging) should be enabled or not.
-        /// </summary>
-        public bool VerboseLogging;
-
         /// <summary>
         /// If the <see cref="BaseClusterDirectory"/> should be instantiated and loaded or not.
         /// </summary>
@@ -43,7 +40,6 @@ namespace Pustalorc.Plugins.BaseClustering.Config
         /// </summary>
         public void LoadDefaults()
         {
-            VerboseLogging = false;
             EnableClustering = true;
             MaxDistanceBetweenStructures = 6.1f;
             MaxDistanceToConsiderPartOfBase = 10f;

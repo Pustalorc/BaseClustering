@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
@@ -14,6 +15,7 @@ using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
+    [UsedImplicitly]
     public sealed class FindBuildsCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;

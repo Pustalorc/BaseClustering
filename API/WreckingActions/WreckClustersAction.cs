@@ -11,34 +11,34 @@ namespace Pustalorc.Plugins.BaseClustering.API.WreckingActions
     /// <br/>
     /// Actions determine how the plugin will do a final search when performing a confirmed wreck.
     /// </summary>
-    public sealed class WreckClustersAction
+    public readonly struct WreckClustersAction
     {
         /// <summary>
         /// The player we might possibly be targeting that owns specific clusters.
         /// </summary>
-        public IRocketPlayer? TargetPlayer;
+        public IRocketPlayer? TargetPlayer { get; }
 
         /// <summary>
         /// The center position of the wreck action.
         /// <br/>
         /// If no position is wanted, this value is to be set to <see cref="Vector3.negativeInfinity"/>.
         /// </summary>
-        public Vector3 Center;
+        public Vector3 Center { get; }
 
         /// <summary>
         /// A list of all <see cref="ItemAsset"/>s that will be targeted.
         /// </summary>
-        public List<ItemAsset> ItemAssets;
+        public List<ItemAsset> ItemAssets { get; }
 
         /// <summary>
         /// The radius based on the Center specified in this object.
         /// </summary>
-        public float Radius;
+        public float Radius { get; }
 
         /// <summary>
         /// The name of the user input for item asset search, or the name of the only item asset used.
         /// </summary>
-        public string ItemAssetName;
+        public string ItemAssetName { get; }
 
         /// <summary>
         /// Creates a new instance of the class.

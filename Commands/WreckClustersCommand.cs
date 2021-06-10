@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Pustalorc.Plugins.BaseClustering.API.WreckingActions;
 using Rocket.API;
@@ -13,6 +14,7 @@ using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
+    [UsedImplicitly]
     public sealed class WreckClustersCommand : IRocketCommand
     {
         private readonly Dictionary<string, WreckClustersAction> m_WreckActions = new();

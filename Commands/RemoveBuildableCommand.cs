@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Rocket.API;
 using Rocket.Unturned.Chat;
@@ -11,6 +12,7 @@ using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
+    [UsedImplicitly]
     public sealed class RemoveBuildableCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;

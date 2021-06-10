@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
@@ -14,6 +15,7 @@ using Random = UnityEngine.Random;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
+    [UsedImplicitly]
     public sealed class TeleportToBuildCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;

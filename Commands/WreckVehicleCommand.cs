@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
@@ -10,6 +11,7 @@ using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
+    [UsedImplicitly]
     public sealed class WreckVehicleCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;
