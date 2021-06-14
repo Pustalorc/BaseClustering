@@ -79,7 +79,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// <summary>
         /// Gets a copied <see cref="IReadOnlyCollection{Buildable}"/> of all the buildables in the cluster.
         /// </summary>
-        public IReadOnlyCollection<Buildable> Buildables => new ReadOnlyCollection<Buildable>(m_Buildables);
+        public IReadOnlyCollection<Buildable> Buildables => new ReadOnlyCollection<Buildable>(m_Buildables.ToList());
 
         internal BaseCluster(BaseClusteringPluginConfiguration pluginConfiguration,
             BaseClusterDirectory baseClusterDirectory, int instanceId, bool isGlobalCluster = false)
