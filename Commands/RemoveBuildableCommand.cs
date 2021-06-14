@@ -23,9 +23,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Syntax => "";
 
-        public List<string> Aliases => new();
+        public List<string> Aliases => new List<string>();
 
-        public List<string> Permissions => new() {"removebuildable"};
+        public List<string> Permissions => new List<string> {"removebuildable"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -34,7 +34,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (pluginInstance == null)
                 throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
 
-            if (caller is not UnturnedPlayer player) return;
+            if (!(caller is UnturnedPlayer player)) return;
 
             if (!Physics.Raycast(new Ray(player.Player.look.aim.position, player.Player.look.aim.forward), out var hit,
                     player.Player.look.perspective == EPlayerPerspective.THIRD ? 6 : 4,

@@ -24,9 +24,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Syntax => "[player]";
 
-        public List<string> Aliases => new() {"tpc"};
+        public List<string> Aliases => new List<string> {"tpc"};
 
-        public List<string> Permissions => new() {"teleporttocluster"};
+        public List<string> Permissions => new List<string> {"teleporttocluster"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -42,7 +42,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            if (caller is not UnturnedPlayer player) return;
+            if (!(caller is UnturnedPlayer player)) return;
 
             var args = command.ToList();
 

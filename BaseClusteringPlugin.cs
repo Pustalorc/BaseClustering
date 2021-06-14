@@ -47,7 +47,7 @@ namespace Pustalorc.Plugins.BaseClustering
         /// <summary>
         /// Gets the default translations that the plugin uses.
         /// </summary>
-        public override TranslationList DefaultTranslations => new()
+        public override TranslationList DefaultTranslations => new TranslationList
         {
             {
                 "command_fail_clustering_disabled",

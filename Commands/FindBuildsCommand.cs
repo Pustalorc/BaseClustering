@@ -27,9 +27,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
         public string Syntax =>
             "b [radius] | s [radius] | [id] [radius] | v [id] [radius] | [player] [id] [radius] | [player] b [radius] | [player] s [radius] | [player] v [id] [radius]";
 
-        public List<string> Aliases => new() {"fb"};
+        public List<string> Aliases => new List<string> {"fb"};
 
-        public List<string> Permissions => new() {"findbuilds"};
+        public List<string> Permissions => new List<string> {"findbuilds"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -80,7 +80,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (!float.IsNegativeInfinity(radius))
             {
-                if (caller is not UnturnedPlayer cPlayer)
+                if (!(caller is UnturnedPlayer cPlayer))
                 {
                     UnturnedChat.Say(caller, pluginInstance.Translate("cannot_be_executed_from_console"));
                     return;
@@ -91,15 +91,10 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             var itemAssetName = pluginInstance.Translate("not_available");
 
-            switch (assetCount)
-            {
-                case 1:
-                    itemAssetName = itemAssets.First().itemName;
-                    break;
-                case > 1:
-                    itemAssetName = itemAssetInput;
-                    break;
-            }
+            if (assetCount == 1)
+                itemAssetName = itemAssets.First().itemName;
+            else if (assetCount > 1)
+                itemAssetName = itemAssetInput;
 
             UnturnedChat.Say(caller,
                 pluginInstance.Translate("build_count", builds.Count(), itemAssetName,

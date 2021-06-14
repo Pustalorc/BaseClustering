@@ -19,7 +19,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
     [UsedImplicitly]
     public sealed class WreckCommand : IRocketCommand
     {
-        private readonly Dictionary<string, WreckAction> m_WreckActions = new();
+        private readonly Dictionary<string, WreckAction> m_WreckActions = new Dictionary<string, WreckAction>();
 
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
@@ -30,9 +30,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
         public string Syntax =>
             "confirm | abort | b [radius] | s [radius] | <item> [radius] | v [item] [radius] | <player> [item] [radius]";
 
-        public List<string> Aliases => new() {"w"};
+        public List<string> Aliases => new List<string> {"w"};
 
-        public List<string> Permissions => new() {"wreck"};
+        public List<string> Permissions => new List<string> {"wreck"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -159,7 +159,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (!float.IsNegativeInfinity(radius))
             {
-                if (caller is not UnturnedPlayer cPlayer)
+                if (!(caller is UnturnedPlayer cPlayer))
                 {
                     UnturnedChat.Say(caller, baseClusteringPlugin.Translate("cannot_be_executed_from_console"));
                     return;
@@ -171,15 +171,10 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             var itemAssetName = baseClusteringPlugin.Translate("not_available");
 
-            switch (assetCount)
-            {
-                case 1:
-                    itemAssetName = itemAssets.First().itemName;
-                    break;
-                case > 1:
-                    itemAssetName = itemAssetInput;
-                    break;
-            }
+            if (assetCount == 1)
+                itemAssetName = itemAssets.First().itemName;
+            else if (assetCount > 1)
+                itemAssetName = itemAssetInput;
 
             var count = builds.Count();
             if (count <= 0)

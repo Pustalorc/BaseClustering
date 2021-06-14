@@ -26,9 +26,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Syntax => "b [player] | s [player] | v [player] | [player] [id]";
 
-        public List<string> Aliases => new() {"tpb"};
+        public List<string> Aliases => new List<string> {"tpb"};
 
-        public List<string> Permissions => new() {"teleporttobuild"};
+        public List<string> Permissions => new List<string> {"teleporttobuild"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -37,7 +37,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (pluginInstance == null)
                 throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
 
-            if (caller is not UnturnedPlayer player) return;
+            if (!(caller is UnturnedPlayer player)) return;
 
             var args = command.ToList();
 
@@ -79,15 +79,10 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             var itemAssetName = pluginInstance.Translate("not_available");
 
-            switch (assetCount)
-            {
-                case 1:
-                    itemAssetName = itemAssets.First().itemName;
-                    break;
-                case > 1:
-                    itemAssetName = itemAssetInput;
-                    break;
-            }
+            if (assetCount == 1)
+                itemAssetName = itemAssets.First().itemName;
+            else if (assetCount > 1)
+                itemAssetName = itemAssetInput;
 
             var buildsL = builds.ToList();
             if (!buildsL.Any())

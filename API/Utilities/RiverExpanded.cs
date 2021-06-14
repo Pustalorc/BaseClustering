@@ -157,7 +157,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         [UsedImplicitly]
         public CSteamID ReadSteamID()
         {
-            return new(ReadUInt64());
+            return new CSteamID(ReadUInt64());
         }
 
         /// <summary>
@@ -167,7 +167,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         [UsedImplicitly]
         public Vector3 ReadSingleVector3()
         {
-            return new(ReadSingle(), ReadSingle(), ReadSingle());
+            return new Vector3(ReadSingle(), ReadSingle(), ReadSingle());
         }
 
         /// <summary>
@@ -187,7 +187,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         [UsedImplicitly]
         public Color ReadColor()
         {
-            return new(ReadByte() / 255f, ReadByte() / 255f, ReadByte() / 255f);
+            return new Color(ReadByte() / 255f, ReadByte() / 255f, ReadByte() / 255f);
         }
 
         /// <summary>

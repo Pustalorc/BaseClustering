@@ -17,7 +17,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
     [UsedImplicitly]
     public sealed class WreckClustersCommand : IRocketCommand
     {
-        private readonly Dictionary<string, WreckClustersAction> m_WreckActions = new();
+        private readonly Dictionary<string, WreckClustersAction> m_WreckActions = new Dictionary<string, WreckClustersAction>();
 
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
@@ -27,9 +27,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Syntax => "confirm | abort | [player] [item] [radius]";
 
-        public List<string> Aliases => new() {"wc"};
+        public List<string> Aliases => new List<string> {"wc"};
 
-        public List<string> Permissions => new() {"wreckclusters"};
+        public List<string> Permissions => new List<string> {"wreckclusters"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -148,7 +148,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (!float.IsNegativeInfinity(radius))
             {
-                if (caller is not UnturnedPlayer cPlayer)
+                if (!(caller is UnturnedPlayer cPlayer))
                 {
                     UnturnedChat.Say(caller,
                         pluginInstance.Translate("cannot_be_executed_from_console"));
@@ -170,15 +170,10 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             var itemAssetName = pluginInstance.Translate("not_available");
 
-            switch (assetCount)
-            {
-                case 1:
-                    itemAssetName = itemAssets.First().itemName;
-                    break;
-                case > 1:
-                    itemAssetName = itemAssetInput;
-                    break;
-            }
+            if (assetCount == 1)
+                itemAssetName = itemAssets.First().itemName;
+            else if (assetCount > 1)
+                itemAssetName = itemAssetInput;
 
             if (m_WreckActions.TryGetValue(cId, out _))
             {

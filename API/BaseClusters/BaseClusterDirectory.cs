@@ -284,7 +284,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
         private BaseCluster CreateCluster(int instanceId, bool globalCluster = false)
         {
-            return new(m_PluginConfiguration, this, instanceId, globalCluster);
+            return new BaseCluster(m_PluginConfiguration, this, instanceId, globalCluster);
         }
 
         /// <summary>

@@ -20,9 +20,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Syntax => "";
 
-        public List<string> Aliases => new() {"topc"};
+        public List<string> Aliases => new List<string> {"topc"};
 
-        public List<string> Permissions => new() {"topclusters"};
+        public List<string> Permissions => new List<string> {"topclusters"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

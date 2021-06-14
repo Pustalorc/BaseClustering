@@ -19,9 +19,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Syntax => "";
 
-        public List<string> Aliases => new();
+        public List<string> Aliases => new List<string>();
 
-        public List<string> Permissions => new() {"clustersregen"};
+        public List<string> Permissions => new List<string> {"clustersregen"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

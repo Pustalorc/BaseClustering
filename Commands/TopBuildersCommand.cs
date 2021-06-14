@@ -22,9 +22,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Syntax => "v";
 
-        public List<string> Aliases => new() {"topb"};
+        public List<string> Aliases => new List<string> {"topb"};
 
-        public List<string> Permissions => new() {"topbuilders"};
+        public List<string> Permissions => new List<string> {"topbuilders"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
