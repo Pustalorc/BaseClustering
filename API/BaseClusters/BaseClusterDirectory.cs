@@ -74,7 +74,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             m_Clusters = new List<BaseCluster>();
 
             PatchBuildableTransforms.OnBuildableTransformed += BuildableTransformed;
-            buildableDirectory.OnBuildableAdded += BuildableSpawned;
+            buildableDirectory.OnBuildablesAdded += BuildablesSpawned;
             buildableDirectory.OnBuildablesRemoved += BuildablesDestroyed;
             SaveManager.onPostSave += Save;
         }
@@ -90,7 +90,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         internal void Unload()
         {
             PatchBuildableTransforms.OnBuildableTransformed -= BuildableTransformed;
-            m_BuildableDirectory.OnBuildableAdded -= BuildableSpawned;
+            m_BuildableDirectory.OnBuildablesAdded -= BuildablesSpawned;
             m_BuildableDirectory.OnBuildablesRemoved -= BuildablesDestroyed;
             SaveManager.onPostSave -= Save;
             Save();
@@ -513,72 +513,76 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
         private void BuildableTransformed(Buildable buildable)
         {
-            BuildablesDestroyed(new[] {buildable});
-            BuildableSpawned(buildable);
+            var builds = new[] {buildable};
+            BuildablesDestroyed(builds);
+            BuildablesSpawned(builds);
         }
 
-        private void BuildableSpawned(Buildable buildable)
+        private void BuildablesSpawned(IEnumerable<Buildable> buildables)
         {
-            if (buildable.IsPlanted) return;
-
             var gCluster = GetOrCreateGlobalCluster();
 
-            // On spawning, check if its a barricade
-            if (buildable is BarricadeBuildable)
+            foreach (var buildable in buildables)
             {
-                // Find the best cluster for this barricade. Only the first result should be considered for barricades.
-                var bestCluster = FindBestCluster(buildable);
+                if (buildable.IsPlanted) return;
 
-                // If we find a best cluster, add it on it.
-                if (bestCluster != null)
+                // On spawning, check if its a barricade
+                if (buildable is BarricadeBuildable)
                 {
-                    bestCluster.AddBuildable(buildable);
+                    // Find the best cluster for this barricade.
+                    var bestCluster = FindBestCluster(buildable);
+
+                    // If we find a best cluster, add it on it.
+                    if (bestCluster != null)
+                    {
+                        bestCluster.AddBuildable(buildable);
+                        return;
+                    }
+
+                    // If we don't, add it to the global cluster.
+                    gCluster.AddBuildable(buildable);
                     return;
                 }
 
-                // If we don't, add it to the global cluster.
-                gCluster.AddBuildable(buildable);
-                return;
-            }
+                // Otherwise, if its a structure, find all the clusters where it'd make a good target, and exclude any global clusters from the result.
+                var bestClusters = FindBestClusters(buildable).ToList();
 
-            // Otherwise, if its a structure, find all the clusters where it'd make a good target, and exclude any global clusters from the result.
-            var bestClusters = FindBestClusters(buildable).ToList();
+                switch (bestClusters.Count)
+                {
+                    // If there's no results, create a new non-global cluster for this new base.
+                    case 0:
+                        var cluster = GetOrCreatePooledCluster();
+                        cluster.AddBuildable(buildable);
+                        RegisterCluster(cluster);
+                        return;
+                    // If there's exactly 1 cluster found, simply add it to that cluster.
+                    case 1:
+                        bestClusters.First().AddBuildable(buildable);
+                        return;
 
-            switch (bestClusters.Count)
-            {
-                // If there's no results, create a new non-global cluster for this new base.
-                case 0:
-                    var cluster = GetOrCreatePooledCluster();
-                    cluster.AddBuildable(buildable);
-                    RegisterCluster(cluster);
-                    return;
-                // If there's exactly 1 cluster found, simply add it to that cluster.
-                case 1:
-                    bestClusters.First().AddBuildable(buildable);
-                    return;
+                    // However, if there's more than 1 cluster, select every single buildable from all found clusters and the global cluster.
+                    default:
+                        var allBuilds = bestClusters.SelectMany(k => k.Buildables).Concat(gCluster.Buildables).ToList();
 
-                // However, if there's more than 1 cluster, select every single buildable from all found clusters and the global cluster.
-                default:
-                    var allBuilds = bestClusters.SelectMany(k => k.Buildables).Concat(gCluster.Buildables).ToList();
+                        // Make sure to include the buildable we spawned in that set.
+                        allBuilds.Add(buildable);
 
-                    // Make sure to include the buildable we spawned in that set.
-                    allBuilds.Add(buildable);
+                        // For all the found best clusters, we can now un-register them, as they are no longer needed.
+                        foreach (var c in bestClusters)
+                            Return(c);
 
-                    // For all the found best clusters, we can now un-register them, as they are no longer needed.
-                    foreach (var c in bestClusters)
-                        Return(c);
+                        // Clear the global cluster
+                        gCluster.Reset();
 
-                    // Clear the global cluster
-                    gCluster.Reset();
+                        // And ask the clustering tool to generate new clusters, and populate the global cluster.
+                        var newClusters = ClusterElements(allBuilds);
 
-                    // And ask the clustering tool to generate new clusters, and populate the global cluster.
-                    var newClusters = ClusterElements(allBuilds);
+                        // New clusters can be safely added now.
+                        foreach (var c in newClusters)
+                            RegisterCluster(c);
 
-                    // New clusters can be safely added now.
-                    foreach (var c in newClusters)
-                        RegisterCluster(c);
-
-                    return;
+                        return;
+                }
             }
         }
 

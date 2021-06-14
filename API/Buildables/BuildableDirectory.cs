@@ -1,17 +1,14 @@
-﻿using System;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
-using System.Timers;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using Pustalorc.Plugins.BaseClustering.API.Patches;
 using Pustalorc.Plugins.BaseClustering.Config;
-using Rocket.Core.Utils;
 using SDG.Unturned;
 using UnityEngine;
-using Timer = System.Timers.Timer;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 {
@@ -28,7 +25,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// <summary>
         /// This event is raised every time a buildable is added.
         /// </summary>
-        public event BuildableChange? OnBuildableAdded;
+        public event BuildablesChanged? OnBuildablesAdded;
 
         /// <summary>
         /// This event is raised every time buildables are removed (in bulk).
@@ -38,10 +35,12 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         private readonly Dictionary<uint, BarricadeBuildable> m_BarricadeBuildables;
         private readonly Dictionary<uint, StructureBuildable> m_StructureBuildables;
 
-        private readonly HashSet<KeyValuePair<uint, bool>> m_BuildablesToRemove;
+        private readonly ConcurrentQueue<Buildable> m_DeferredRemove;
+        private readonly ConcurrentQueue<Buildable> m_DeferredAdd;
+
         private readonly BackgroundWorker m_BackgroundWorker;
-        private readonly Timer m_WorkerTimeout;
-        private readonly AutoResetEvent m_BackgroundReset;
+        private readonly AutoResetEvent m_BackgroundWorkerEnd;
+        private readonly int m_BackgroundWorkerSleepTime;
 
         /// <summary>
         /// Gets a copied <see cref="IReadOnlyCollection{Buildable}"/> of all the buildables tracked.
@@ -58,17 +57,19 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         {
             m_BarricadeBuildables = new Dictionary<uint, BarricadeBuildable>(configuration.BuildableCapacity);
             m_StructureBuildables = new Dictionary<uint, StructureBuildable>(configuration.BuildableCapacity);
-            m_BackgroundWorker = new BackgroundWorker();
-            m_BackgroundWorker.DoWork += HandleDestroyedInBulk;
-            m_WorkerTimeout = new Timer(1000);
-            m_WorkerTimeout.Elapsed += HandleElapsed;
-            m_BuildablesToRemove = new HashSet<KeyValuePair<uint, bool>>();
-            m_BackgroundReset = new AutoResetEvent(true);
+            m_BackgroundWorker = new BackgroundWorker {WorkerSupportsCancellation = true};
+            m_BackgroundWorker.DoWork += HandleDeferred;
+            m_DeferredRemove = new ConcurrentQueue<Buildable>();
+            m_DeferredAdd = new ConcurrentQueue<Buildable>();
+            m_BackgroundWorkerEnd = new AutoResetEvent(false);
+            m_BackgroundWorkerSleepTime = configuration.BackgroundWorkerSleepTime;
             _instance = this;
 
-            StructureManager.onStructureSpawned -= StructureSpawned;
-            BarricadeManager.onBarricadeSpawned -= BarricadeSpawned;
+            StructureManager.onStructureSpawned += StructureSpawned;
+            BarricadeManager.onBarricadeSpawned += BarricadeSpawned;
             PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
+
+            m_BackgroundWorker.RunWorkerAsync();
         }
 
         internal void LevelLoaded()
@@ -94,105 +95,81 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             PatchBuildablesDestroy.OnBuildableDestroyed -= BuildableDestroyed;
         }
 
-        private void HandleElapsed(object sender, ElapsedEventArgs e)
+        private void HandleDeferred(object sender, DoWorkEventArgs e)
         {
-            var lastAdd = m_LastAdd;
-            if ((DateTime.UtcNow - lastAdd).TotalMilliseconds <= 1000)
-                return;
-
-            m_BackgroundWorker.RunWorkerAsync();
-
-            if (lastAdd == m_LastAdd)
-                m_WorkerTimeout.Stop();
-        }
-
-        private void HandleDestroyedInBulk(object sender, DoWorkEventArgs e)
-        {
-            m_BackgroundReset.Reset();
-            TaskDispatcher.QueueOnMainThread(InternalHandleDestroyedInBulk);
-        }
-
-        private void InternalHandleDestroyedInBulk()
-        {
-            var affected = new List<Buildable>();
-
-            foreach (var element in m_BuildablesToRemove)
+            while (!m_BackgroundWorker.CancellationPending)
             {
-                Buildable build;
-
-                if (element.Value)
-                {
-                    if (!m_StructureBuildables.TryGetValue(element.Key, out var s))
-                        continue;
-
-                    build = s;
-                    m_StructureBuildables.Remove(element.Key);
-                }
-                else
-                {
-                    if (!m_BarricadeBuildables.TryGetValue(element.Key, out var b))
-                        continue;
-
-                    build = b;
-                    m_BarricadeBuildables.Remove(element.Key);
-                }
-
-                affected.Add(build);
+                InternalHandleDeferred();
+                Thread.Sleep(m_BackgroundWorkerSleepTime);
             }
 
-            if (affected.Count > 0)
-                OnBuildablesRemoved?.Invoke(affected);
+            m_BackgroundWorkerEnd.Set();
+        }
 
-            m_BackgroundReset.Set();
+        private void InternalHandleDeferred()
+        {
+            var deferredAdd = new List<Buildable>();
+            while (m_DeferredAdd.TryDequeue(out var element))
+                deferredAdd.Add(element);
+
+            var deferredRemove = new List<Buildable>();
+            while (m_DeferredRemove.TryDequeue(out var element))
+                deferredRemove.Add(element);
+
+            OnBuildablesAdded?.Invoke(deferredAdd);
+            OnBuildablesRemoved?.Invoke(deferredRemove);
         }
 
         internal void WaitDestroyHandle()
         {
-            if (m_WorkerTimeout.Enabled || m_BuildablesToRemove.Count > 0 || m_BackgroundWorker.IsBusy)
-                m_BackgroundReset.WaitOne();
+            if (m_BackgroundWorker.IsBusy)
+            {
+                m_BackgroundWorker.CancelAsync();
+                m_BackgroundWorkerEnd.WaitOne();
+            }
 
-            if (m_BuildablesToRemove.Count > 0)
-                InternalHandleDestroyedInBulk();
+            InternalHandleDeferred();
         }
-
-        private DateTime m_LastAdd;
 
         private void BuildableDestroyed(uint instanceId, bool isStructure)
         {
-            m_LastAdd = DateTime.UtcNow;
-            m_BuildablesToRemove.Add(new KeyValuePair<uint, bool>(instanceId, isStructure));
+            Buildable? build;
+            bool removed;
 
-            if (!m_WorkerTimeout.Enabled)
-                m_WorkerTimeout.Start();
-        }
-
-        private void StructureSpawned(StructureRegion region, StructureDrop drop)
-        {
-            var data = region.structures.Find(k => k.instanceID == drop.instanceID);
-            BuildableSpawned(new StructureBuildable(data, drop));
-        }
-
-        private void BarricadeSpawned(BarricadeRegion region, BarricadeDrop drop)
-        {
-            var data = region.barricades.Find(k => k.instanceID == drop.instanceID);
-            BuildableSpawned(new BarricadeBuildable(data, drop));
-        }
-
-        private void BuildableSpawned(Buildable buildable)
-        {
-            switch (buildable)
+            switch (isStructure)
             {
-                case BarricadeBuildable b:
-                    m_BarricadeBuildables.Add(buildable.InstanceId, b);
+                case true when m_StructureBuildables.TryGetValue(instanceId, out var s):
+                    build = s;
+                    removed = m_StructureBuildables.Remove(instanceId);
                     break;
-                case StructureBuildable s:
-                    m_StructureBuildables.Add(buildable.InstanceId, s);
+                case false when m_BarricadeBuildables.TryGetValue(instanceId, out var b):
+                    build = b;
+                    removed = m_BarricadeBuildables.Remove(instanceId);
                     break;
                 default:
                     return;
             }
 
-            OnBuildableAdded?.Invoke(buildable);
+            if (!removed || build == null)
+                return;
+
+            m_DeferredRemove.Enqueue(build);
+        }
+
+        private void StructureSpawned(StructureRegion region, StructureDrop drop)
+        {
+            var data = region.structures.Find(k => k.instanceID == drop.instanceID);
+            var build = new StructureBuildable(data, drop);
+            m_StructureBuildables.Add(build.InstanceId, build);
+            m_DeferredAdd.Enqueue(build);
+        }
+
+        private void BarricadeSpawned(BarricadeRegion region, BarricadeDrop drop)
+        {
+            var data = region.barricades.Find(k => k.instanceID == drop.instanceID);
+            var build = new BarricadeBuildable(data, drop);
+            m_BarricadeBuildables.Add(build.InstanceId, build);
+            m_DeferredAdd.Enqueue(build);
         }
 
         /// <summary>
