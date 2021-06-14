@@ -37,7 +37,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (pluginInstance == null)
                 throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
 
-            if (!(caller is UnturnedPlayer player)) return;
+            if (caller is not UnturnedPlayer player) return;
 
             var args = command.ToList();
 

@@ -34,7 +34,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (pluginInstance == null)
                 throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
 
-            if (!(caller is UnturnedPlayer player)) return;
+            if (caller is not UnturnedPlayer player) return;
 
             if (!Physics.Raycast(new Ray(player.Player.look.aim.position, player.Player.look.aim.forward), out var hit,
                     player.Player.look.perspective == EPlayerPerspective.THIRD ? 6 : 4,

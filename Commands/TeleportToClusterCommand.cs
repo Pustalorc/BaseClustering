@@ -42,7 +42,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            if (!(caller is UnturnedPlayer player)) return;
+            if (caller is not UnturnedPlayer player) return;
 
             var args = command.ToList();
 

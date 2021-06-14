@@ -148,7 +148,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
             if (!float.IsNegativeInfinity(radius))
             {
-                if (!(caller is UnturnedPlayer cPlayer))
+                if (caller is not UnturnedPlayer cPlayer)
                 {
                     UnturnedChat.Say(caller,
                         pluginInstance.Translate("cannot_be_executed_from_console"));
