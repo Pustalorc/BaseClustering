@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 using Rocket.API;
 using Rocket.Unturned.Chat;
@@ -6,21 +7,24 @@ using Rocket.Unturned.Player;
 using SDG.Unturned;
 using UnityEngine;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
+    [UsedImplicitly]
     public sealed class WreckVehicleCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;
 
-        [NotNull] public string Name => "wreckvehicle";
+        public string Name => "wreckvehicle";
 
-        [NotNull] public string Help => "Wrecks all the buildables on the vehicle that you are looking at.";
+        public string Help => "Wrecks all the buildables on the vehicle that you are looking at.";
 
-        [NotNull] public string Syntax => "";
+        public string Syntax => "";
 
-        [NotNull] public List<string> Aliases => new List<string> {"wv"};
+        public List<string> Aliases => new List<string> {"wv"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"wreckvehicle"};
+        public List<string> Permissions => new List<string> {"wreckvehicle"};
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -28,23 +32,27 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             var raycastInfo =
                 DamageTool.raycast(new Ray(player.Player.look.aim.position, player.Player.look.aim.forward), 10f,
                     RayMasks.VEHICLE);
+            var baseClusteringPlugin = BaseClusteringPlugin.Instance;
+
+            if (baseClusteringPlugin == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
 
             if (raycastInfo.vehicle == null)
             {
-                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("no_vehicle_found"));
+                UnturnedChat.Say(caller, baseClusteringPlugin.Translate("no_vehicle_found"));
                 return;
             }
 
             if (raycastInfo.vehicle.isDead)
             {
-                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("vehicle_dead"));
+                UnturnedChat.Say(caller, baseClusteringPlugin.Translate("vehicle_dead"));
                 return;
             }
 
             if (!BarricadeManager.tryGetPlant(raycastInfo.transform, out var x, out var y, out var plant,
                 out var region))
             {
-                UnturnedChat.Say(caller, BaseClusteringPlugin.Instance.Translate("vehicle_no_plant"));
+                UnturnedChat.Say(caller, baseClusteringPlugin.Translate("vehicle_no_plant"));
                 return;
             }
 
@@ -52,7 +60,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 BarricadeManager.destroyBarricade(region, x, y, plant, (ushort) i);
 
             UnturnedChat.Say(caller,
-                BaseClusteringPlugin.Instance.Translate("vehicle_wreck",
+                baseClusteringPlugin.Translate("vehicle_wreck",
                     raycastInfo.vehicle.asset.vehicleName ?? raycastInfo.vehicle.asset.name,
                     raycastInfo.vehicle.id, raycastInfo.vehicle.instanceID,
                     raycastInfo.vehicle.lockedOwner.ToString()));

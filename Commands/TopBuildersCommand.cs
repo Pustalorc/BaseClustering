@@ -1,35 +1,45 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Pustalorc.Plugins.BaseClustering.API.Buildables;
+using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
+    [UsedImplicitly]
     public sealed class TopBuildersCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 
-        [NotNull] public string Name => "topbuilders";
+        public string Name => "topbuilders";
 
-        [NotNull] public string Help => "Displays the top 5 builders in the game.";
+        public string Help => "Displays the top 5 builders in the game.";
 
-        [NotNull] public string Syntax => "v";
+        public string Syntax => "v";
 
-        [NotNull] public List<string> Aliases => new List<string> {"topb"};
+        public List<string> Aliases => new List<string> {"topb"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"topbuilders"};
+        public List<string> Permissions => new List<string> {"topbuilders"};
 
-        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
+        public void Execute(IRocketPlayer caller, string[] command)
         {
             var args = command.ToList();
+            var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
 
             var plants = args.CheckArgsIncludeString("v", out var index);
             if (index > -1)
                 args.RemoveAt(index);
 
-            var builds = ReadOnlyGame.GetBuilds(includePlants: plants);
+            var builds = BuildableDirectory.GetBuildables(includePlants: plants);
 
             var topBuilders = builds.GroupBy(k => k.Owner).OrderByDescending(k => k.Count()).Take(5).ToList();
 
@@ -38,7 +48,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 var builder = topBuilders.ElementAt(i);
 
                 UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("top_builder_format", i + 1, builder.Key, builder.Count()));
+                    pluginInstance.Translate("top_builder_format", i + 1, builder.Key, builder.Count()));
             }
         }
     }

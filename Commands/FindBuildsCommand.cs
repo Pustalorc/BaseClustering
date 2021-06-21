@@ -1,31 +1,43 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Pustalorc.Plugins.BaseClustering.API.Buildables;
+using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using SDG.Unturned;
 using UnityEngine;
 
+#pragma warning disable 1591
+
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
+    [UsedImplicitly]
     public sealed class FindBuildsCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
-        [NotNull] public string Name => "findbuilds";
-        [NotNull] public string Help => "Finds buildables around the map";
 
-        [NotNull]
+        public string Name => "findbuilds";
+
+        public string Help => "Finds buildables around the map";
+
         public string Syntax =>
             "b [radius] | s [radius] | [id] [radius] | v [id] [radius] | [player] [id] [radius] | [player] b [radius] | [player] s [radius] | [player] v [id] [radius]";
 
-        [NotNull] public List<string> Aliases => new List<string> {"fb"};
-        [NotNull] public List<string> Permissions => new List<string> {"findbuilds"};
+        public List<string> Aliases => new List<string> {"fb"};
 
-        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
+        public List<string> Permissions => new List<string> {"findbuilds"};
+
+        public void Execute(IRocketPlayer caller, string[] command)
         {
+            var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
             var args = command.ToList();
 
             var barricades = args.CheckArgsIncludeString("b", out var index);
@@ -44,43 +56,53 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             if (index > -1)
                 args.RemoveAt(index);
 
-            var itemAsset = args.GetItemAsset(out index);
+            var itemAssetInput = pluginInstance.Translate("not_available");
+            var itemAssets = args.GetMultipleItemAssets(out index);
+            var assetCount = itemAssets.Count;
             if (index > -1)
+            {
+                itemAssetInput = args[index];
                 args.RemoveAt(index);
+            }
 
             var radius = args.GetFloat(out index);
             if (index > -1)
                 args.RemoveAt(index);
 
-            var builds = ReadOnlyGame.GetBuilds(includePlants: plants);
+            var builds = BuildableDirectory.GetBuildables(includePlants: plants);
 
             if (target != null) builds = builds.Where(k => k.Owner.ToString().Equals(target.Id));
 
             if (barricades) builds = builds.Where(k => k.Asset is ItemBarricadeAsset);
             else if (structs) builds = builds.Where(k => k.Asset is ItemStructureAsset);
 
-            if (itemAsset != null) builds = builds.Where(k => k.AssetId == itemAsset.id);
+            if (assetCount > 0) builds = builds.Where(k => itemAssets.Exists(l => k.AssetId == l.id));
 
-            if (radius != float.NegativeInfinity)
+            if (!float.IsNegativeInfinity(radius))
             {
                 if (!(caller is UnturnedPlayer cPlayer))
                 {
-                    UnturnedChat.Say(caller,
-                        BaseClusteringPlugin.Instance.Translate("cannot_be_executed_from_console"));
+                    UnturnedChat.Say(caller, pluginInstance.Translate("cannot_be_executed_from_console"));
                     return;
                 }
 
-                builds = builds.Where(k => Vector3.Distance(k.Position, cPlayer.Position) <= radius);
+                builds = builds.Where(k => (k.Position - cPlayer.Position).sqrMagnitude <= Mathf.Pow(radius, 2));
             }
 
+            var itemAssetName = pluginInstance.Translate("not_available");
+
+            if (assetCount == 1)
+                itemAssetName = itemAssets.First().itemName;
+            else if (assetCount > 1)
+                itemAssetName = itemAssetInput;
+
             UnturnedChat.Say(caller,
-                BaseClusteringPlugin.Instance.Translate("build_count", builds.Count(),
-                    itemAsset != null ? itemAsset.itemName : BaseClusteringPlugin.Instance.Translate("not_available"),
-                    radius != float.NegativeInfinity
+                pluginInstance.Translate("build_count", builds.Count(), itemAssetName,
+                    !float.IsNegativeInfinity(radius)
                         ? radius.ToString(CultureInfo.CurrentCulture)
-                        : BaseClusteringPlugin.Instance.Translate("not_available"),
-                    target != null ? target.DisplayName : BaseClusteringPlugin.Instance.Translate("not_available"),
-                    plants, barricades, structs));
+                        : pluginInstance.Translate("not_available"),
+                    target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants, barricades,
+                    structs));
         }
     }
 }

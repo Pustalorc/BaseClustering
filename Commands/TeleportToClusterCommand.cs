@@ -1,30 +1,47 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using JetBrains.Annotations;
-using Pustalorc.Plugins.BaseClustering.API.Statics;
+using Pustalorc.Plugins.BaseClustering.API.Utilities;
 using Rocket.API;
 using Rocket.Unturned.Chat;
 using Rocket.Unturned.Player;
 using UnityEngine;
+using Random = UnityEngine.Random;
+
+#pragma warning disable 1591
 
 namespace Pustalorc.Plugins.BaseClustering.Commands
 {
+    [UsedImplicitly]
     public sealed class TeleportToClusterCommand : IRocketCommand
     {
         public AllowedCaller AllowedCaller => AllowedCaller.Player;
 
-        [NotNull] public string Name => "teleporttocluster";
+        public string Name => "teleporttocluster";
 
-        [NotNull] public string Help => "Teleports you to a random cluster on the map based on filters.";
+        public string Help => "Teleports you to a random cluster on the map based on filters.";
 
-        [NotNull] public string Syntax => "[player]";
+        public string Syntax => "[player]";
 
-        [NotNull] public List<string> Aliases => new List<string> {"tpc"};
+        public List<string> Aliases => new List<string> {"tpc"};
 
-        [NotNull] public List<string> Permissions => new List<string> {"teleporttocluster"};
+        public List<string> Permissions => new List<string> {"teleporttocluster"};
 
-        public void Execute(IRocketPlayer caller, [NotNull] string[] command)
+        public void Execute(IRocketPlayer caller, string[] command)
         {
+            var pluginInstance = BaseClusteringPlugin.Instance;
+
+            if (pluginInstance == null)
+                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+
+            var clusterDirectory = pluginInstance.BaseClusterDirectory;
+            if (clusterDirectory == null)
+            {
+                UnturnedChat.Say(caller, pluginInstance.Translate("command_fail_clustering_disabled"));
+                return;
+            }
+
             if (!(caller is UnturnedPlayer player)) return;
 
             var args = command.ToList();
@@ -34,17 +51,18 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 args.RemoveAt(index);
 
             var clusters = target != null
-                ? BaseClusteringPlugin.Instance.Clusters.Where(k => k.CommonOwner.ToString().Equals(target.Id))
-                : BaseClusteringPlugin.Instance.Clusters;
+                ? clusterDirectory.GetClustersWithFilter(k =>
+                    k.CommonOwner.ToString().Equals(target.Id))
+                : clusterDirectory.Clusters;
 
-            var clustersL = clusters.ToList();
+            var clustersL = clusters.Where(k => k.AverageCenterPosition != Vector3.zero).ToList();
             if (!clustersL.Any())
             {
                 UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_clusters",
+                    pluginInstance.Translate("cannot_teleport_no_clusters",
                         target != null
                             ? target.DisplayName
-                            : BaseClusteringPlugin.Instance.Translate("not_available")));
+                            : pluginInstance.Translate("not_available")));
                 return;
             }
 
@@ -63,10 +81,10 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             else
             {
                 UnturnedChat.Say(caller,
-                    BaseClusteringPlugin.Instance.Translate("cannot_teleport_no_clusters",
+                    pluginInstance.Translate("cannot_teleport_no_clusters",
                         target != null
                             ? target.DisplayName
-                            : BaseClusteringPlugin.Instance.Translate("not_available")));
+                            : pluginInstance.Translate("not_available")));
             }
         }
     }

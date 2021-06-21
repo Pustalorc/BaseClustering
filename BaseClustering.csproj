@@ -8,10 +8,11 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Pustalorc.Plugins.BaseClustering</RootNamespace>
-    <AssemblyName>BaseClustering</AssemblyName>
+    <AssemblyName>0BaseClustering</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <LangVersion>8</LangVersion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -31,6 +32,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>bin\Release\BaseClustering.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.0.4.0, Culture=neutral, PublicKeyToken=null">
@@ -53,13 +55,13 @@
       <HintPath>libs\Rocket.Unturned.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Steamworks.NET">
+    <Reference Include="Steamworks.NET, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>libs\Steamworks.NET.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Xml" />
     <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>libs\UnityEngine.dll</HintPath>
       <Private>False</Private>
@@ -68,28 +70,33 @@
       <HintPath>libs\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>libs\UnityEngine.PhysicsModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="API\Classes\BaseCluster.cs" />
-    <Compile Include="API\Classes\Buildable.cs" />
-    <Compile Include="API\Classes\ExpandedRiver.cs" />
-    <Compile Include="API\Classes\WreckAction.cs" />
-    <Compile Include="API\Classes\WreckClustersAction.cs" />
-    <Compile Include="API\Delegates\BuildableSpawned.cs" />
-    <Compile Include="API\Delegates\BuildableDestroyed.cs" />
-    <Compile Include="API\Delegates\BuildableTransformed.cs" />
+    <Compile Include="API\BaseClusters\BaseCluster.cs" />
+    <Compile Include="API\BaseClusters\BaseClusterDirectory.cs" />
+    <Compile Include="API\Buildables\BarricadeBuildable.cs" />
+    <Compile Include="API\Buildables\Buildable.cs" />
+    <Compile Include="API\Buildables\BuildableDirectory.cs" />
+    <Compile Include="API\Buildables\StructureBuildable.cs" />
+    <Compile Include="API\Delegates\BuildableDeleted.cs" />
+    <Compile Include="API\Delegates\BuildablesChanged.cs" />
+    <Compile Include="API\Delegates\ClusterChange.cs" />
     <Compile Include="API\Delegates\VoidDelegate.cs" />
-    <Compile Include="API\Statics\ExtendedMath.cs" />
-    <Compile Include="API\Statics\Extensions.cs" />
-    <Compile Include="API\Statics\ReadOnlyGame.cs" />
-    <Compile Include="API\Statics\Logging.cs" />
-    <Compile Include="API\Statics\ThreadUtil2.cs" />
-    <Compile Include="API\Statics\Utils.cs" />
-    <Compile Include="API\Statics\WriteOnlyGame.cs" />
+    <Compile Include="API\Utilities\Extensions.cs" />
+    <Compile Include="API\Utilities\RiverExpanded.cs" />
+    <Compile Include="API\WreckingActions\WreckAction.cs" />
+    <Compile Include="API\WreckingActions\WreckClustersAction.cs" />
+    <Compile Include="API\Delegates\BuildableChange.cs" />
+    <Compile Include="API\Utilities\Logging.cs" />
     <Compile Include="BaseClusteringPlugin.cs" />
     <Compile Include="Commands\ClustersRegenCommand.cs" />
     <Compile Include="Commands\FindBuildsCommand.cs" />
     <Compile Include="Commands\FindClustersCommand.cs" />
+    <Compile Include="Commands\RemoveBuildableCommand.cs" />
     <Compile Include="Commands\TeleportToBuildCommand.cs" />
     <Compile Include="Commands\TeleportToClusterCommand.cs" />
     <Compile Include="Commands\TopBuildersCommand.cs" />
@@ -98,12 +105,8 @@
     <Compile Include="Commands\WreckCommand.cs" />
     <Compile Include="Commands\WreckVehicleCommand.cs" />
     <Compile Include="Config\BaseClusteringPluginConfiguration.cs" />
-    <Compile Include="Config\BruteforceOptions.cs" />
-    <Compile Include="Config\EClusteringStyle.cs" />
-    <Compile Include="Config\RustOptions.cs" />
-    <Compile Include="Patches\PatchBuildableTransforms.cs" />
-    <Compile Include="Patches\PatchBuildablesDestroy.cs" />
-    <Compile Include="Patches\PatchBuildableSpawns.cs" />
+    <Compile Include="API\Patches\PatchBuildableTransforms.cs" />
+    <Compile Include="API\Patches\PatchBuildablesDestroy.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
