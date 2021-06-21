@@ -49,10 +49,11 @@ Arguments can be on any order, so doing: `/wreck b pusta birch 5.0` should be th
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <BaseClusteringPluginConfiguration xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-  <VerboseLogging>false</VerboseLogging> <!-- Determines if more logging information should be printed (Note: Can be a lot, or no change in logging output.) -->
   <EnableClustering>true</EnableClustering> <!-- Enables/Disables the clustering feature from the plugin. Setting this to false means you only really want to use the plugin as an API for other plugins, or as another wreckingball plugin. -->
   <MaxDistanceBetweenStructures>6.1</MaxDistanceBetweenStructures> <!-- Maximum distance between structures in order for them to be considered part of a base. Structures are floors, walls, roofs, pillars, etc. -->
   <MaxDistanceToConsiderPartOfBase>10</MaxDistanceToConsiderPartOfBase> <!-- Maximum distance between barricades (and barricade <-> structure) in order for them to be considered part of a base. Barricades are doors, signs, crates, beds, flags, etc. This distance is also used for any checks if anything is inside the base. -->
+  <BuildableCapacity>60000</BuildableCapacity> <!-- The starting size of the dictionaries that the plugin internally uses. Larger value will result in higher memory usage, but no need to allocate more space when more elements are added. Lower is the opposite, less memory usage, but requires to allocate more space when more elements are added. -->
+  <BackgroundWorkerSleepTime>125</BackgroundWorkerSleepTime> <!-- How long the background working that's deferring the destroyed/spawned buildables should wait before processing another batch of deferred buildables. -->
 </BaseClusteringPluginConfiguration>
 ```
 
