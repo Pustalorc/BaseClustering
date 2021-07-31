@@ -151,6 +151,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             }
 
             river.CloseRiver();
+            m_BuildableDirectory.RestartBackgroundWorker();
         }
 
         private bool LoadClusters(IEnumerable<Buildable> allBuildables)
@@ -554,15 +555,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                         var cluster = GetOrCreatePooledCluster();
                         cluster.AddBuildable(buildable);
                         RegisterCluster(cluster);
+                        cluster.StealFromGlobal(gCluster);
                         return;
                     // If there's exactly 1 cluster found, simply add it to that cluster.
                     case 1:
-                        bestClusters.First().AddBuildable(buildable);
+                        cluster = bestClusters.First();
+                        cluster.AddBuildable(buildable);
+                        cluster.StealFromGlobal(gCluster);
                         return;
 
-                    // However, if there's more than 1 cluster, select every single buildable from all found clusters and the global cluster.
+                    // However, if there's more than 1 cluster, select every single buildable from all found clusters.
                     default:
-                        var allBuilds = bestClusters.SelectMany(k => k.Buildables).Concat(gCluster.Buildables).ToList();
+                        var allBuilds = bestClusters.SelectMany(k => k.Buildables).ToList();
 
                         // Make sure to include the buildable we spawned in that set.
                         allBuilds.Add(buildable);
@@ -571,15 +575,15 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                         foreach (var c in bestClusters)
                             Return(c);
 
-                        // Clear the global cluster
-                        gCluster.Reset();
-
                         // And ask the clustering tool to generate new clusters, and populate the global cluster.
                         var newClusters = ClusterElements(allBuilds);
 
                         // New clusters can be safely added now.
                         foreach (var c in newClusters)
+                        {
                             RegisterCluster(c);
+                            c.StealFromGlobal(c);
+                        }
 
                         return;
                 }

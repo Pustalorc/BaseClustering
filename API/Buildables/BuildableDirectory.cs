@@ -38,9 +38,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         private readonly ConcurrentQueue<Buildable> m_DeferredRemove;
         private readonly ConcurrentQueue<Buildable> m_DeferredAdd;
 
-        private readonly BackgroundWorker m_BackgroundWorker;
         private readonly AutoResetEvent m_BackgroundWorkerEnd;
         private readonly int m_BackgroundWorkerSleepTime;
+
+        private BackgroundWorker m_BackgroundWorker;
 
         /// <summary>
         /// Gets a copied <see cref="IReadOnlyCollection{Buildable}"/> of all the buildables tracked.
@@ -57,8 +58,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         {
             m_BarricadeBuildables = new Dictionary<uint, BarricadeBuildable>(configuration.BuildableCapacity);
             m_StructureBuildables = new Dictionary<uint, StructureBuildable>(configuration.BuildableCapacity);
-            m_BackgroundWorker = new BackgroundWorker {WorkerSupportsCancellation = true};
-            m_BackgroundWorker.DoWork += HandleDeferred;
             m_DeferredRemove = new ConcurrentQueue<Buildable>();
             m_DeferredAdd = new ConcurrentQueue<Buildable>();
             m_BackgroundWorkerEnd = new AutoResetEvent(false);
@@ -69,7 +68,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             BarricadeManager.onBarricadeSpawned += BarricadeSpawned;
             PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
 
-            m_BackgroundWorker.RunWorkerAsync();
+            m_BackgroundWorker = new BackgroundWorker {WorkerSupportsCancellation = true};
+            RestartBackgroundWorker();
         }
 
         internal void LevelLoaded()
@@ -129,6 +129,13 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             }
 
             InternalHandleDeferred();
+        }
+
+        internal void RestartBackgroundWorker()
+        {
+            m_BackgroundWorker = new BackgroundWorker {WorkerSupportsCancellation = true};
+            m_BackgroundWorker.DoWork += HandleDeferred;
+            m_BackgroundWorker.RunWorkerAsync();
         }
 
         private void BuildableDestroyed(uint instanceId, bool isStructure)

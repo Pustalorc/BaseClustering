@@ -263,6 +263,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         private bool VerifyBarricadeIntegrity()
         {
             var structures = Buildables.OfType<StructureBuildable>().ToList();
+
+            if (structures.Count <= 0)
+                return false;
+
             var maxBuildableDistance =
                 Mathf.Pow(m_PluginConfiguration.MaxDistanceToConsiderPartOfBase, 2);
 
@@ -299,7 +303,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                         if (bestCluster != this)
                         {
                             // If its a different cluster, remove it from the current cluster and add it to the new one.
-                            m_Buildables.Remove(b);
+                            RemoveBuildable(b);
                             bestCluster.AddBuildable(b);
                         }
 
@@ -307,19 +311,19 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                     }
 
                     // If no best cluster is found, check if we have a global cluster. If we do, add the barricade to it. If we don't, create a new global cluster.
+                    RemoveBuildable(b);
                     globalCluster.AddBuildable(b);
-                    m_Buildables.Remove(b);
                 }
 
                 IsBeingDestroyed = false;
                 return;
             }
 
-            // First, ask the clustering tool to generate a new set of clusters from the current buildables.
-            var clusterRegened = m_BaseClusterDirectory
-                .ClusterElements(Buildables.Concat(globalCluster.Buildables).ToList())
-                .OrderByDescending(k => k.Buildables.Count).ToList();
+            // First, get a list of all buildables to cluster, including global cluster.
+            var builds = Buildables.Concat(globalCluster.Buildables).ToList();
             globalCluster.Reset();
+            var clusterRegened = m_BaseClusterDirectory.ClusterElements(builds)
+                .OrderByDescending(k => k.Buildables.Count).ToList();
 
             // Dispose correctly of the cluster we are not going to add here.
             var discarded = clusterRegened.FirstOrDefault();
@@ -340,6 +344,18 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                 m_BaseClusterDirectory.Return(this);
 
             IsBeingDestroyed = false;
+        }
+
+        internal void StealFromGlobal(BaseCluster? globalCluster)
+        {
+            if (globalCluster?.IsGlobalCluster != true)
+                return;
+
+            foreach (var build in globalCluster.Buildables.Where(IsWithinRange))
+            {
+                AddBuildable(build);
+                globalCluster.RemoveBuildable(build);
+            }
         }
     }
 }
