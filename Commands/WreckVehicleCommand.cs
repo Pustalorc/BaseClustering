@@ -56,8 +56,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 return;
             }
 
-            for (var i = region.barricades.Count - 1; i > 0; i--)
-                BarricadeManager.destroyBarricade(region, x, y, plant, (ushort) i);
+            for (var i = region.drops.Count - 1; i > 0; i--)
+                BarricadeManager.destroyBarricade(region.drops[i], x, y, plant);
 
             UnturnedChat.Say(caller,
                 baseClusteringPlugin.Translate("vehicle_wreck",

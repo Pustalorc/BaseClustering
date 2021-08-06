@@ -6,73 +6,78 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
     /// <inheritdoc />
     public sealed class BarricadeBuildable : Buildable
     {
-        private readonly BarricadeData m_BarricadeData;
-        private readonly BarricadeDrop m_BarricadeDrop;
+        /// <summary>
+        /// Server-Side barricade data.
+        /// </summary>
+        public BarricadeData BarricadeData { get; }
 
         /// <summary>
-        /// Creates a new instance of <see cref="BarricadeBuildable"/> with the specified data and drop.
+        /// The drop/model of the barricade.
         /// </summary>
-        /// <param name="data">The data to add.</param>
+        public BarricadeDrop BarricadeDrop { get; }
+
+        /// <summary>
+        /// Creates a new instance of <see cref="BarricadeBuildable"/> with the specified drop.
+        /// </summary>
         /// <param name="drop">The drop to add.</param>
-        public BarricadeBuildable(BarricadeData data, BarricadeDrop drop)
+        public BarricadeBuildable(BarricadeDrop drop)
         {
-            m_BarricadeData = data;
-            m_BarricadeDrop = drop;
+            BarricadeDrop = drop;
+            BarricadeData = drop.GetServersideData();
         }
 
         /// <inheritdoc />
         public override ushort AssetId => Asset.id;
 
         /// <inheritdoc />
-        public override ushort Health => m_BarricadeData.barricade.health;
+        public override ushort Health => BarricadeData.barricade.health;
 
         /// <inheritdoc />
-        public override byte[]? State => m_BarricadeData.barricade.state;
+        public override byte[]? State => BarricadeData.barricade.state;
 
         /// <inheritdoc />
-        public override ulong Owner => m_BarricadeData.owner;
+        public override ulong Owner => BarricadeData.owner;
 
         /// <inheritdoc />
-        public override ulong Group => m_BarricadeData.group;
+        public override ulong Group => BarricadeData.group;
 
         /// <inheritdoc />
-        public override byte AngleX => m_BarricadeData.angle_x;
+        public override byte AngleX => BarricadeData.angle_x;
 
         /// <inheritdoc />
-        public override byte AngleY => m_BarricadeData.angle_y;
+        public override byte AngleY => BarricadeData.angle_y;
 
         /// <inheritdoc />
-        public override byte AngleZ => m_BarricadeData.angle_z;
+        public override byte AngleZ => BarricadeData.angle_z;
 
         /// <inheritdoc />
-        public override Vector3 Position => m_BarricadeData.point;
+        public override Vector3 Position => BarricadeData.point;
 
         /// <inheritdoc />
-        public override Transform Model => m_BarricadeDrop.model;
+        public override Transform Model => BarricadeDrop.model;
 
         /// <inheritdoc />
-        public override Interactable? Interactable => m_BarricadeDrop.interactable;
+        public override Interactable? Interactable => BarricadeDrop.interactable;
 
         /// <inheritdoc />
-        public override uint InstanceId => m_BarricadeData.instanceID;
+        public override uint InstanceId => BarricadeData.instanceID;
 
         /// <inheritdoc />
-        public override Asset Asset => m_BarricadeDrop.asset;
+        public override Asset Asset => BarricadeDrop.asset;
 
         /// <inheritdoc />
-        public override bool IsPlanted => m_BarricadeDrop.model != null &&
-                                          m_BarricadeDrop.model.parent != null &&
-                                          m_BarricadeDrop.model.parent.CompareTag("Vehicle");
+        public override bool IsPlanted => BarricadeDrop.model != null &&
+                                          BarricadeDrop.model.parent != null &&
+                                          BarricadeDrop.model.parent.CompareTag("Vehicle");
 
         /// <inheritdoc />
         public override void UnsafeDestroy()
         {
             ThreadUtil.assertIsGameThread();
-            if (!BarricadeManager.tryGetInfo(Model, out var x, out var y, out var plant, out var index,
-                out var bRegion))
+            if (!BarricadeManager.tryGetRegion(Model, out var x, out var y, out var plant, out _))
                 return;
 
-            BarricadeManager.destroyBarricade(bRegion, x, y, plant, index);
+            BarricadeManager.destroyBarricade(BarricadeDrop, x, y, plant);
         }
 
         /// <inheritdoc />

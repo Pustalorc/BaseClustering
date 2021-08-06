@@ -6,58 +6,64 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
     /// <inheritdoc />
     public sealed class StructureBuildable : Buildable
     {
-        private readonly StructureData m_StructureData;
-        private readonly StructureDrop m_StructureDrop;
+        /// <summary>
+        /// Server-Side structure data.
+        /// </summary>
+        public StructureData StructureData { get; }
+
+        /// <summary>
+        /// The drop/model of the structure.
+        /// </summary>
+        public StructureDrop StructureDrop { get; }
 
         /// <summary>
         /// Creates a new instance of <see cref="StructureBuildable"/> with the specified data and drop.
         /// </summary>
-        /// <param name="data">The data to add.</param>
         /// <param name="drop">The drop to add.</param>
-        public StructureBuildable(StructureData data, StructureDrop drop)
+        public StructureBuildable(StructureDrop drop)
         {
-            m_StructureData = data;
-            m_StructureDrop = drop;
+            StructureDrop = drop;
+            StructureData = drop.GetServersideData();
         }
 
         /// <inheritdoc />
         public override ushort AssetId => Asset.id;
 
         /// <inheritdoc />
-        public override ushort Health => m_StructureData.structure.health;
+        public override ushort Health => StructureData.structure.health;
 
         /// <inheritdoc />
         public override byte[]? State => null;
 
         /// <inheritdoc />
-        public override ulong Owner => m_StructureData.owner;
+        public override ulong Owner => StructureData.owner;
 
         /// <inheritdoc />
-        public override ulong Group => m_StructureData.group;
+        public override ulong Group => StructureData.group;
 
         /// <inheritdoc />
-        public override byte AngleX => m_StructureData.angle_x;
+        public override byte AngleX => StructureData.angle_x;
 
         /// <inheritdoc />
-        public override byte AngleY => m_StructureData.angle_y;
+        public override byte AngleY => StructureData.angle_y;
 
         /// <inheritdoc />
-        public override byte AngleZ => m_StructureData.angle_z;
+        public override byte AngleZ => StructureData.angle_z;
 
         /// <inheritdoc />
-        public override Vector3 Position => m_StructureData.point;
+        public override Vector3 Position => StructureData.point;
 
         /// <inheritdoc />
-        public override Transform Model => m_StructureDrop.model;
+        public override Transform Model => StructureDrop.model;
 
         /// <inheritdoc />
         public override Interactable? Interactable => null;
 
         /// <inheritdoc />
-        public override uint InstanceId => m_StructureData.instanceID;
+        public override uint InstanceId => StructureData.instanceID;
 
         /// <inheritdoc />
-        public override Asset Asset => m_StructureData.structure.asset;
+        public override Asset Asset => StructureData.structure.asset;
 
         /// <inheritdoc />
         public override bool IsPlanted => false;
@@ -66,10 +72,10 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         public override void UnsafeDestroy()
         {
             ThreadUtil.assertIsGameThread();
-            if (!StructureManager.tryGetInfo(Model, out var x, out var y, out var index, out var sRegion))
+            if (!StructureManager.tryGetRegion(Model, out var x, out var y, out _))
                 return;
 
-            StructureManager.destroyStructure(sRegion, x, y, index, Vector3.zero);
+            StructureManager.destroyStructure(StructureDrop, x, y, Vector3.zero);
         }
 
         /// <inheritdoc />

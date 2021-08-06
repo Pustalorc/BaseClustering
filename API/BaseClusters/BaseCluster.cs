@@ -152,7 +152,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         {
             var distanceCheck = Mathf.Pow(m_PluginConfiguration.MaxDistanceToConsiderPartOfBase, 2);
 
-            return Buildables.OfType<StructureBuildable>().Any(k => (k.Position - position).sqrMagnitude <= distanceCheck);
+            return Buildables.OfType<StructureBuildable>()
+                .Any(k => (k.Position - position).sqrMagnitude <= distanceCheck);
         }
 
         /// <summary>

@@ -17,7 +17,8 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
     [UsedImplicitly]
     public sealed class WreckClustersCommand : IRocketCommand
     {
-        private readonly Dictionary<string, WreckClustersAction> m_WreckActions = new Dictionary<string, WreckClustersAction>();
+        private readonly Dictionary<string, WreckClustersAction> m_WreckActions =
+            new Dictionary<string, WreckClustersAction>();
 
         public AllowedCaller AllowedCaller => AllowedCaller.Both;
 

@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading;
+using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using Pustalorc.Plugins.BaseClustering.API.Patches;
 using Pustalorc.Plugins.BaseClustering.Config;
@@ -165,16 +166,14 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         private void StructureSpawned(StructureRegion region, StructureDrop drop)
         {
-            var data = region.structures.Find(k => k.instanceID == drop.instanceID);
-            var build = new StructureBuildable(data, drop);
+            var build = new StructureBuildable(drop);
             m_StructureBuildables.Add(build.InstanceId, build);
             m_DeferredAdd.Enqueue(build);
         }
 
         private void BarricadeSpawned(BarricadeRegion region, BarricadeDrop drop)
         {
-            var data = region.barricades.Find(k => k.instanceID == drop.instanceID);
-            var build = new BarricadeBuildable(data, drop);
+            var build = new BarricadeBuildable(drop);
             m_BarricadeBuildables.Add(build.InstanceId, build);
             m_DeferredAdd.Enqueue(build);
         }
@@ -210,23 +209,11 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
                 var structureRegions = StructureManager.regions.Cast<StructureRegion>().ToList();
 
-                var barricadeDatas = barricadeRegions.SelectMany(brd => brd.barricades).ToList();
                 var barricadeDrops = barricadeRegions.SelectMany(brd => brd.drops).ToList();
-                var structureDatas = structureRegions.SelectMany(str => str.structures).ToList();
                 var structureDrops = structureRegions.SelectMany(str => str.drops).ToList();
 
-                result = barricadeDatas
-                    .Select((k, i) =>
-                    {
-                        var drop = barricadeDrops.ElementAt(i);
-                        return drop == null ? null : new BarricadeBuildable(k, drop);
-                    })
-                    .Concat<Buildable?>(structureDatas.Select((k, i) =>
-                    {
-                        var drop = structureDrops.ElementAt(i);
-                        return drop == null ? null : new StructureBuildable(k, drop);
-                    }))
-                    .Where(d => d != null)!;
+                result = barricadeDrops.Select(k => new BarricadeBuildable(k))
+                    .Concat<Buildable>(structureDrops.Select(k => new StructureBuildable(k)));
             }
 
             return (owner switch
@@ -263,6 +250,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
         /// <br/>
         /// An instance of <see cref="Buildable"/> if the buildable was found.
         /// </returns>
+        [UsedImplicitly]
         public static Buildable? GetBuildable(uint instanceId, bool isStructure)
         {
             var buildables = GetBuildables(includePlants: true);
