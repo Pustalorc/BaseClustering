@@ -2,6 +2,7 @@
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using SDG.Unturned;
+using UnityEngine;
 
 namespace Pustalorc.Plugins.BaseClustering.API.Patches
 {
@@ -18,22 +19,24 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
         [HarmonyPatch]
         internal static class InternalPatches
         {
-            [HarmonyPatch(typeof(BarricadeManager), "destroyBarricade")]
+            [HarmonyPatch(typeof(BarricadeManager), "destroyBarricade", typeof(BarricadeDrop), typeof(byte),
+                typeof(byte), typeof(ushort))]
             [HarmonyPrefix]
             [UsedImplicitly]
-            internal static void DestroyBarricade(BarricadeRegion region, ushort index)
+            internal static void DestroyBarricade(BarricadeDrop barricade)
             {
                 ThreadUtil.assertIsGameThread();
-                OnBuildableDestroyed?.Invoke(region.drops[index].instanceID, false);
+                OnBuildableDestroyed?.Invoke(barricade.instanceID, false);
             }
 
-            [HarmonyPatch(typeof(StructureManager), "destroyStructure")]
+            [HarmonyPatch(typeof(StructureManager), "destroyStructure", typeof(StructureDrop), typeof(byte),
+                typeof(byte), typeof(Vector3))]
             [HarmonyPrefix]
             [UsedImplicitly]
-            internal static void DestroyStructure(StructureRegion region, ushort index)
+            internal static void DestroyStructure(StructureDrop structure)
             {
                 ThreadUtil.assertIsGameThread();
-                OnBuildableDestroyed?.Invoke(region.drops[index].instanceID, true);
+                OnBuildableDestroyed?.Invoke(structure.instanceID, true);
             }
         }
     }

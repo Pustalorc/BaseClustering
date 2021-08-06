@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using HarmonyLib;
+﻿using HarmonyLib;
 using JetBrains.Annotations;
 using Pustalorc.Plugins.BaseClustering.API.Buildables;
 using Pustalorc.Plugins.BaseClustering.API.Delegates;
@@ -22,50 +21,24 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
         [HarmonyPatch]
         internal static class InternalPatches
         {
-            [HarmonyPatch(typeof(BarricadeManager), "ReceiveTransformBarricade")]
+            [HarmonyPatch(typeof(BarricadeDrop), "ReceiveTransform")]
             [HarmonyPostfix]
             [UsedImplicitly]
-            internal static void ReceiveTransformBarricade(byte x, byte y, ushort plant, uint instanceID)
+            internal static void ReceiveTransformBarricade(BarricadeDrop __instance)
             {
-                var buildable = BuildableDirectory.GetBuildable(instanceID, false);
-
-                if (buildable == null)
-                {
-                    if (!BarricadeManager.tryGetRegion(x, y, plant, out var region))
-                        return;
-
-                    var data = region.barricades.FirstOrDefault(k => k.instanceID == instanceID);
-                    var drop = region.drops.FirstOrDefault(k => k.instanceID == instanceID);
-
-                    if (data == null || drop == null)
-                        return;
-
-                    buildable = new BarricadeBuildable(data, drop);
-                }
+                var buildable = BuildableDirectory.GetBuildable(__instance.instanceID, false) ??
+                                new BarricadeBuildable(__instance);
 
                 OnBuildableTransformed?.Invoke(buildable!);
             }
 
-            [HarmonyPatch(typeof(StructureManager), "ReceiveTransformStructure")]
+            [HarmonyPatch(typeof(StructureDrop), "ReceiveTransform")]
             [HarmonyPostfix]
             [UsedImplicitly]
-            internal static void ReceiveTransformStructure(byte x, byte y, uint instanceID)
+            internal static void ReceiveTransformStructure(StructureDrop __instance)
             {
-                var buildable = BuildableDirectory.GetBuildable(instanceID, true);
-
-                if (buildable == null)
-                {
-                    if (!StructureManager.tryGetRegion(x, y, out var region))
-                        return;
-
-                    var data = region.structures.FirstOrDefault(k => k.instanceID == instanceID);
-                    var drop = region.drops.FirstOrDefault(k => k.instanceID == instanceID);
-
-                    if (data == null || drop == null)
-                        return;
-
-                    buildable = new StructureBuildable(data, drop);
-                }
+                var buildable = BuildableDirectory.GetBuildable(__instance.instanceID, true) ??
+                                new StructureBuildable(__instance);
 
                 OnBuildableTransformed?.Invoke(buildable!);
             }
