@@ -32,7 +32,7 @@ namespace Pustalorc.Plugins.BaseClustering
         /// <summary>
         /// Harmony instance that the plugin utilizes.
         /// </summary>
-        private Harmony? m_Harmony;
+        private static Harmony? _harmony;
 
         /// <summary>
         /// The main instance of type <see cref="BuildableDirectory"/>.
@@ -130,8 +130,11 @@ namespace Pustalorc.Plugins.BaseClustering
         /// </summary>
         protected override void Load()
         {
-            m_Harmony = new Harmony("xyz.pustalorc.baseClustering");
-            m_Harmony.PatchAll();
+            if (_harmony == null)
+            {
+                _harmony = new Harmony("com.pustalorc.baseClustering");
+                _harmony.PatchAll();
+            }
 
             BuildableDirectory = new BuildableDirectory(Configuration.Instance);
 
@@ -169,12 +172,6 @@ namespace Pustalorc.Plugins.BaseClustering
             {
                 BuildableDirectory.Unload();
                 BuildableDirectory = null;
-            }
-
-            if (m_Harmony != null)
-            {
-                m_Harmony.UnpatchAll();
-                m_Harmony = null;
             }
 
             Logging.PluginUnloaded(this);

@@ -220,8 +220,6 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// <param name="value">The <see cref="bool"/> value to write.</param>
         public void WriteBoolean(bool value)
         {
-            // ReSharper disable once RedundantCast
-            // Removing cast causes compile exception.
             Stream.WriteByte((byte)(value ? 1 : 0));
             Water++;
         }

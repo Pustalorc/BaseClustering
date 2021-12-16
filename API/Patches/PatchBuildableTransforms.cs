@@ -5,6 +5,7 @@ using Pustalorc.Plugins.BaseClustering.API.Delegates;
 using SDG.Unturned;
 
 // ReSharper disable InconsistentNaming
+// Patches have inconsistent naming due to harmony rules.
 
 namespace Pustalorc.Plugins.BaseClustering.API.Patches
 {
