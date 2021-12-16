@@ -64,7 +64,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         /// <returns>A <see cref="byte"/>.</returns>
         public byte ReadByte()
         {
-            return (byte) Stream.ReadByte();
+            return (byte)Stream.ReadByte();
         }
 
         /// <summary>
@@ -208,7 +208,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         public void WriteString(string value)
         {
             var bytes = Encoding.UTF8.GetBytes(value);
-            var b = (byte) bytes.Length;
+            var b = (byte)bytes.Length;
             Stream.WriteByte(b);
             Stream.Write(bytes, 0, b);
             Water += 1 + b;
@@ -222,7 +222,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         {
             // ReSharper disable once RedundantCast
             // Removing cast causes compile exception.
-            Stream.WriteByte((byte) (value ? 1 : 0));
+            Stream.WriteByte((byte)(value ? 1 : 0));
             Water++;
         }
 
@@ -243,7 +243,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         [UsedImplicitly]
         public void WriteBytes(byte[] values)
         {
-            var num = (ushort) values.Length;
+            var num = (ushort)values.Length;
             WriteUInt16(num);
             Stream.Write(values, 0, num);
             Water += num;
@@ -369,9 +369,9 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
         [UsedImplicitly]
         public void WriteColor(Color value)
         {
-            WriteByte((byte) (value.r * 255f));
-            WriteByte((byte) (value.g * 255f));
-            WriteByte((byte) (value.b * 255f));
+            WriteByte((byte)(value.r * 255f));
+            WriteByte((byte)(value.g * 255f));
+            WriteByte((byte)(value.b * 255f));
         }
 
         /// <summary>
@@ -410,7 +410,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Utilities
 
             var dir = System.IO.Path.GetDirectoryName(Path);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                Directory.CreateDirectory(dir!);
+                Directory.CreateDirectory(dir);
 
             Stream = new FileStream(Path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
             Water = 0;

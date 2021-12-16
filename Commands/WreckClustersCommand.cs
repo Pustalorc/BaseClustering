@@ -28,9 +28,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Syntax => "confirm | abort | [player] [item] [radius]";
 
-        public List<string> Aliases => new List<string> {"wc"};
+        public List<string> Aliases => new List<string> { "wc" };
 
-        public List<string> Permissions => new List<string> {"wreckclusters"};
+        public List<string> Permissions => new List<string> { "wreckclusters" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

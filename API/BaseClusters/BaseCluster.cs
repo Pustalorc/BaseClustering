@@ -183,7 +183,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             AddBuildables(buildsInRange);
             gCluster.RemoveBuildables(buildsInRange);
             // Include the buildables from the global cluster that got added.
-            OnBuildablesAdded?.Invoke(buildsInRange.Concat(new[] {build}));
+            OnBuildablesAdded?.Invoke(buildsInRange.Concat(new[] { build }));
         }
 
         /// <summary>
@@ -206,7 +206,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         {
             var removedSomething = m_Buildables.Remove(build);
             if (removedSomething)
-                OnBuildablesRemoved?.Invoke(new[] {build});
+                OnBuildablesRemoved?.Invoke(new[] { build });
 
             if (removedSomething && !IsBeingDestroyed && !IsGlobalCluster)
                 VerifyAndCorrectIntegrity();

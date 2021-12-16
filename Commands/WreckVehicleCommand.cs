@@ -22,13 +22,13 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Syntax => "";
 
-        public List<string> Aliases => new List<string> {"wv"};
+        public List<string> Aliases => new List<string> { "wv" };
 
-        public List<string> Permissions => new List<string> {"wreckvehicle"};
+        public List<string> Permissions => new List<string> { "wreckvehicle" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
-            var player = (UnturnedPlayer) caller;
+            var player = (UnturnedPlayer)caller;
             var raycastInfo =
                 DamageTool.raycast(new Ray(player.Player.look.aim.position, player.Player.look.aim.forward), 10f,
                     RayMasks.VEHICLE);
@@ -50,7 +50,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
             }
 
             if (!BarricadeManager.tryGetPlant(raycastInfo.transform, out var x, out var y, out var plant,
-                out var region))
+                    out var region))
             {
                 UnturnedChat.Say(caller, baseClusteringPlugin.Translate("vehicle_no_plant"));
                 return;

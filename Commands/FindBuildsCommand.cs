@@ -27,9 +27,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
         public string Syntax =>
             "b [radius] | s [radius] | [id] [radius] | v [id] [radius] | [player] [id] [radius] | [player] b [radius] | [player] s [radius] | [player] v [id] [radius]";
 
-        public List<string> Aliases => new List<string> {"fb"};
+        public List<string> Aliases => new List<string> { "fb" };
 
-        public List<string> Permissions => new List<string> {"findbuilds"};
+        public List<string> Permissions => new List<string> { "findbuilds" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

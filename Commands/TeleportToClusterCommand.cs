@@ -24,9 +24,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
 
         public string Syntax => "[player]";
 
-        public List<string> Aliases => new List<string> {"tpc"};
+        public List<string> Aliases => new List<string> { "tpc" };
 
-        public List<string> Permissions => new List<string> {"teleporttocluster"};
+        public List<string> Permissions => new List<string> { "teleporttocluster" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {
@@ -73,7 +73,7 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
                 var offset = new Vector3(0, 4, 0);
 
                 while (!player.Player.stance.wouldHaveHeightClearanceAtPosition(cluster.AverageCenterPosition + offset,
-                    0.5f))
+                           0.5f))
                     offset.y++;
 
                 player.Teleport(cluster.AverageCenterPosition + offset, player.Rotation);

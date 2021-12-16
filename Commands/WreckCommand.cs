@@ -30,9 +30,9 @@ namespace Pustalorc.Plugins.BaseClustering.Commands
         public string Syntax =>
             "confirm | abort | b [radius] | s [radius] | <item> [radius] | v [item] [radius] | <player> [item] [radius]";
 
-        public List<string> Aliases => new List<string> {"w"};
+        public List<string> Aliases => new List<string> { "w" };
 
-        public List<string> Permissions => new List<string> {"wreck"};
+        public List<string> Permissions => new List<string> { "wreck" };
 
         public void Execute(IRocketPlayer caller, string[] command)
         {

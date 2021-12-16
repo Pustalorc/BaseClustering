@@ -57,13 +57,13 @@ namespace Pustalorc.Plugins.BaseClustering
                 "clusters_regen_warning",
                 "WARNING! This operation can take a long amount of time! The more buildables in the map the longer it will take! Please see console for when this operation is completed."
             },
-            {"not_available", "N/A"},
-            {"cannot_be_executed_from_console", "That command cannot be executed from console with those arguments."},
+            { "not_available", "N/A" },
+            { "cannot_be_executed_from_console", "That command cannot be executed from console with those arguments." },
             {
                 "build_count",
                 "There are a total of {0} builds. Specific Item: {1}, Radius: {2}, Player: {3}, Planted Barricades Included: {4}, Filter by Barricades: {5}, Filter by Structures: {6}"
             },
-            {"cluster_count", "There are a total of {0} clusters. Specific Item: {1}, Radius: {2}, Player: {3}"},
+            { "cluster_count", "There are a total of {0} clusters. Specific Item: {1}, Radius: {2}, Player: {3}" },
             {
                 "not_looking_buildable", "You are not looking at a structure/barricade, so you cannot get any info."
             },
@@ -79,12 +79,12 @@ namespace Pustalorc.Plugins.BaseClustering
                 "cannot_teleport_no_clusters",
                 "Cannot teleport anywhere, no clusters found with the following filters. Player: {0}"
             },
-            {"top_builder_format", "At number {0}, {1} with {2} buildables!"},
-            {"top_cluster_format", "At number {0}, {1} with {2} clusters!"},
-            {"not_enough_args", "You need more arguments to use this command."},
-            {"action_cancelled", "The wreck action was cancelled."},
-            {"no_action_queued", "There is no wreck action queued."},
-            {"cannot_wreck_no_clusters", "There are no clusters selected, so nothing can be wrecked."},
+            { "top_builder_format", "At number {0}, {1} with {2} buildables!" },
+            { "top_cluster_format", "At number {0}, {1} with {2} clusters!" },
+            { "not_enough_args", "You need more arguments to use this command." },
+            { "action_cancelled", "The wreck action was cancelled." },
+            { "no_action_queued", "There is no wreck action queued." },
+            { "cannot_wreck_no_clusters", "There are no clusters selected, so nothing can be wrecked." },
             {
                 "wrecked_clusters",
                 "Wrecked {0} clusters. Specific Item: {1}, Radius: {2}, Player: {3}"
@@ -97,7 +97,7 @@ namespace Pustalorc.Plugins.BaseClustering
                 "wreck_clusters_action_queued_new",
                 "Discarded previous queued action and queued a new wreck clusters action for {3} clusters. Confirm with /wc confirm. Player: {0}, Specific Item: {1}, Radius: {2}."
             },
-            {"cannot_wreck_no_builds", "There are no buildables selected, so nothing can be wrecked."},
+            { "cannot_wreck_no_builds", "There are no buildables selected, so nothing can be wrecked." },
             {
                 "wrecked",
                 "Wrecked {0} buildables. Specific Item: {1}, Radius: {2}, Player: {3}, Planted Barricades Included: {4}, Filter by Barricades: {5}, Filter by Structures: {6}"
@@ -122,7 +122,7 @@ namespace Pustalorc.Plugins.BaseClustering
                 "vehicle_no_plant",
                 "The vehicle appears to have no assigned barricades to it, please make sure that it has barricades before asking to wreck them."
             },
-            {"vehicle_wreck", "Wrecked buildables from {0} [{1}]. Instance ID: {2}, Owner: {3}"}
+            { "vehicle_wreck", "Wrecked buildables from {0} [{1}]. Instance ID: {2}, Owner: {3}" }
         };
 
         /// <summary>

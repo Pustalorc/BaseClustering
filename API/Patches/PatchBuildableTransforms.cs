@@ -29,7 +29,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
                 var buildable = BuildableDirectory.GetBuildable(__instance.instanceID, false) ??
                                 new BarricadeBuildable(__instance);
 
-                OnBuildableTransformed?.Invoke(buildable!);
+                OnBuildableTransformed?.Invoke(buildable);
             }
 
             [HarmonyPatch(typeof(StructureDrop), "ReceiveTransform")]
@@ -40,7 +40,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Patches
                 var buildable = BuildableDirectory.GetBuildable(__instance.instanceID, true) ??
                                 new StructureBuildable(__instance);
 
-                OnBuildableTransformed?.Invoke(buildable!);
+                OnBuildableTransformed?.Invoke(buildable);
             }
         }
     }

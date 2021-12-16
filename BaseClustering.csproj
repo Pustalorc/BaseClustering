@@ -1,123 +1,121 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D64124CB-7B6E-4334-AB68-857848E03858}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Pustalorc.Plugins.BaseClustering</RootNamespace>
-    <AssemblyName>0BaseClustering</AssemblyName>
-    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <LangVersion>8</LangVersion>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\BaseClustering.xml</DocumentationFile>
-  </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="0Harmony, Version=2.1.1.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>packages\Lib.Harmony.2.1.1\lib\net45\0Harmony.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>libs/Assembly-CSharp.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Rocket.API">
-      <HintPath>libs\Rocket.API.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Rocket.Core">
-      <HintPath>libs\Rocket.Core.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Rocket.Unturned">
-      <HintPath>libs\Rocket.Unturned.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Steamworks.NET, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>libs\Steamworks.NET.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>libs\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>libs\UnityEngine.CoreModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>libs\UnityEngine.PhysicsModule.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="API\BaseClusters\BaseCluster.cs" />
-    <Compile Include="API\BaseClusters\BaseClusterDirectory.cs" />
-    <Compile Include="API\Buildables\BarricadeBuildable.cs" />
-    <Compile Include="API\Buildables\Buildable.cs" />
-    <Compile Include="API\Buildables\BuildableDirectory.cs" />
-    <Compile Include="API\Buildables\StructureBuildable.cs" />
-    <Compile Include="API\Delegates\BuildableDeleted.cs" />
-    <Compile Include="API\Delegates\BuildablesChanged.cs" />
-    <Compile Include="API\Delegates\ClusterChange.cs" />
-    <Compile Include="API\Delegates\VoidDelegate.cs" />
-    <Compile Include="API\Utilities\Extensions.cs" />
-    <Compile Include="API\Utilities\RiverExpanded.cs" />
-    <Compile Include="API\WreckingActions\WreckAction.cs" />
-    <Compile Include="API\WreckingActions\WreckClustersAction.cs" />
-    <Compile Include="API\Delegates\BuildableChange.cs" />
-    <Compile Include="API\Utilities\Logging.cs" />
-    <Compile Include="BaseClusteringPlugin.cs" />
-    <Compile Include="Commands\ClustersRegenCommand.cs" />
-    <Compile Include="Commands\FindBuildsCommand.cs" />
-    <Compile Include="Commands\FindClustersCommand.cs" />
-    <Compile Include="Commands\RemoveBuildableCommand.cs" />
-    <Compile Include="Commands\TeleportToBuildCommand.cs" />
-    <Compile Include="Commands\TeleportToClusterCommand.cs" />
-    <Compile Include="Commands\TopBuildersCommand.cs" />
-    <Compile Include="Commands\TopClustersCommand.cs" />
-    <Compile Include="Commands\WreckClustersCommand.cs" />
-    <Compile Include="Commands\WreckCommand.cs" />
-    <Compile Include="Commands\WreckVehicleCommand.cs" />
-    <Compile Include="Config\BaseClusteringPluginConfiguration.cs" />
-    <Compile Include="API\Patches\PatchBuildableTransforms.cs" />
-    <Compile Include="API\Patches\PatchBuildablesDestroy.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-         Other similar extension points exist, see Microsoft.Common.targets.
-    <Target Name="BeforeBuild">
-    </Target>
-    <Target Name="AfterBuild">
-    </Target>
-    -->
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')"/>
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{D64124CB-7B6E-4334-AB68-857848E03858}</ProjectGuid>
+        <OutputType>Library</OutputType>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>Pustalorc.Plugins.BaseClustering</RootNamespace>
+        <AssemblyName>0BaseClustering</AssemblyName>
+        <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+        <FileAlignment>512</FileAlignment>
+        <LangVersion>8</LangVersion>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>AnyCPU</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+        <DocumentationFile>bin\Release\BaseClustering.xml</DocumentationFile>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="0Harmony, Version=2.1.1.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>packages\Lib.Harmony.2.1.1\lib\net45\0Harmony.dll</HintPath>
+            <Private>True</Private>
+        </Reference>
+        <Reference Include="Assembly-CSharp, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>libs/Assembly-CSharp.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="com.rlabrecque.steamworks.net, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>libs\com.rlabrecque.steamworks.net.dll</HintPath>
+        </Reference>
+        <Reference Include="Rocket.API">
+            <HintPath>libs\Rocket.API.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="Rocket.Core">
+            <HintPath>libs\Rocket.Core.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="Rocket.Unturned">
+            <HintPath>libs\Rocket.Unturned.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="System"/>
+        <Reference Include="System.Core"/>
+        <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>libs\UnityEngine.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>libs\UnityEngine.CoreModule.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>libs\UnityEngine.PhysicsModule.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="API\BaseClusters\BaseCluster.cs"/>
+        <Compile Include="API\BaseClusters\BaseClusterDirectory.cs"/>
+        <Compile Include="API\Buildables\BarricadeBuildable.cs"/>
+        <Compile Include="API\Buildables\Buildable.cs"/>
+        <Compile Include="API\Buildables\BuildableDirectory.cs"/>
+        <Compile Include="API\Buildables\StructureBuildable.cs"/>
+        <Compile Include="API\Delegates\BuildableDeleted.cs"/>
+        <Compile Include="API\Delegates\BuildablesChanged.cs"/>
+        <Compile Include="API\Delegates\ClusterChange.cs"/>
+        <Compile Include="API\Delegates\VoidDelegate.cs"/>
+        <Compile Include="API\Utilities\Extensions.cs"/>
+        <Compile Include="API\Utilities\RiverExpanded.cs"/>
+        <Compile Include="API\WreckingActions\WreckAction.cs"/>
+        <Compile Include="API\WreckingActions\WreckClustersAction.cs"/>
+        <Compile Include="API\Delegates\BuildableChange.cs"/>
+        <Compile Include="API\Utilities\Logging.cs"/>
+        <Compile Include="BaseClusteringPlugin.cs"/>
+        <Compile Include="Commands\ClustersRegenCommand.cs"/>
+        <Compile Include="Commands\FindBuildsCommand.cs"/>
+        <Compile Include="Commands\FindClustersCommand.cs"/>
+        <Compile Include="Commands\RemoveBuildableCommand.cs"/>
+        <Compile Include="Commands\TeleportToBuildCommand.cs"/>
+        <Compile Include="Commands\TeleportToClusterCommand.cs"/>
+        <Compile Include="Commands\TopBuildersCommand.cs"/>
+        <Compile Include="Commands\TopClustersCommand.cs"/>
+        <Compile Include="Commands\WreckClustersCommand.cs"/>
+        <Compile Include="Commands\WreckCommand.cs"/>
+        <Compile Include="Commands\WreckVehicleCommand.cs"/>
+        <Compile Include="Config\BaseClusteringPluginConfiguration.cs"/>
+        <Compile Include="API\Patches\PatchBuildableTransforms.cs"/>
+        <Compile Include="API\Patches\PatchBuildablesDestroy.cs"/>
+        <Compile Include="Properties\AssemblyInfo.cs"/>
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="packages.config"/>
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets"/>
+    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+           Other similar extension points exist, see Microsoft.Common.targets.
+      <Target Name="BeforeBuild">
+      </Target>
+      <Target Name="AfterBuild">
+      </Target>
+      -->
 </Project>

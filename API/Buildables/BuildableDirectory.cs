@@ -69,7 +69,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
             BarricadeManager.onBarricadeSpawned += BarricadeSpawned;
             PatchBuildablesDestroy.OnBuildableDestroyed += BuildableDestroyed;
 
-            m_BackgroundWorker = new BackgroundWorker {WorkerSupportsCancellation = true};
+            m_BackgroundWorker = new BackgroundWorker { WorkerSupportsCancellation = true };
             RestartBackgroundWorker();
         }
 
@@ -134,7 +134,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.Buildables
 
         internal void RestartBackgroundWorker()
         {
-            m_BackgroundWorker = new BackgroundWorker {WorkerSupportsCancellation = true};
+            m_BackgroundWorker = new BackgroundWorker { WorkerSupportsCancellation = true };
             m_BackgroundWorker.DoWork += HandleDeferred;
             m_BackgroundWorker.RunWorkerAsync();
         }
