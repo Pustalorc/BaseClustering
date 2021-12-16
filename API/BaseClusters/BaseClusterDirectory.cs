@@ -45,6 +45,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         private readonly BuildableDirectory m_BuildableDirectory;
         private readonly ConcurrentBag<BaseCluster> m_ClusterPool;
         private readonly List<BaseCluster> m_Clusters;
+        private string m_SaveFilePath;
 
         private BaseCluster? m_GlobalCluster;
         private int m_InstanceIds;
@@ -56,7 +57,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         /// This copied collection includes the global cluster from <see cref="GetOrCreateGlobalCluster"/>.
         /// </remarks>
         public IReadOnlyCollection<BaseCluster> Clusters =>
-            new ReadOnlyCollection<BaseCluster>(m_Clusters.Concat(new[] {GetOrCreateGlobalCluster()}).ToList());
+            new ReadOnlyCollection<BaseCluster>(m_Clusters.Concat(new[] { GetOrCreateGlobalCluster() }).ToList());
 
         /// <summary>
         /// Creates a new instance of the BaseCluster Directory.
@@ -72,6 +73,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             m_BuildableDirectory = buildableDirectory;
             m_ClusterPool = new ConcurrentBag<BaseCluster>();
             m_Clusters = new List<BaseCluster>();
+            m_SaveFilePath = ServerSavedata.directory + "/" + Provider.serverID + "/Level/" +
+                             (Level.info?.name ?? "Washington") + "/Bases.dat";
 
             PatchBuildableTransforms.OnBuildableTransformed += BuildableTransformed;
             buildableDirectory.OnBuildablesAdded += BuildablesSpawned;
@@ -81,6 +84,8 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
         internal void LevelLoaded()
         {
+            m_SaveFilePath = ServerSavedata.directory + "/" + Provider.serverID + "/Level/" +
+                             Level.info.name + "/Bases.dat";
             GenerateAndLoadAllClusters();
 
             while (m_ClusterPool.Count < 25)
@@ -133,8 +138,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
         public void Save()
         {
             m_BuildableDirectory.WaitDestroyHandle();
-            var river = new RiverExpanded(ServerSavedata.directory + "/" + Provider.serverID + "/Level/" +
-                                          Level.info.name + "/Bases.dat");
+            var river = new RiverExpanded(m_SaveFilePath);
             river.WriteInt32(m_BuildableDirectory.Buildables.Count);
             var clusters = Clusters;
             river.WriteInt32(clusters.Count);
@@ -164,8 +168,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             try
             {
                 var timer = Stopwatch.StartNew();
-                var river = new RiverExpanded(ServerSavedata.directory + "/" + Provider.serverID + "/Level/" +
-                                              Level.info.name + "/Bases.dat");
+                var river = new RiverExpanded(m_SaveFilePath);
                 var allBuilds = allBuildables.ToList();
                 var structures = allBuilds.OfType<StructureBuildable>().ToDictionary(k => k.InstanceId);
                 var barricades = allBuilds.OfType<BarricadeBuildable>().ToDictionary(k => k.InstanceId);
@@ -200,7 +203,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
                         var buildInstanceId = river.ReadUInt32();
                         var isStructure = river.ReadBoolean();
                         var build = isStructure
-                            ? (Buildable) structures[buildInstanceId]
+                            ? (Buildable)structures[buildInstanceId]
                             : barricades[buildInstanceId];
 
                         if (build == null)
@@ -237,7 +240,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
                     if ((i + 1) % logRate == 0)
                         Logging.Write(m_Plugin,
-                            $"Loading saved clusters... {Math.Ceiling((i + 1) / (double) clusterCount * 100)}% [{i + 1}/{clusterCount}] {timer.ElapsedMilliseconds}ms",
+                            $"Loading saved clusters... {Math.Ceiling((i + 1) / (double)clusterCount * 100)}% [{i + 1}/{clusterCount}] {timer.ElapsedMilliseconds}ms",
                             ConsoleColor.Cyan);
                 }
 
@@ -403,7 +406,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
                 currentMultiplier++;
                 Logging.Write(m_Plugin,
-                    $"Generating new clusters... {Math.Ceiling(currentCount / (double) totalBuildablesToCluster * 100)}% [{currentCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
+                    $"Generating new clusters... {Math.Ceiling(currentCount / (double)totalBuildablesToCluster * 100)}% [{currentCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
                     ConsoleColor.Cyan);
             }
 
@@ -425,7 +428,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
             {
                 var finalBuildCount = output.Sum(k => k.Buildables.Count) + remainingBarricadeCount;
                 Logging.Write(m_Plugin,
-                    $"Generating new clusters... {Math.Ceiling(finalBuildCount / (double) totalBuildablesToCluster * 100)}% [{finalBuildCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
+                    $"Generating new clusters... {Math.Ceiling(finalBuildCount / (double)totalBuildablesToCluster * 100)}% [{finalBuildCount}/{totalBuildablesToCluster}] {stopwatch.ElapsedMilliseconds}ms",
                     ConsoleColor.Cyan);
             }
 
@@ -514,7 +517,7 @@ namespace Pustalorc.Plugins.BaseClustering.API.BaseClusters
 
         private void BuildableTransformed(Buildable buildable)
         {
-            var builds = new[] {buildable};
+            var builds = new[] { buildable };
             BuildablesDestroyed(builds);
             BuildablesSpawned(builds);
         }
