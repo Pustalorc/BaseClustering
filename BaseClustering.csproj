@@ -31,12 +31,15 @@
         <DocumentationFile>bin\$(Configuration)\BaseClustering.xml</DocumentationFile>
     </PropertyGroup>
     <ItemGroup>
-        <Reference Include="0Harmony, Version=2.1.1.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>packages\Lib.Harmony.2.1.1\lib\net45\0Harmony.dll</HintPath>
-            <Private>True</Private>
-        </Reference>
+        <PackageReference Include="Lib.Harmony" Version="2.1.1"/>
+        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net48" Version="1.0.2">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+    </ItemGroup>
+    <ItemGroup>
         <Reference Include="Assembly-CSharp">
-            <HintPath>libs/Assembly-CSharp.dll</HintPath>
+            <HintPath>libs\Assembly-CSharp.dll</HintPath>
             <Private>False</Private>
         </Reference>
         <Reference Include="com.rlabrecque.steamworks.net">
@@ -55,8 +58,6 @@
             <HintPath>libs\Rocket.Unturned.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <Reference Include="System" />
-        <Reference Include="System.Core" />
         <Reference Include="UnityEngine">
             <HintPath>libs\UnityEngine.dll</HintPath>
             <Private>False</Private>
@@ -69,12 +70,5 @@
             <HintPath>libs\UnityEngine.PhysicsModule.dll</HintPath>
             <Private>False</Private>
         </Reference>
-    </ItemGroup>
-    <ItemGroup>
-      <PackageReference Include="Lib.Harmony" Version="2.1.1" />
-      <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies.net48" Version="1.0.2">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
     </ItemGroup>
 </Project>

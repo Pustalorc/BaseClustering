@@ -1,4 +1,5 @@
 # BaseClustering
+
 Unturned Plugin to cluster Buildables &amp; Structures
 
 Download is available on github [releases](https://github.com/Pustalorc/BaseClustering/releases/)
@@ -7,7 +8,8 @@ Download is available on github [releases](https://github.com/Pustalorc/BaseClus
 
 ## Commands
 
-`/clustersregen` - Regenerates ALL clusters. Useful if a new barricade was missed, or one of them is reported at the wrong position, or some other issue with clusters has occurred.
+`/clustersregen` - Regenerates ALL clusters. Useful if a new barricade was missed, or one of them is reported at the
+wrong position, or some other issue with clusters has occurred.
 
 `/findbuilds [b | s | v] [player] [item] [radius]` - Finds and returns the count of buildables with the filters.
 
@@ -23,9 +25,11 @@ Download is available on github [releases](https://github.com/Pustalorc/BaseClus
 
 `/topclusters` - Lists the top 5 players that have the most amount of common ownerships on clusters.
 
-`/wreckclusters [player] [item] [radius]` and `/wreckclusters [abort | confirm]` - Wrecks all of the clusters that satisfy the filters. Requires confirmation before fully wrecking them.
+`/wreckclusters [player] [item] [radius]` and `/wreckclusters [abort | confirm]` - Wrecks all of the clusters that
+satisfy the filters. Requires confirmation before fully wrecking them.
 
-`/wreck [b | s | v] [player] [item] [radius]` and `/wreck [abort | confirm]` - Wrecks all of the buildables that satisfy the filters. Requires confirmation before fully wrecking them.
+`/wreck [b | s | v] [player] [item] [radius]` and `/wreck [abort | confirm]` - Wrecks all of the buildables that satisfy
+the filters. Requires confirmation before fully wrecking them.
 
 `/wreckvehicle` - Wrecks all of the buildables without confirmation on the vehicle that you are facing.
 
@@ -33,19 +37,23 @@ Download is available on github [releases](https://github.com/Pustalorc/BaseClus
 
 Arguments can be on any order, so doing: `/wreck b pusta birch 5.0` should be the same as `/wreck birch b 5.0 pusta`
 
-`[b | s | v]` specifies filters for all of the buildables. It can specify to filter JUST for barricades (`b`), JUST for structures (`s`), or INCLUDE buildables on vehicles (`v`).
+`[b | s | v]` specifies filters for all of the buildables. It can specify to filter JUST for barricades (`b`), JUST for
+structures (`s`), or INCLUDE buildables on vehicles (`v`).
 
 `[player]` self-explanatory. Accepts Steam64ID as well as the name.
 
-`[item]` self-explanatory. Accepts item names (including just typing `birch`) as well as item IDs. Using item names will select all results with that name, so be careful if you only write one letter!
+`[item]` self-explanatory. Accepts item names (including just typing `birch`) as well as item IDs. Using item names will
+select all results with that name, so be careful if you only write one letter!
 
-`[radius]` self-explanatory. Note that typing `5` will be considered an item if you do not specify an item by name or ID before it! To prevent this, type `.0` at the end of the number, that will force it to be detected as a radius.
+`[radius]` self-explanatory. Note that typing `5` will be considered an item if you do not specify an item by name or ID
+before it! To prevent this, type `.0` at the end of the number, that will force it to be detected as a radius.
 
 `[abort | confirm]` - self-explanatory, aborts or confirms previous action
 
 ---
 
 ## Default Configuration:
+
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <BaseClusteringPluginConfiguration xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
@@ -60,6 +68,7 @@ Arguments can be on any order, so doing: `/wreck b pusta birch 5.0` should be th
 ---
 
 ## Default Translations:
+
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <Translations xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
