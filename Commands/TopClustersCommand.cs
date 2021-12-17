@@ -7,48 +7,47 @@ using Rocket.Unturned.Chat;
 
 #pragma warning disable 1591
 
-namespace Pustalorc.Plugins.BaseClustering.Commands
+namespace Pustalorc.Plugins.BaseClustering.Commands;
+
+[UsedImplicitly]
+public sealed class TopClustersCommand : IRocketCommand
 {
-    [UsedImplicitly]
-    public sealed class TopClustersCommand : IRocketCommand
+    public AllowedCaller AllowedCaller => AllowedCaller.Both;
+
+    public string Name => "topclusters";
+
+    public string Help => "Displays the top 5 clusters in the game.";
+
+    public string Syntax => "";
+
+    public List<string> Aliases => new() { "topc" };
+
+    public List<string> Permissions => new() { "topclusters" };
+
+    public void Execute(IRocketPlayer caller, string[] command)
     {
-        public AllowedCaller AllowedCaller => AllowedCaller.Both;
+        var pluginInstance = BaseClusteringPlugin.Instance;
 
-        public string Name => "topclusters";
+        if (pluginInstance == null)
+            throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
 
-        public string Help => "Displays the top 5 clusters in the game.";
-
-        public string Syntax => "";
-
-        public List<string> Aliases => new List<string> { "topc" };
-
-        public List<string> Permissions => new List<string> { "topclusters" };
-
-        public void Execute(IRocketPlayer caller, string[] command)
+        var clusterDirectory = pluginInstance.BaseClusterDirectory;
+        if (clusterDirectory == null)
         {
-            var pluginInstance = BaseClusteringPlugin.Instance;
+            UnturnedChat.Say(caller, pluginInstance.Translate("command_fail_clustering_disabled"));
+            return;
+        }
 
-            if (pluginInstance == null)
-                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+        var clusters = clusterDirectory.Clusters;
 
-            var clusterDirectory = pluginInstance.BaseClusterDirectory;
-            if (clusterDirectory == null)
-            {
-                UnturnedChat.Say(caller, pluginInstance.Translate("command_fail_clustering_disabled"));
-                return;
-            }
+        var topClusters = clusters.GroupBy(k => k.CommonOwner).OrderByDescending(k => k.Count()).Take(5).ToList();
 
-            var clusters = clusterDirectory.Clusters;
+        for (var i = 0; i < topClusters.Count; i++)
+        {
+            var builder = topClusters.ElementAt(i);
 
-            var topClusters = clusters.GroupBy(k => k.CommonOwner).OrderByDescending(k => k.Count()).Take(5).ToList();
-
-            for (var i = 0; i < topClusters.Count; i++)
-            {
-                var builder = topClusters.ElementAt(i);
-
-                UnturnedChat.Say(caller,
-                    pluginInstance.Translate("top_cluster_format", i + 1, builder.Key, builder.Count()));
-            }
+            UnturnedChat.Say(caller,
+                pluginInstance.Translate("top_cluster_format", i + 1, builder.Key, builder.Count()));
         }
     }
 }

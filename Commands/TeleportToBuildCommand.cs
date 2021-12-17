@@ -13,105 +13,109 @@ using Random = UnityEngine.Random;
 
 #pragma warning disable 1591
 
-namespace Pustalorc.Plugins.BaseClustering.Commands
+namespace Pustalorc.Plugins.BaseClustering.Commands;
+
+[UsedImplicitly]
+public sealed class TeleportToBuildCommand : IRocketCommand
 {
-    [UsedImplicitly]
-    public sealed class TeleportToBuildCommand : IRocketCommand
+    public AllowedCaller AllowedCaller => AllowedCaller.Player;
+
+    public string Name => "teleporttobuild";
+
+    public string Help => "Teleports you to a random buildable on the map based on filters.";
+
+    public string Syntax => "b [player] | s [player] | v [player] | [player] [id]";
+
+    public List<string> Aliases => new() { "tpb" };
+
+    public List<string> Permissions => new() { "teleporttobuild" };
+
+    public void Execute(IRocketPlayer caller, string[] command)
     {
-        public AllowedCaller AllowedCaller => AllowedCaller.Player;
+        var pluginInstance = BaseClusteringPlugin.Instance;
 
-        public string Name => "teleporttobuild";
+        if (pluginInstance == null)
+            throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
 
-        public string Help => "Teleports you to a random buildable on the map based on filters.";
+        if (caller is not UnturnedPlayer player) return;
 
-        public string Syntax => "b [player] | s [player] | v [player] | [player] [id]";
+        var args = command.ToList();
 
-        public List<string> Aliases => new List<string> { "tpb" };
+        var barricades = args.CheckArgsIncludeString("b", out var index);
+        if (index > -1)
+            args.RemoveAt(index);
 
-        public List<string> Permissions => new List<string> { "teleporttobuild" };
+        var structs = args.CheckArgsIncludeString("s", out index);
+        if (index > -1)
+            args.RemoveAt(index);
 
-        public void Execute(IRocketPlayer caller, string[] command)
+        var plants = args.CheckArgsIncludeString("v", out index);
+        if (index > -1)
+            args.RemoveAt(index);
+
+        var target = args.GetIRocketPlayer(out index);
+        if (index > -1)
+            args.RemoveAt(index);
+
+        var itemAssetInput = pluginInstance.Translate("not_available");
+        var itemAssets = args.GetMultipleItemAssets(out index);
+        var assetCount = itemAssets.Count;
+        if (index > -1)
         {
-            var pluginInstance = BaseClusteringPlugin.Instance;
+            itemAssetInput = args[index];
+            args.RemoveAt(index);
+        }
 
-            if (pluginInstance == null)
-                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
+        var builds = BuildableDirectory.GetBuildables(includePlants: plants);
 
-            if (!(caller is UnturnedPlayer player)) return;
+        builds = target != null
+            ? builds.Where(k => k.Owner.ToString().Equals(target.Id))
+            : builds.Where(k => (k.Position - player.Position).sqrMagnitude > 400);
 
-            var args = command.ToList();
+        if (barricades) builds = builds.Where(k => k.Asset is ItemBarricadeAsset);
+        else if (structs) builds = builds.Where(k => k.Asset is ItemStructureAsset);
 
-            var barricades = args.CheckArgsIncludeString("b", out var index);
-            if (index > -1)
-                args.RemoveAt(index);
+        if (assetCount > 0) builds = builds.Where(k => itemAssets.Exists(l => l.id == k.AssetId));
 
-            var structs = args.CheckArgsIncludeString("s", out index);
-            if (index > -1)
-                args.RemoveAt(index);
+        var itemAssetName = pluginInstance.Translate("not_available");
 
-            var plants = args.CheckArgsIncludeString("v", out index);
-            if (index > -1)
-                args.RemoveAt(index);
-
-            var target = args.GetIRocketPlayer(out index);
-            if (index > -1)
-                args.RemoveAt(index);
-
-            var itemAssetInput = pluginInstance.Translate("not_available");
-            var itemAssets = args.GetMultipleItemAssets(out index);
-            var assetCount = itemAssets.Count;
-            if (index > -1)
-            {
-                itemAssetInput = args[index];
-                args.RemoveAt(index);
-            }
-
-            var builds = BuildableDirectory.GetBuildables(includePlants: plants);
-
-            builds = target != null
-                ? builds.Where(k => k.Owner.ToString().Equals(target.Id))
-                : builds.Where(k => (k.Position - player.Position).sqrMagnitude > 400);
-
-            if (barricades) builds = builds.Where(k => k.Asset is ItemBarricadeAsset);
-            else if (structs) builds = builds.Where(k => k.Asset is ItemStructureAsset);
-
-            if (assetCount > 0) builds = builds.Where(k => itemAssets.Exists(l => l.id == k.AssetId));
-
-            var itemAssetName = pluginInstance.Translate("not_available");
-
-            if (assetCount == 1)
+        switch (assetCount)
+        {
+            case 1:
                 itemAssetName = itemAssets.First().itemName;
-            else if (assetCount > 1)
+                break;
+            case > 1:
                 itemAssetName = itemAssetInput;
+                break;
+        }
 
-            var buildsL = builds.ToList();
-            if (!buildsL.Any())
-            {
-                UnturnedChat.Say(caller,
-                    pluginInstance.Translate("cannot_teleport_no_builds", itemAssetName,
-                        target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants,
-                        barricades, structs));
-                return;
-            }
+        var buildsL = builds.ToList();
+        if (!buildsL.Any())
+        {
+            UnturnedChat.Say(caller,
+                pluginInstance.Translate("cannot_teleport_no_builds", itemAssetName,
+                    target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants,
+                    barricades, structs));
+            return;
+        }
 
-            var build = buildsL[Random.Range(0, buildsL.Count - 1)];
+        var build = buildsL[Random.Range(0, buildsL.Count - 1)];
 
-            if (build != null)
-            {
-                var offset = new Vector3(0, plants ? 4 : 2, 0);
+        if (build != null)
+        {
+            var offset = new Vector3(0, plants ? 4 : 2, 0);
 
-                while (!player.Player.stance.wouldHaveHeightClearanceAtPosition(build.Position + offset, 0.5f))
-                    offset.y++;
+            while (!player.Player.stance.wouldHaveHeightClearanceAtPosition(build.Position + offset, 0.5f))
+                offset.y++;
 
-                player.Teleport(build.Position + offset, player.Rotation);
-            }
-            else
-            {
-                UnturnedChat.Say(caller,
-                    pluginInstance.Translate("cannot_teleport_builds_too_close", itemAssetName,
-                        target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants,
-                        barricades, structs));
-            }
+            player.Teleport(build.Position + offset, player.Rotation);
+        }
+        else
+        {
+            UnturnedChat.Say(caller,
+                pluginInstance.Translate("cannot_teleport_builds_too_close", itemAssetName,
+                    target != null ? target.DisplayName : pluginInstance.Translate("not_available"), plants,
+                    barricades, structs));
         }
     }
 }

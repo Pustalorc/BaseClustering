@@ -6,39 +6,38 @@ using Rocket.Unturned.Chat;
 
 #pragma warning disable 1591
 
-namespace Pustalorc.Plugins.BaseClustering.Commands
+namespace Pustalorc.Plugins.BaseClustering.Commands;
+
+[UsedImplicitly]
+public sealed class ClustersRegenCommand : IRocketCommand
 {
-    [UsedImplicitly]
-    public sealed class ClustersRegenCommand : IRocketCommand
+    public AllowedCaller AllowedCaller => AllowedCaller.Both;
+
+    public string Name => "clustersregen";
+
+    public string Help => "Regenerates all clusters from scratch.";
+
+    public string Syntax => "";
+
+    public List<string> Aliases => new();
+
+    public List<string> Permissions => new() { "clustersregen" };
+
+    public void Execute(IRocketPlayer caller, string[] command)
     {
-        public AllowedCaller AllowedCaller => AllowedCaller.Both;
+        var pluginInstance = BaseClusteringPlugin.Instance;
 
-        public string Name => "clustersregen";
+        if (pluginInstance == null)
+            throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
 
-        public string Help => "Regenerates all clusters from scratch.";
-
-        public string Syntax => "";
-
-        public List<string> Aliases => new List<string>();
-
-        public List<string> Permissions => new List<string> { "clustersregen" };
-
-        public void Execute(IRocketPlayer caller, string[] command)
+        var clusterDirectory = pluginInstance.BaseClusterDirectory;
+        if (clusterDirectory == null)
         {
-            var pluginInstance = BaseClusteringPlugin.Instance;
-
-            if (pluginInstance == null)
-                throw new NullReferenceException("BaseClusteringPlugin.Instance is null. Cannot execute command.");
-
-            var clusterDirectory = pluginInstance.BaseClusterDirectory;
-            if (clusterDirectory == null)
-            {
-                UnturnedChat.Say(caller, pluginInstance.Translate("command_fail_clustering_disabled"));
-                return;
-            }
-
-            UnturnedChat.Say(caller, pluginInstance.Translate("clusters_regen_warning"));
-            clusterDirectory.GenerateAndLoadAllClusters(false);
+            UnturnedChat.Say(caller, pluginInstance.Translate("command_fail_clustering_disabled"));
+            return;
         }
+
+        UnturnedChat.Say(caller, pluginInstance.Translate("clusters_regen_warning"));
+        clusterDirectory.GenerateAndLoadAllClusters(false);
     }
 }
