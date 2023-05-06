@@ -53,6 +53,7 @@ public class RiverExpanded
     /// Reads a <see cref="bool"/> from the stream.
     /// </summary>
     /// <returns>A <see cref="bool"/>.</returns>
+    [UsedImplicitly]
     public bool ReadBoolean()
     {
         return Stream.ReadByte() != 0;
@@ -62,6 +63,7 @@ public class RiverExpanded
     /// Reads a <see cref="byte"/> from the stream.
     /// </summary>
     /// <returns>A <see cref="byte"/>.</returns>
+    [UsedImplicitly]
     public byte ReadByte()
     {
         return (byte)Stream.ReadByte();
@@ -94,6 +96,7 @@ public class RiverExpanded
     /// Reads an <see cref="ushort"/> from the stream.
     /// </summary>
     /// <returns>An <see cref="ushort"/>.</returns>
+    [UsedImplicitly]
     public ushort ReadUInt16()
     {
         Stream.Read(Buffer, 0, 2);
@@ -104,6 +107,7 @@ public class RiverExpanded
     /// Reads an <see cref="int"/> from the stream.
     /// </summary>
     /// <returns>An <see cref="int"/>.</returns>
+    [UsedImplicitly]
     public int ReadInt32()
     {
         Stream.Read(Buffer, 0, 4);
@@ -114,6 +118,7 @@ public class RiverExpanded
     /// Reads an <see cref="uint"/> from the stream.
     /// </summary>
     /// <returns>An <see cref="uint"/>.</returns>
+    [UsedImplicitly]
     public uint ReadUInt32()
     {
         Stream.Read(Buffer, 0, 4);
@@ -124,6 +129,7 @@ public class RiverExpanded
     /// Reads a <see cref="float"/> from the stream.
     /// </summary>
     /// <returns>A <see cref="float"/>.</returns>
+    [UsedImplicitly]
     public float ReadSingle()
     {
         Stream.Read(Buffer, 0, 4);
@@ -134,6 +140,7 @@ public class RiverExpanded
     /// Reads an <see cref="long"/> from the stream.
     /// </summary>
     /// <returns>An <see cref="long"/>.</returns>
+    [UsedImplicitly]
     public long ReadInt64()
     {
         Stream.Read(Buffer, 0, 8);
@@ -144,6 +151,7 @@ public class RiverExpanded
     /// Reads an <see cref="ulong"/> from the stream.
     /// </summary>
     /// <returns>An <see cref="ulong"/>.</returns>
+    [UsedImplicitly]
     public ulong ReadUInt64()
     {
         Stream.Read(Buffer, 0, 8);
@@ -218,6 +226,7 @@ public class RiverExpanded
     /// Writes a <see cref="bool"/> to the stream.
     /// </summary>
     /// <param name="value">The <see cref="bool"/> value to write.</param>
+    [UsedImplicitly]
     public void WriteBoolean(bool value)
     {
         Stream.WriteByte((byte)(value ? 1 : 0));
@@ -228,6 +237,7 @@ public class RiverExpanded
     /// Writes a <see cref="byte"/> to the stream.
     /// </summary>
     /// <param name="value">The <see cref="byte"/> value to write.</param>
+    [UsedImplicitly]
     public void WriteByte(byte value)
     {
         Stream.WriteByte(value);
@@ -263,6 +273,7 @@ public class RiverExpanded
     /// Writes an <see cref="ushort"/> to the stream.
     /// </summary>
     /// <param name="value">The <see cref="ushort"/> value to write.</param>
+    [UsedImplicitly]
     public void WriteUInt16(ushort value)
     {
         var bytes = BitConverter.GetBytes(value);
@@ -274,6 +285,7 @@ public class RiverExpanded
     /// Writes an <see cref="int"/> to the stream.
     /// </summary>
     /// <param name="value">The <see cref="int"/> value to write.</param>
+    [UsedImplicitly]
     public void WriteInt32(int value)
     {
         var bytes = BitConverter.GetBytes(value);
@@ -285,6 +297,7 @@ public class RiverExpanded
     /// Writes an <see cref="uint"/> to the stream.
     /// </summary>
     /// <param name="value">The <see cref="uint"/> value to write.</param>
+    [UsedImplicitly]
     public void WriteUInt32(uint value)
     {
         var bytes = BitConverter.GetBytes(value);
@@ -296,6 +309,7 @@ public class RiverExpanded
     /// Writes a <see cref="float"/> to the stream.
     /// </summary>
     /// <param name="value">The <see cref="float"/> value to write.</param>
+    [UsedImplicitly]
     public void WriteSingle(float value)
     {
         var bytes = BitConverter.GetBytes(value);
@@ -307,6 +321,7 @@ public class RiverExpanded
     /// Writes an <see cref="long"/> to the stream.
     /// </summary>
     /// <param name="value">The <see cref="long"/> value to write.</param>
+    [UsedImplicitly]
     public void WriteInt64(long value)
     {
         var bytes = BitConverter.GetBytes(value);
@@ -318,6 +333,7 @@ public class RiverExpanded
     /// Writes an <see cref="ulong"/> to the stream.
     /// </summary>
     /// <param name="value">The <see cref="ulong"/> value to write.</param>
+    [UsedImplicitly]
     public void WriteUInt64(ulong value)
     {
         var bytes = BitConverter.GetBytes(value);
@@ -385,6 +401,7 @@ public class RiverExpanded
     /// <summary>
     /// Closes and disposes of the stream.
     /// </summary>
+    [UsedImplicitly]
     public void CloseRiver()
     {
         if (Water > 0)
@@ -433,11 +450,13 @@ public class RiverExpanded
     /// <summary>
     /// The number of bytes currently pending to be written and flushed.
     /// </summary>
+    [UsedImplicitly]
     public int Water { get; protected set; }
 
     /// <summary>
     /// The path to the file to read/write from/to.
     /// </summary>
+    [UsedImplicitly]
     public string Path { get; }
 
     /// <summary>
