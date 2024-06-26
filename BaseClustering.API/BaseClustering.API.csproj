@@ -1,0 +1,49 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net481</TargetFramework>
+        <LangVersion>12</LangVersion>
+        <Nullable>enable</Nullable>
+        <RootNamespace>Pustalorc.Libraries.BaseClustering.API</RootNamespace>
+        <AssemblyTitle>BaseClustering.API</AssemblyTitle>
+        <AssemblyName>Pustalorc.BaseClustering.API</AssemblyName>
+        <Product>BaseClustering.API</Product>
+        <Company>Pustalorc</Company>
+        <Copyright>Copyright © Pustalorc 2020-2024</Copyright>
+        <AssemblyVersion>3.0.0</AssemblyVersion>
+        <PackageVersion>3.0.0</PackageVersion>
+        <FileVersion>3.0.0</FileVersion>
+        <OutputPath>bin\$(Configuration)\</OutputPath>
+        <IsPackable>true</IsPackable>
+        <Title>BaseClustering</Title>
+        <Authors>Pustalorc</Authors>
+        <Description>Library to cluster/group Buildables, which allows to define what a player built base is.</Description>
+        <RepositoryUrl>https://github.com/Pustalorc/BaseClustering/</RepositoryUrl>
+        <PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
+        <RepositoryType>Github</RepositoryType>
+        <PackageId>Pustalorc.BaseClustering.API</PackageId>
+        <PackageReleaseNotes>Push project to nuget</PackageReleaseNotes>
+        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="OpenMod.UnityEngine.Redist" Version="2021.3.29.1"/>
+        <PackageReference Include="OpenMod.Unturned.Redist" Version="3.23.12.3"/>
+        <PackageReference Include="Pustalorc.AsyncTaskDispatcher" Version="1.2.0"/>
+        <PackageReference Include="Pustalorc.RocketModServices" Version="1.1.0"/>
+        <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" Aliases="JetBrainsAnnotations"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="Pustalorc.BuildableAbstractions.API">
+            <HintPath>..\..\..\..\Libraries\BuildableAbstractions\BuildableAbstractions.API\bin\Release\net481\Pustalorc.BuildableAbstractions.API.dll</HintPath>
+        </Reference>
+        <Reference Include="Pustalorc.Logging.API">
+          <HintPath>..\..\..\..\Libraries\Logging\Pustalorc.Logging.API\bin\Release\net481\Pustalorc.Logging.API.dll</HintPath>
+        </Reference>
+        <Reference Include="Rocket.Core">
+            <HintPath>..\libs\Rocket.Core.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+</Project>
