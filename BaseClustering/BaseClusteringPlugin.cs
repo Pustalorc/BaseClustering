@@ -1,9 +1,15 @@
-﻿using Pustalorc.Libraries.BaseClustering.API.BaseClusters.Directory.Implementations;
+﻿using System.Collections.Generic;
+using Pustalorc.Libraries.BaseClustering.API.BaseClusters.Directory.Implementations;
 using Pustalorc.Libraries.BaseClustering.API.BaseClusters.Directory.Interfaces;
 using Pustalorc.Libraries.BaseClustering.API.BaseClusters.Pool.Implementations;
 using Pustalorc.Libraries.BaseClustering.API.BaseClusters.Pool.Interfaces;
 using Pustalorc.Libraries.Logging.API.Manager;
+using Pustalorc.Libraries.RocketModCommandsExtended.Abstractions;
+using Pustalorc.Libraries.RocketModCommandsExtended.Extensions;
 using Pustalorc.Libraries.RocketModServices.Services;
+using Pustalorc.Plugins.BaseClustering.Commands.Actions;
+using Pustalorc.Plugins.BaseClustering.Commands.Information;
+using Pustalorc.Plugins.BaseClustering.Commands.Wreck;
 using Pustalorc.Plugins.BaseClustering.Config;
 using Rocket.Core.Plugins;
 using SDG.Unturned;
@@ -13,15 +19,35 @@ namespace Pustalorc.Plugins.BaseClustering;
 /// <inheritdoc />
 public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConfiguration>
 {
+    private List<MultiThreadedRocketCommand> Commands { get; }
+
+    /// <inheritdoc />
+    public BaseClusteringPlugin()
+    {
+        var translations = this.GetCurrentTranslationsForCommands();
+
+        Commands = new List<MultiThreadedRocketCommand>
+        {
+            new ClustersRegenCommand(translations),
+            new TeleportToClusterCommand(translations),
+            new FindClustersCommand(translations),
+            new TopClustersCommand(translations),
+            new WreckClustersCommand(translations)
+        };
+
+        Commands.LoadAndRegisterCommands(this);
+    }
+
     /// <inheritdoc />
     protected override void Load()
     {
         if (Level.isLoaded)
             OnLevelLoaded(0);
         else
-            Level.onLevelLoaded += OnLevelLoaded;
+            Level.onPrePreLevelLoaded += OnLevelLoaded;
 
         Provider.onCommenceShutdown += SaveManager.save;
+        Commands.ReloadCommands(this);
 
         LogManager.UpdateConfiguration(Configuration.Instance);
         LogManager.Information(
@@ -32,10 +58,9 @@ public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConf
     protected override void Unload()
     {
         Provider.onCommenceShutdown -= SaveManager.save;
-        Level.onLevelLoaded -= OnLevelLoaded;
+        Level.onPrePreLevelLoaded -= OnLevelLoaded;
 
         RocketModService<IBaseClusterDirectory>.UnregisterService();
-
         RocketModService<IBaseClusterPool>.UnregisterService();
 
         LogManager.Information("Plugin has been unloaded. Created by Pustalorc.");

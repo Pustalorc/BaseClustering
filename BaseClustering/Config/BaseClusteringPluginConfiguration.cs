@@ -14,13 +14,13 @@ namespace Pustalorc.Plugins.BaseClustering.Config;
 public sealed class BaseClusteringPluginConfiguration : IRocketPluginConfiguration, IClusterRules, ILoggerConfiguration
 {
     /// <inheritdoc />
-    public byte MaxLogLevel { get; set; }
-
-    /// <inheritdoc />
     public float MaxDistanceBetweenStructures { get; set; }
 
     /// <inheritdoc />
     public float MaxDistanceToConsiderPartOfBase { get; set; }
+
+    /// <inheritdoc />
+    public byte MaxLogLevel { get; set; }
 
     /// <summary>
     ///     Loads the default values for the config.

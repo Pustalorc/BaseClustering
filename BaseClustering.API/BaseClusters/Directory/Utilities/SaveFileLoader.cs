@@ -168,7 +168,8 @@ public class SaveFileLoader
 
         if (buildableDirectory.BuildableCount != buildableCount)
         {
-            LogManager.Debug(string.Format(LoggingConstants.BuildableCountMismatchDebug, buildableDirectory.BuildableCount, buildableCount));
+            LogManager.Debug(string.Format(LoggingConstants.BuildableCountMismatchDebug,
+                buildableDirectory.BuildableCount, buildableCount));
             LogManager.Warning(LoggingConstants.BuildableCountMismatch);
             return false;
         }

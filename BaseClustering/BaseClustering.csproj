@@ -37,7 +37,7 @@
             <HintPath>..\..\..\..\Libraries\BuildableAbstractions\BuildableAbstractions.API\bin\Release\net481\Pustalorc.BuildableAbstractions.API.dll</HintPath>
         </Reference>
         <Reference Include="Pustalorc.Logging.API">
-          <HintPath>..\..\..\..\Libraries\Logging\Pustalorc.Logging.API\bin\Release\net481\Pustalorc.Logging.API.dll</HintPath>
+            <HintPath>..\..\..\..\Libraries\Logging\Pustalorc.Logging.API\bin\Release\net481\Pustalorc.Logging.API.dll</HintPath>
         </Reference>
         <Reference Include="Rocket.API">
             <HintPath>..\libs\Rocket.API.dll</HintPath>

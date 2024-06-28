@@ -12,7 +12,8 @@ internal static class LoggingConstants
     public const string BuildableCountMismatch =
         "Warning! Buildable count doesn't match saved count! Buildable save data was most likely modified or lost during server downtime. Clusters will be now rebuilt.";
 
-    public const string BuildableCountMismatchDebug = "Buildables according to IBuildableDirectory: {0}. Buildables according to save file: {1}.";
+    public const string BuildableCountMismatchDebug =
+        "Buildables according to IBuildableDirectory: {0}. Buildables according to save file: {1}.";
 
     public const string ClusterLoadProgress = "Loading saved clusters... {0}% [{1}/{2}] {3}ms";
     public const string ClusterSaveProgress = "Saving clusters... {0}% [{1}/{2}] {3}ms";

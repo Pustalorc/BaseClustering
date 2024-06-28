@@ -30,7 +30,25 @@ internal sealed class WreckClustersCommand(Dictionary<string, string> translatio
     {
         { TranslationKeys.CommandExceptionKey, CommandTranslationConstants.CommandExceptionValue },
         { CommandTranslationConstants.NotEnoughArgumentsKey, CommandTranslationConstants.NotEnoughArgumentsValue },
-        { CommandTranslationConstants.NotAvailableKey, CommandTranslationConstants.NotAvailableValue }
+        { CommandTranslationConstants.NotAvailableKey, CommandTranslationConstants.NotAvailableValue },
+        {
+            CommandTranslationConstants.CannotBeExecutedFromConsoleKey,
+            CommandTranslationConstants.CannotBeExecutedFromConsoleValue
+        },
+        { CommandTranslationConstants.ActionCancelledKey, CommandTranslationConstants.ActionCancelledValue },
+        { CommandTranslationConstants.NoActionQueuedKey, CommandTranslationConstants.NoActionQueuedValue },
+        {
+            CommandTranslationConstants.CannotWreckNoClustersKey, CommandTranslationConstants.CannotWreckNoClustersValue
+        },
+        { CommandTranslationConstants.WreckedClustersKey, CommandTranslationConstants.WreckedClustersValue },
+        {
+            CommandTranslationConstants.WreckedClustersActionQueuedKey,
+            CommandTranslationConstants.WreckedClustersActionQueuedValue
+        },
+        {
+            CommandTranslationConstants.WreckedClustersActionQueuedNewKey,
+            CommandTranslationConstants.WreckedClustersActionQueuedNewValue
+        }
     };
 
     private Dictionary<string, WreckClustersAction> WreckActions { get; } = new();
@@ -90,7 +108,7 @@ internal sealed class WreckClustersCommand(Dictionary<string, string> translatio
         {
             if (caller is not UnturnedPlayer cPlayer)
             {
-                SendTranslatedMessage(caller, "cannot_be_executed_from_console");
+                SendTranslatedMessage(caller, CommandTranslationConstants.CannotBeExecutedFromConsoleKey);
                 return;
             }
 
@@ -103,7 +121,7 @@ internal sealed class WreckClustersCommand(Dictionary<string, string> translatio
 
         if (count <= 0)
         {
-            SendTranslatedMessage(caller, "cannot_wreck_no_clusters");
+            SendTranslatedMessage(caller, CommandTranslationConstants.CannotWreckNoClustersKey);
             return;
         }
 
@@ -115,23 +133,24 @@ internal sealed class WreckClustersCommand(Dictionary<string, string> translatio
         };
 
         var callerId = caller.Id;
+        var notAvailableTranslation = Translate(CommandTranslationConstants.NotAvailableKey);
         if (WreckActions.TryGetValue(callerId, out _))
         {
             WreckActions[callerId] = new WreckClustersAction(target, center, itemAssets, radius, itemAssetInput);
-            SendTranslatedMessage(caller, "wreck_clusters_action_queued_new",
-                target?.DisplayName ?? Translate("not_available"), itemAssetName,
+            SendTranslatedMessage(caller, CommandTranslationConstants.WreckedClustersActionQueuedNewKey,
+                target?.DisplayName ?? notAvailableTranslation, itemAssetName,
                 !float.IsNegativeInfinity(radius)
                     ? radius.ToString(CultureInfo.CurrentCulture)
-                    : Translate("not_available"), count);
+                    : notAvailableTranslation, count);
         }
         else
         {
             WreckActions.Add(callerId, new WreckClustersAction(target, center, itemAssets, radius, itemAssetInput));
-            SendTranslatedMessage(caller, "wreck_clusters_action_queued",
-                target?.DisplayName ?? Translate("not_available"), itemAssetName,
+            SendTranslatedMessage(caller, CommandTranslationConstants.WreckedClustersActionQueuedKey,
+                target?.DisplayName ?? notAvailableTranslation, itemAssetName,
                 !float.IsNegativeInfinity(radius)
                     ? radius.ToString(CultureInfo.CurrentCulture)
-                    : Translate("not_available"), count);
+                    : notAvailableTranslation, count);
         }
     }
 

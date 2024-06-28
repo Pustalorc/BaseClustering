@@ -50,11 +50,6 @@ public class DefaultBaseClusterDirectory : IBaseClusterDirectory, IService
     private IClusterRules ClusterRules { get; set; }
     private SaveFileLoader SaveFileLoader { get; }
 
-    private class LogConfiguration : ILoggerConfiguration
-    {
-        public byte MaxLogLevel => LogLevel.Debug.Level;
-    }
-
     /// <summary>
     ///     Instantiates the default base cluster directory with default configuration.
     /// </summary>
@@ -63,8 +58,7 @@ public class DefaultBaseClusterDirectory : IBaseClusterDirectory, IService
         LoadedClusters = new List<IBaseCluster>();
         GlobalCluster = null;
         ClusterRules = new DefaultClusterRules();
-        SaveFileLoader = new SaveFileLoader(Path.Combine(ServerSavedata.directory, Provider.serverID,
-            SaveConstants.LevelFolderName, Level.info.name, SaveConstants.SaveFileName));
+        SaveFileLoader = new SaveFileLoader(Path.Combine(ServerSavedata.directory, Provider.serverID, SaveConstants.LevelFolderName, Level.info.name, SaveConstants.SaveFileName));
         ServiceHelper.GetServiceOrUseDefault();
         LogManager.UpdateConfiguration(new LogConfiguration());
     }
@@ -466,5 +460,10 @@ public class DefaultBaseClusterDirectory : IBaseClusterDirectory, IService
         var buildables = arguments.Buildables;
         BuildablesDestroyedInternal(buildables);
         BuildablesSpawnedInternal(buildables);
+    }
+
+    private class LogConfiguration : ILoggerConfiguration
+    {
+        public byte MaxLogLevel => LogLevel.Debug.Level;
     }
 }
