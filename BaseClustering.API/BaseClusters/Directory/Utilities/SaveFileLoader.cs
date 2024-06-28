@@ -103,6 +103,8 @@ public class SaveFileLoader
             LogManager.Information(logMessage);
         }
 
+        LogManager.Information(string.Format(LoggingConstants.ClusterSaveProgress, 100, clusterCount, clusterCount, stopwatch.ElapsedMilliseconds));
+
         river.CloseRiver();
         stopwatch.Stop();
     }
@@ -197,6 +199,8 @@ public class SaveFileLoader
                 clusterCount, stopwatch.ElapsedMilliseconds);
             LogManager.Information(logMessage);
         }
+
+        LogManager.Information(string.Format(LoggingConstants.ClusterLoadProgress, 100, clusterCount, clusterCount, stopwatch.ElapsedMilliseconds));
 
         return true;
     }
