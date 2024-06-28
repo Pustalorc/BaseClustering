@@ -58,7 +58,8 @@ public class DefaultBaseClusterDirectory : IBaseClusterDirectory, IService
         LoadedClusters = new List<IBaseCluster>();
         GlobalCluster = null;
         ClusterRules = new DefaultClusterRules();
-        SaveFileLoader = new SaveFileLoader(Path.Combine(ServerSavedata.directory, Provider.serverID, SaveConstants.LevelFolderName, Level.info.name, SaveConstants.SaveFileName));
+        SaveFileLoader = new SaveFileLoader(Path.Combine(ServerSavedata.directory, Provider.serverID,
+            SaveConstants.LevelFolderName, Level.info.name, SaveConstants.SaveFileName));
         ServiceHelper.GetServiceOrUseDefault();
         LogManager.UpdateConfiguration(new LogConfiguration());
     }

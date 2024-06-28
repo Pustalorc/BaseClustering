@@ -11,6 +11,7 @@ using Pustalorc.Plugins.BaseClustering.Commands.Actions;
 using Pustalorc.Plugins.BaseClustering.Commands.Information;
 using Pustalorc.Plugins.BaseClustering.Commands.Wreck;
 using Pustalorc.Plugins.BaseClustering.Config;
+using Pustalorc.Plugins.BaseClustering.Constants;
 using Rocket.Core.Plugins;
 using SDG.Unturned;
 
@@ -50,8 +51,7 @@ public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConf
         Commands.ReloadCommands(this);
 
         LogManager.UpdateConfiguration(Configuration.Instance);
-        LogManager.Information(
-            "Plugin has a deferred load. Please wait for the level to load and then confirm that the plugin loaded. Created by Pustalorc.");
+        LogManager.Information(LoggingConstants.PluginLoaded);
     }
 
     /// <inheritdoc />
@@ -63,34 +63,33 @@ public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConf
         RocketModService<IBaseClusterDirectory>.UnregisterService();
         RocketModService<IBaseClusterPool>.UnregisterService();
 
-        LogManager.Information("Plugin has been unloaded. Created by Pustalorc.");
+        LogManager.Information(LoggingConstants.PluginUnloaded);
     }
 
     private void OnLevelLoaded(int level)
     {
-        LogManager.Debug("Level has loaded, checking for an existing IBaseClusterPool service...");
+        LogManager.Debug(LoggingConstants.LevelLoaded);
         if (RocketModService<IBaseClusterPool>.TryGetService() == null)
         {
-            LogManager.Debug("No existing IBaseClusterPool service found. Registering 'DefaultBaseClusterPool'...");
+            LogManager.Debug(LoggingConstants.NoIBaseClusterPoolService);
             RocketModService<IBaseClusterPool>.RegisterService(new DefaultBaseClusterPool());
-            LogManager.Information("'DefaultBaseClusterPool' registered successfully!");
+            LogManager.Information(LoggingConstants.DefaultBaseClusterPoolRegistered);
         }
 
-        LogManager.Debug("Updating registered IBaseClusterPool service with the latest configuration...");
+        LogManager.Debug(LoggingConstants.UpdateIBaseClusterPoolConfig);
         RocketModService<IBaseClusterPool>.GetService().ChangeClusterRules(Configuration.Instance);
 
-        LogManager.Debug("Checking for an existing IBaseClusterDirectory service...");
+        LogManager.Debug(LoggingConstants.CheckIBaseClusterDirectoryService);
         if (RocketModService<IBaseClusterDirectory>.TryGetService() == null)
         {
-            LogManager.Debug(
-                "No existing IBaseClusterDirectory service found. Registering and loading 'DefaultBaseClusterDirectory'...");
+            LogManager.Debug(LoggingConstants.NoIBaseClusterDirectoryService);
             RocketModService<IBaseClusterDirectory>.RegisterService(new DefaultBaseClusterDirectory());
-            LogManager.Information("'DefaultBaseClusterDirectory' registered and loaded successfully!");
+            LogManager.Information(LoggingConstants.DefaultBaseClusterDirectoryRegistered);
         }
 
-        LogManager.Debug("Updating registered IBaseClusterDirectory service with the latest configuration...");
+        LogManager.Debug(LoggingConstants.UpdateIBaseClusterDirectoryConfig);
         RocketModService<IBaseClusterDirectory>.GetService().ChangeClusterRules(Configuration.Instance);
 
-        LogManager.Information("Finished loading everything.");
+        LogManager.Information(LoggingConstants.LoadingFinished);
     }
 }
