@@ -12,7 +12,7 @@ using Pustalorc.Libraries.BuildableAbstractions.API.Buildables.Abstraction;
 using Pustalorc.Libraries.BuildableAbstractions.API.Buildables.Implementations;
 using Pustalorc.Libraries.BuildableAbstractions.API.Directory.Interfaces;
 using Pustalorc.Libraries.BuildableAbstractions.API.Directory.Utils;
-using Pustalorc.Libraries.Logging.API.Manager;
+using Pustalorc.Libraries.Logging.Manager;
 using Pustalorc.Libraries.RocketModServices.Services;
 
 namespace Pustalorc.Libraries.BaseClustering.API.BaseClusters.Directory.Utilities;
@@ -103,7 +103,8 @@ public class SaveFileLoader
             LogManager.Information(logMessage);
         }
 
-        LogManager.Information(string.Format(LoggingConstants.ClusterSaveProgress, 100, clusterCount, clusterCount, stopwatch.ElapsedMilliseconds));
+        LogManager.Information(string.Format(LoggingConstants.ClusterSaveProgress, 100, clusterCount, clusterCount,
+            stopwatch.ElapsedMilliseconds));
 
         river.CloseRiver();
         stopwatch.Stop();
@@ -200,7 +201,8 @@ public class SaveFileLoader
             LogManager.Information(logMessage);
         }
 
-        LogManager.Information(string.Format(LoggingConstants.ClusterLoadProgress, 100, clusterCount, clusterCount, stopwatch.ElapsedMilliseconds));
+        LogManager.Information(string.Format(LoggingConstants.ClusterLoadProgress, 100, clusterCount, clusterCount,
+            stopwatch.ElapsedMilliseconds));
 
         return true;
     }

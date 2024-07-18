@@ -3,7 +3,7 @@ using Pustalorc.Libraries.BaseClustering.API.BaseClusters.Directory.Implementati
 using Pustalorc.Libraries.BaseClustering.API.BaseClusters.Directory.Interfaces;
 using Pustalorc.Libraries.BaseClustering.API.BaseClusters.Pool.Implementations;
 using Pustalorc.Libraries.BaseClustering.API.BaseClusters.Pool.Interfaces;
-using Pustalorc.Libraries.Logging.API.Manager;
+using Pustalorc.Libraries.Logging.Manager;
 using Pustalorc.Libraries.RocketModCommandsExtended.Abstractions;
 using Pustalorc.Libraries.RocketModCommandsExtended.Extensions;
 using Pustalorc.Libraries.RocketModServices.Services;

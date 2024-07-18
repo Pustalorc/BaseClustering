@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Xml.Serialization;
 using Pustalorc.Libraries.BaseClustering.API.BaseClusters.Configuration.Interfaces;
-using Pustalorc.Libraries.Logging.API.Loggers.Configuration.Interfaces;
-using Pustalorc.Libraries.Logging.API.LogLevels.Implementations;
+using Pustalorc.Libraries.Logging.API.Loggers.Configuration;
+using Pustalorc.Libraries.Logging.API.Pipes.Configuration;
 using Rocket.API;
 
 namespace Pustalorc.Plugins.BaseClustering.Config;
@@ -20,15 +22,32 @@ public sealed class BaseClusteringPluginConfiguration : IRocketPluginConfigurati
     public float MaxDistanceToConsiderPartOfBase { get; set; }
 
     /// <inheritdoc />
-    public byte MaxLogLevel { get; set; }
+    [XmlIgnore]
+    public List<IPipeConfiguration> PipeSettings =>
+    [
+        ConsoleLogSettings,
+        FileLogSettings
+    ];
+
+    /// <summary>
+    ///     The log settings for the ConsolePipe
+    /// </summary>
+    public ConsolePipeConfiguration ConsoleLogSettings { get; set; } = new();
+
+
+    /// <summary>
+    ///     The log settings for the FilePipe
+    /// </summary>
+    public FilePipeConfiguration FileLogSettings { get; set; } = new();
 
     /// <summary>
     ///     Loads the default values for the config.
     /// </summary>
     public void LoadDefaults()
     {
-        MaxLogLevel = LogLevel.Info.Level;
         MaxDistanceBetweenStructures = 6.1f;
         MaxDistanceToConsiderPartOfBase = 10f;
+        ConsoleLogSettings = new ConsolePipeConfiguration();
+        FileLogSettings = new FilePipeConfiguration();
     }
 }

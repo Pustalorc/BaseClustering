@@ -23,9 +23,11 @@ using Pustalorc.Libraries.BuildableAbstractions.API.Buildables.Abstraction;
 using Pustalorc.Libraries.BuildableAbstractions.API.Buildables.Implementations;
 using Pustalorc.Libraries.BuildableAbstractions.API.Directory.Interfaces;
 using Pustalorc.Libraries.BuildableAbstractions.API.Directory.Utils;
-using Pustalorc.Libraries.Logging.API.Loggers.Configuration.Interfaces;
-using Pustalorc.Libraries.Logging.API.LogLevels.Implementations;
-using Pustalorc.Libraries.Logging.API.Manager;
+using Pustalorc.Libraries.Logging.API.Loggers.Configuration;
+using Pustalorc.Libraries.Logging.API.Pipes.Configuration;
+using Pustalorc.Libraries.Logging.LogLevels;
+using Pustalorc.Libraries.Logging.Manager;
+using Pustalorc.Libraries.Logging.Pipes.Configuration;
 using Pustalorc.Libraries.RocketModServices.Events.Bus;
 using Pustalorc.Libraries.RocketModServices.Services;
 using Pustalorc.Libraries.RocketModServices.Services.Interfaces;
@@ -465,6 +467,20 @@ public class DefaultBaseClusterDirectory : IBaseClusterDirectory, IService
 
     private class LogConfiguration : ILoggerConfiguration
     {
-        public byte MaxLogLevel => LogLevel.Debug.Level;
+        public List<IPipeConfiguration> PipeSettings =>
+        [
+            new ConsolePipeConfiguration(),
+            new FilePipeConfiguration()
+        ];
+
+        private sealed class ConsolePipeConfiguration : DefaultConsolePipeConfiguration
+        {
+            public override byte MaxLogLevel => LogLevel.Debug.Level;
+        }
+
+        private sealed class FilePipeConfiguration : DefaultFilePipeConfiguration
+        {
+            public override byte MaxLogLevel => LogLevel.Debug.Level;
+        }
     }
 }

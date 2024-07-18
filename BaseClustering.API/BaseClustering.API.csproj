@@ -27,19 +27,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="OpenMod.UnityEngine.Redist" Version="2021.3.29.1"/>
-        <PackageReference Include="OpenMod.Unturned.Redist" Version="3.23.12.3"/>
-        <PackageReference Include="Pustalorc.AsyncTaskDispatcher" Version="1.2.0"/>
+        <PackageReference Include="Pustalorc.BuildableAbstractions.API" Version="1.0.0" />
+        <PackageReference Include="Pustalorc.Logging" Version="1.0.1" />
         <PackageReference Include="Pustalorc.RocketModServices" Version="1.1.0"/>
-        <PackageReference Include="JetBrains.Annotations" Version="2023.3.0" Aliases="JetBrainsAnnotations"/>
-    </ItemGroup>
-
-    <ItemGroup>
-        <Reference Include="Pustalorc.BuildableAbstractions.API">
-            <HintPath>..\..\..\..\Libraries\BuildableAbstractions\BuildableAbstractions.API\bin\Release\net481\Pustalorc.BuildableAbstractions.API.dll</HintPath>
-        </Reference>
-        <Reference Include="Pustalorc.Logging.API">
-            <HintPath>..\..\..\..\Libraries\Logging\Pustalorc.Logging.API\bin\Release\net481\Pustalorc.Logging.API.dll</HintPath>
-        </Reference>
+        <PackageReference Include="Pustalorc.AsyncTaskDispatcher" Version="1.2.0"/>
+        <PackageReference Include="OpenMod.Unturned.Redist" Version="3.23.12.3" PrivateAssets="all"/>
+        <PackageReference Include="OpenMod.UnityEngine.Redist" Version="2021.3.29.1" PrivateAssets="all"/>
+        <PackageReference Include="JetBrains.Annotations" Version="2024.2.0" Aliases="JetBrainsAnnotations" PrivateAssets="all" />
     </ItemGroup>
 </Project>
