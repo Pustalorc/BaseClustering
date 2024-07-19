@@ -10,8 +10,8 @@
         <Company>Pustalorc</Company>
         <Copyright>Copyright © Pustalorc 2020-2024</Copyright>
         <AssemblyVersion>3.0.0</AssemblyVersion>
-        <PackageVersion>3.0.0</PackageVersion>
-        <FileVersion>3.0.0</FileVersion>
+        <PackageVersion>3.0.1</PackageVersion>
+        <FileVersion>3.0.1</FileVersion>
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <IsPackable>true</IsPackable>
         <Title>BaseClustering</Title>
@@ -28,7 +28,7 @@
 
     <ItemGroup>
         <PackageReference Include="Pustalorc.BuildableAbstractions.API" Version="1.0.0" />
-        <PackageReference Include="Pustalorc.Logging" Version="1.0.1" />
+        <PackageReference Include="Pustalorc.Logging" Version="1.0.3" />
         <PackageReference Include="Pustalorc.RocketModServices" Version="1.1.0"/>
         <PackageReference Include="Pustalorc.AsyncTaskDispatcher" Version="1.2.0"/>
         <PackageReference Include="OpenMod.Unturned.Redist" Version="3.23.12.3" PrivateAssets="all"/>

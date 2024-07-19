@@ -42,6 +42,8 @@ public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConf
     /// <inheritdoc />
     protected override void Load()
     {
+        LogManager.UpdateConfiguration(Configuration.Instance);
+
         if (Level.isLoaded)
             OnLevelLoaded(0);
         else
@@ -50,7 +52,6 @@ public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConf
         Provider.onCommenceShutdown += SaveManager.save;
         Commands.ReloadCommands(this);
 
-        LogManager.UpdateConfiguration(Configuration.Instance);
         LogManager.Information(LoggingConstants.PluginLoaded);
     }
 
