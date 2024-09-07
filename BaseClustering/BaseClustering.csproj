@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>net481</TargetFramework>
+        <Nullable>enable</Nullable>
+        <Product>BaseClustering</Product>
+        <AssemblyName>BaseClustering</AssemblyName>
+        <AssemblyTitle>BaseClustering</AssemblyTitle>
+        <RootNamespace>Pustalorc.Plugins.BaseClustering</RootNamespace>
+        <LangVersion>12</LangVersion>
+        <Authors>Pustalorc</Authors>
+        <Company>Pustalorc</Company>
+        <Copyright>Copyright © Pustalorc 2020-2024</Copyright>
+        <AssemblyVersion>3.0.0</AssemblyVersion>
+        <FileVersion>3.0.1</FileVersion>
+        <OutputPath>bin\$(Configuration)\</OutputPath>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Pustalorc.Logging" Version="1.0.4"/>
+        <PackageReference Include="Pustalorc.RocketModExtended.Commands" Version="1.2.3"/>
+        <PackageReference Include="OpenMod.Unturned.Redist" Version="3.23.12.3" PrivateAssets="all"/>
+        <PackageReference Include="OpenMod.UnityEngine.Redist" Version="2021.3.29.1" PrivateAssets="all"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="Rocket.API">
+            <HintPath>..\libs\Rocket.API.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="Rocket.Core">
+            <HintPath>..\libs\Rocket.Core.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+        <Reference Include="Rocket.Unturned">
+            <HintPath>..\libs\Rocket.Unturned.dll</HintPath>
+            <Private>False</Private>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\BaseClustering.API\BaseClustering.API.csproj"/>
+    </ItemGroup>
+</Project>

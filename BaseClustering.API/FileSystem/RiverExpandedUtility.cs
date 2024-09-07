@@ -1,0 +1,449 @@
+﻿extern alias JetBrainsAnnotations;
+using System;
+using System.IO;
+using System.Text;
+using JetBrainsAnnotations::JetBrains.Annotations;
+using SDG.Unturned;
+using Steamworks;
+using UnityEngine;
+
+namespace Pustalorc.Libraries.BaseClustering.API.FileSystem;
+
+/// <summary>
+///     A modified class of <see cref="River" /> that implements more types and isn't sealed, so other plugins can inherit
+///     and expand it with more.
+/// </summary>
+[PublicAPI]
+public class RiverExpandedUtility
+{
+    /// <summary>
+    ///     The buffer to which all reads are performed to.
+    /// </summary>
+    public byte[] Buffer { get; protected set; } = new byte[Block.BUFFER_SIZE];
+
+    /// <summary>
+    ///     The number of bytes currently pending to be written and flushed.
+    /// </summary>
+    public int Water { get; protected set; }
+
+    /// <summary>
+    ///     The path to the file to read/write from/to.
+    /// </summary>
+    public string Path { get; }
+
+    /// <summary>
+    ///     The FileStream dealing with the file.
+    /// </summary>
+    public FileStream Stream { get; protected set; }
+
+    /// <summary>
+    ///     Creates a new instance of <see cref="RiverExpandedUtility" />.
+    /// </summary>
+    /// <param name="newPath">The path of the file to which this object will read and write to.</param>
+    /// <param name="usePath">If the path should be combined with <see cref="ReadWrite.PATH" />.</param>
+    public RiverExpandedUtility(string newPath, bool usePath = true)
+    {
+        Path = newPath;
+        if (usePath)
+            Path = ReadWrite.PATH + Path;
+
+        var dir = System.IO.Path.GetDirectoryName(Path);
+        if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+            Directory.CreateDirectory(dir);
+
+        Stream = new FileStream(Path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.ReadWrite);
+        Water = 0;
+    }
+
+    /// <summary>
+    ///     Reads a <see cref="double" /> from the stream.
+    /// </summary>
+    /// <returns>A <see cref="double" />.</returns>
+    public double ReadDouble()
+    {
+        const int size = 8;
+
+        _ = Stream.Read(Buffer, 0, size);
+        return BitConverter.ToDouble(Buffer, 0);
+    }
+
+    /// <summary>
+    ///     Writes a <see cref="double" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="double" /> value to write.</param>
+    public void WriteDouble(double value)
+    {
+        const int size = 8;
+
+        var bytes = BitConverter.GetBytes(value);
+
+        Stream.Write(bytes, 0, size);
+        Water += size;
+    }
+
+    /// <summary>
+    ///     Reads a <see cref="string" /> from the stream.
+    /// </summary>
+    /// <returns>A <see cref="string" />.</returns>
+    public string ReadString()
+    {
+        var count = Stream.ReadByte();
+        _ = Stream.Read(Buffer, 0, count);
+        return Encoding.UTF8.GetString(Buffer, 0, count);
+    }
+
+    /// <summary>
+    ///     Reads a <see cref="bool" /> from the stream.
+    /// </summary>
+    /// <returns>A <see cref="bool" />.</returns>
+    public bool ReadBoolean()
+    {
+        return Stream.ReadByte() != 0;
+    }
+
+    /// <summary>
+    ///     Reads a <see cref="byte" /> from the stream.
+    /// </summary>
+    /// <returns>A <see cref="byte" />.</returns>
+    public byte ReadByte()
+    {
+        return (byte)Stream.ReadByte();
+    }
+
+    /// <summary>
+    ///     Reads multiple <see cref="byte" />s from the stream.
+    /// </summary>
+    /// <returns>An <see cref="Array" /> of <see cref="byte" />s.</returns>
+    public byte[] ReadBytes()
+    {
+        var array = new byte[ReadUInt16()];
+        _ = Stream.Read(array, 0, array.Length);
+        return array;
+    }
+
+    /// <summary>
+    ///     Reads an <see cref="short" /> from the stream.
+    /// </summary>
+    /// <returns>An <see cref="short" />.</returns>
+    public short ReadInt16()
+    {
+        const int size = 2;
+        _ = Stream.Read(Buffer, 0, size);
+        return BitConverter.ToInt16(Buffer, 0);
+    }
+
+    /// <summary>
+    ///     Reads an <see cref="ushort" /> from the stream.
+    /// </summary>
+    /// <returns>An <see cref="ushort" />.</returns>
+    public ushort ReadUInt16()
+    {
+        const int size = 2;
+        _ = Stream.Read(Buffer, 0, size);
+        return BitConverter.ToUInt16(Buffer, 0);
+    }
+
+    /// <summary>
+    ///     Reads an <see cref="int" /> from the stream.
+    /// </summary>
+    /// <returns>An <see cref="int" />.</returns>
+    public int ReadInt32()
+    {
+        const int size = 4;
+        _ = Stream.Read(Buffer, 0, size);
+        return BitConverter.ToInt32(Buffer, 0);
+    }
+
+    /// <summary>
+    ///     Reads an <see cref="uint" /> from the stream.
+    /// </summary>
+    /// <returns>An <see cref="uint" />.</returns>
+    public uint ReadUInt32()
+    {
+        const int size = 4;
+        _ = Stream.Read(Buffer, 0, size);
+        return BitConverter.ToUInt32(Buffer, 0);
+    }
+
+    /// <summary>
+    ///     Reads a <see cref="float" /> from the stream.
+    /// </summary>
+    /// <returns>A <see cref="float" />.</returns>
+    public float ReadSingle()
+    {
+        const int size = 4;
+        _ = Stream.Read(Buffer, 0, size);
+        return BitConverter.ToSingle(Buffer, 0);
+    }
+
+    /// <summary>
+    ///     Reads an <see cref="long" /> from the stream.
+    /// </summary>
+    /// <returns>An <see cref="long" />.</returns>
+    public long ReadInt64()
+    {
+        const int size = 8;
+        _ = Stream.Read(Buffer, 0, size);
+        return BitConverter.ToInt64(Buffer, 0);
+    }
+
+    /// <summary>
+    ///     Reads an <see cref="ulong" /> from the stream.
+    /// </summary>
+    /// <returns>An <see cref="ulong" />.</returns>
+    public ulong ReadUInt64()
+    {
+        const int size = 8;
+        _ = Stream.Read(Buffer, 0, size);
+        return BitConverter.ToUInt64(Buffer, 0);
+    }
+
+    /// <summary>
+    ///     Reads a <see cref="CSteamID" /> from the stream.
+    /// </summary>
+    /// <returns>A <see cref="CSteamID" />.</returns>
+    public CSteamID ReadSteamID()
+    {
+        return new CSteamID(ReadUInt64());
+    }
+
+    /// <summary>
+    ///     Reads a <see cref="Vector3" /> from the stream.
+    /// </summary>
+    /// <returns>A <see cref="Vector3" />.</returns>
+    public Vector3 ReadSingleVector3()
+    {
+        return new Vector3(ReadSingle(), ReadSingle(), ReadSingle());
+    }
+
+    /// <summary>
+    ///     Reads a <see cref="Quaternion" /> from the stream.
+    /// </summary>
+    /// <returns>A <see cref="Quaternion" />.</returns>
+    public Quaternion ReadSingleQuaternion()
+    {
+        return Quaternion.Euler(ReadSingle(), ReadSingle(), ReadSingle());
+    }
+
+    /// <summary>
+    ///     Reads a <see cref="Color" /> from the stream.
+    /// </summary>
+    /// <returns>A <see cref="Color" />.</returns>
+    public Color ReadColor()
+    {
+        return new Color(ReadByte() / 255f, ReadByte() / 255f, ReadByte() / 255f);
+    }
+
+    /// <summary>
+    ///     Reads a <see cref="DateTime" /> from the stream.
+    /// </summary>
+    /// <returns>A <see cref="DateTime" />.</returns>
+    public DateTime ReadDateTime()
+    {
+        return DateTime.FromBinary(ReadInt64());
+    }
+
+    /// <summary>
+    ///     Writes a <see cref="string" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="string" /> value to write.</param>
+    public void WriteString(string value)
+    {
+        var bytes = Encoding.UTF8.GetBytes(value);
+        var b = (byte)bytes.Length;
+        Stream.WriteByte(b);
+        Stream.Write(bytes, 0, b);
+        Water += 1 + b;
+    }
+
+    /// <summary>
+    ///     Writes a <see cref="bool" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="bool" /> value to write.</param>
+    public void WriteBoolean(bool value)
+    {
+        Stream.WriteByte((byte)(value ? 1 : 0));
+        Water++;
+    }
+
+    /// <summary>
+    ///     Writes a <see cref="byte" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="byte" /> value to write.</param>
+    public void WriteByte(byte value)
+    {
+        Stream.WriteByte(value);
+        Water++;
+    }
+
+    /// <summary>
+    ///     Writes an <see cref="Array" /> of <see cref="double" />s to the stream.
+    /// </summary>
+    /// <param name="values">The <see cref="Array" /> of <see cref="double" />s to write.</param>
+    public void WriteBytes(byte[] values)
+    {
+        var num = (ushort)values.Length;
+        WriteUInt16(num);
+        Stream.Write(values, 0, num);
+        Water += num;
+    }
+
+    /// <summary>
+    ///     Writes an <see cref="short" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="short" /> value to write.</param>
+    public void WriteInt16(short value)
+    {
+        const int size = 2;
+        var bytes = BitConverter.GetBytes(value);
+        Stream.Write(bytes, 0, size);
+        Water += size;
+    }
+
+    /// <summary>
+    ///     Writes an <see cref="ushort" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="ushort" /> value to write.</param>
+    public void WriteUInt16(ushort value)
+    {
+        const int size = 2;
+        var bytes = BitConverter.GetBytes(value);
+        Stream.Write(bytes, 0, size);
+        Water += size;
+    }
+
+    /// <summary>
+    ///     Writes an <see cref="int" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="int" /> value to write.</param>
+    public void WriteInt32(int value)
+    {
+        const int size = 4;
+        var bytes = BitConverter.GetBytes(value);
+        Stream.Write(bytes, 0, size);
+        Water += size;
+    }
+
+    /// <summary>
+    ///     Writes an <see cref="uint" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="uint" /> value to write.</param>
+    public void WriteUInt32(uint value)
+    {
+        const int size = 4;
+        var bytes = BitConverter.GetBytes(value);
+        Stream.Write(bytes, 0, size);
+        Water += size;
+    }
+
+    /// <summary>
+    ///     Writes a <see cref="float" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="float" /> value to write.</param>
+    public void WriteSingle(float value)
+    {
+        const int size = 4;
+        var bytes = BitConverter.GetBytes(value);
+        Stream.Write(bytes, 0, size);
+        Water += size;
+    }
+
+    /// <summary>
+    ///     Writes an <see cref="long" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="long" /> value to write.</param>
+    public void WriteInt64(long value)
+    {
+        const int size = 8;
+        var bytes = BitConverter.GetBytes(value);
+        Stream.Write(bytes, 0, size);
+        Water += size;
+    }
+
+    /// <summary>
+    ///     Writes an <see cref="ulong" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="ulong" /> value to write.</param>
+    public void WriteUInt64(ulong value)
+    {
+        const int size = 8;
+        var bytes = BitConverter.GetBytes(value);
+        Stream.Write(bytes, 0, size);
+        Water += size;
+    }
+
+    /// <summary>
+    ///     Writes a <see cref="CSteamID" /> to the stream.
+    /// </summary>
+    /// <param name="steamId">The <see cref="CSteamID" /> value to write.</param>
+    public void WriteSteamID(CSteamID steamId)
+    {
+        WriteUInt64(steamId.m_SteamID);
+    }
+
+    /// <summary>
+    ///     Writes a <see cref="Vector3" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="Vector3" /> value to write.</param>
+    public void WriteSingleVector3(Vector3 value)
+    {
+        WriteSingle(value.x);
+        WriteSingle(value.y);
+        WriteSingle(value.z);
+    }
+
+    /// <summary>
+    ///     Writes a <see cref="Quaternion" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="Quaternion" /> value to write.</param>
+    public void WriteSingleQuaternion(Quaternion value)
+    {
+        var eulerAngles = value.eulerAngles;
+        WriteSingle(eulerAngles.x);
+        WriteSingle(eulerAngles.y);
+        WriteSingle(eulerAngles.z);
+    }
+
+    /// <summary>
+    ///     Writes a <see cref="Color" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="Color" /> value to write.</param>
+    public void WriteColor(Color value)
+    {
+        WriteByte((byte)(value.r * 255f));
+        WriteByte((byte)(value.g * 255f));
+        WriteByte((byte)(value.b * 255f));
+    }
+
+    /// <summary>
+    ///     Writes a <see cref="DateTime" /> to the stream.
+    /// </summary>
+    /// <param name="value">The <see cref="DateTime" /> value to write.</param>
+    public void WriteDateTime(DateTime value)
+    {
+        WriteInt64(value.ToBinary());
+    }
+
+    /// <summary>
+    ///     Closes and disposes of the stream.
+    /// </summary>
+    public void CloseRiver()
+    {
+        if (Water > 0)
+            Stream.SetLength(Water);
+
+        Stream.Flush();
+        Stream.Close();
+        Stream.Dispose();
+    }
+
+    /// <summary>
+    ///     Reads <paramref name="count" /> <see cref="byte" />s but does not interpret them in any way, essentially skipping
+    ///     them.
+    /// </summary>
+    /// <param name="count">The number of <see cref="byte" />s that you wish to skip ahead.</param>
+    public void Skip(int count)
+    {
+        _ = Stream.Read(Buffer, 0, count);
+    }
+}
