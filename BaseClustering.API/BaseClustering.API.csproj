@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>net481</TargetFramework>
+        <TargetFrameworks>net481;netstandard20</TargetFrameworks>
         <LangVersion>12</LangVersion>
         <Nullable>enable</Nullable>
         <RootNamespace>Pustalorc.Libraries.BaseClustering.API</RootNamespace>
@@ -27,12 +27,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Pustalorc.BuildableAbstractions.API" Version="1.0.0" />
-        <PackageReference Include="Pustalorc.Logging" Version="1.0.3" />
-        <PackageReference Include="Pustalorc.RocketModServices" Version="1.1.0"/>
-        <PackageReference Include="Pustalorc.AsyncTaskDispatcher" Version="1.2.0"/>
+        <PackageReference Include="Pustalorc.BuildableAbstractions.API" Version="1.0.2" />
+        <PackageReference Include="Pustalorc.Logging" Version="1.0.4"/>
+        <PackageReference Include="Pustalorc.RocketModServices" Version="1.1.2"/>
+        <PackageReference Include="Pustalorc.AsyncTaskDispatcher" Version="1.2.1"/>
         <PackageReference Include="OpenMod.Unturned.Redist" Version="3.23.12.3" PrivateAssets="all"/>
         <PackageReference Include="OpenMod.UnityEngine.Redist" Version="2021.3.29.1" PrivateAssets="all"/>
-        <PackageReference Include="JetBrains.Annotations" Version="2024.2.0" Aliases="JetBrainsAnnotations" PrivateAssets="all" />
+        <PackageReference Include="JetBrains.Annotations" Version="2024.2.0" Aliases="JetBrainsAnnotations" PrivateAssets="all"/>
     </ItemGroup>
 </Project>

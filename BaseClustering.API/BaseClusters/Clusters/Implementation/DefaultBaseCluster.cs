@@ -67,7 +67,7 @@ public class DefaultBaseCluster : IBaseCluster
     public DefaultBaseCluster(IClusterRules clusterRules, uint instanceId)
     {
         ClusterRules = clusterRules;
-        BuildableList = new List<Buildable>();
+        BuildableList = [];
         InstanceId = instanceId;
     }
 
@@ -106,7 +106,7 @@ public class DefaultBaseCluster : IBaseCluster
         var stolenBuildables =
             StealFromCluster(RocketModService<IBaseClusterDirectory>.GetService().GetOrCreateGlobalCluster());
         EventBus.Publish<BaseClusterBuildablesAddedEvent>(
-            new BaseClusterBuildablesAddedEventArguments(this, stolenBuildables.Concat(new[] { buildable })));
+            new BaseClusterBuildablesAddedEventArguments(this, stolenBuildables.Concat([buildable])));
     }
 
     /// <inheritdoc />
@@ -118,7 +118,7 @@ public class DefaultBaseCluster : IBaseCluster
             return;
 
         EventBus.Publish<BaseClusterBuildablesRemovedEvent>(
-            new BaseClusterBuildablesRemovedEventArguments(this, new[] { buildable }));
+            new BaseClusterBuildablesRemovedEventArguments(this, [buildable]));
 
         if (IsBeingDestroyed)
             return;

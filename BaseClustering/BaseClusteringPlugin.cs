@@ -27,14 +27,14 @@ public sealed class BaseClusteringPlugin : RocketPlugin<BaseClusteringPluginConf
     {
         var translations = this.GetCurrentTranslationsForCommands();
 
-        Commands = new List<MultiThreadedRocketCommand>
-        {
+        Commands =
+        [
             new ClustersRegenCommand(translations),
             new TeleportToClusterCommand(translations),
             new FindClustersCommand(translations),
             new TopClustersCommand(translations),
             new WreckClustersCommand(translations)
-        };
+        ];
 
         Commands.LoadAndRegisterCommands(this);
     }

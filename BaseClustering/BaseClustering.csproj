@@ -17,8 +17,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Pustalorc.Logging" Version="1.0.3" />
-        <PackageReference Include="Pustalorc.RocketModExtended.Commands" Version="1.2.1"/>
+        <PackageReference Include="Pustalorc.Logging" Version="1.0.4"/>
+        <PackageReference Include="Pustalorc.RocketModExtended.Commands" Version="1.2.3"/>
         <PackageReference Include="OpenMod.Unturned.Redist" Version="3.23.12.3" PrivateAssets="all"/>
         <PackageReference Include="OpenMod.UnityEngine.Redist" Version="2021.3.29.1" PrivateAssets="all"/>
     </ItemGroup>
